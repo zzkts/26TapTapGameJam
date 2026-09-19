@@ -1,5 +1,12 @@
 {
   "dependencies": {
+    "com.code-philosophy.luban": {
+      "version": "https://github.com/focus-creative-games/luban_unity.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "061314200e2f03307c4d90b448e1de7b85431905"
+    },
     "com.unity.ai.navigation": {
       "version": "2.0.10",
       "depth": 0,
@@ -192,6 +199,13 @@
         "com.unity.modules.jsonserialize": "1.0.0"
       },
       "url": "https://packages.unity.com"
+    },
+    "jillejr.newtonsoft.json-for-unity": {
+      "version": "https://github.com/applejag/Newtonsoft.Json-for-Unity.git#upm",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "f2c6cb09817832dccd0600f291053d8d55298ee9"
     },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",
