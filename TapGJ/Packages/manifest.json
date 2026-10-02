@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "com.code-philosophy.luban": "https://github.com/focus-creative-games/luban_unity.git",
+    "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
     "com.unity.ai.navigation": "2.0.10",
     "com.unity.collab-proxy": "2.11.3",
     "com.unity.ide.rider": "3.0.39",
