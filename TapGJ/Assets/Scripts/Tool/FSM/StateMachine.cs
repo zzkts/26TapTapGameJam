@@ -1,16 +1,23 @@
 public class StateMachine
 {
     private State currentState;
+    public State CurrentState => currentState;
 
     public void Switch(State state)
     {
+        if (currentState == state) return;
+
         currentState?.Exit();
         currentState = state;
-        currentState.Enter();
+        currentState?.Enter();
     }
 
-    public void Update(float deltaTime)
+    public void FixUpdate()
     {
-        currentState?.Update(deltaTime);
+        currentState?.FixUpdate();
+    }
+    public void Update()
+    {
+        currentState?.Update();
     }
 }
