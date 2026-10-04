@@ -102,6 +102,7 @@ namespace DialogScripts
 
         public static void StopAutoPlay()
         {
+            Debug.Log("Cancel Auto Play");
             _autoRollSource.Cancel();
             _autoRollSource.Dispose();
             _autoRollSource = new CancellationTokenSource();

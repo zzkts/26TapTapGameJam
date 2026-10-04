@@ -1,5 +1,6 @@
 ﻿using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DialogScripts
 {
@@ -8,6 +9,7 @@ namespace DialogScripts
         public GameObject Speaker;
         public GameObject DialogText;
         public GameObject BasePanel;
+        public GameObject AutoToggle;
     }
 
     public class MonoSingleton<T> : MonoBehaviour where T : MonoSingleton<T>

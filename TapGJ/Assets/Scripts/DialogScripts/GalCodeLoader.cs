@@ -1,4 +1,6 @@
 using System.Linq;
+using DialogScripts;
+using Tool.ComponentTool;
 using UnityEngine;
 
 public static class GalCodeLoader
@@ -21,6 +23,7 @@ public static class GalCodeLoader
             case "changeFace":
                 break;
             case "speaker":
+                ComponentTool.Change_Text(UIHook.Instance.Speaker, args[0]);
                 break;
         }
     }
