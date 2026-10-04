@@ -6,6 +6,7 @@ using Cysharp.Threading.Tasks;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace DialogScripts
 {
@@ -16,7 +17,10 @@ namespace DialogScripts
         public static bool isRunning;
         public static bool isAutoPlay;
         private static StringBuilder _builder { get; set; } = new();
-        public static Action CallBack { get; set; } = () => { };
+        public static Action CallBack { get; set; } = () =>
+        {
+            SceneManager.UnloadSceneAsync("BeginScene");
+        };
         
         private static async UniTaskVoid RollText(string text, CancellationToken cancellationToken)
         {
@@ -59,7 +63,7 @@ namespace DialogScripts
         {
             DataManager.CurrentIndex += 1;
             DialogView.StartRollText(DataManager.CurrentDialog);
-            if (DataManager.CurrentCode is not null)
+            if (DataManager.CurrentDialogJson.Code.ContainsKey(DataManager.CurrentIndex.ToString()))
             {
                 GalCodeLoader.HandleCodeLine(DataManager.CurrentCode);
             }
@@ -68,16 +72,28 @@ namespace DialogScripts
         private static async UniTaskVoid AutoRollText(CancellationToken cancellationToken)
         {
             isAutoPlay = true;
+            if (DataManager.CurrentIndex is -1)
+            {
+                await Task.Delay(1000, cancellationToken);
+            }
+            else
+            {
+                await DelayCurrentLine(cancellationToken, 2);
+            }
             while (!DataManager.IsFulled)
             {
                 DataManager.CurrentIndex += 1;
                 StartRollText(DataManager.CurrentDialog);
-                int need_time = DataManager.CurrentDialog.Length * DialogSetting.PerCharDelay * 4;
-                Debug.Log(need_time);
-                await Task.Delay(need_time, cancellationToken);
+                await DelayCurrentLine(cancellationToken);
             }
             isAutoPlay = false;
         }
+
+        private static async UniTask DelayCurrentLine(CancellationToken cancellationToken, int update = 1)
+        {
+            int need_time = DataManager.CurrentDialog.Length * DialogSetting.PerCharDelay * 8 / update;
+            await Task.Delay(need_time, cancellationToken);
+        } 
 
         public static void StartAutoPlay()
         {
