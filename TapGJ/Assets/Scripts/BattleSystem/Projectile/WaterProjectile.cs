@@ -7,7 +7,7 @@ public class WaterProjectile : Projectile
     {
         if((targetLM.value & (1 << collision.gameObject.layer)) != 0)
         {
-            collision.GetComponent<IActor>().TakeDamage(CalculateDamage());
+            collision.GetComponentInParent<IActor>().TakeDamage(CalculateDamage());
             Explode();
         }
         else if ((groundLM.value & (1 << collision.gameObject.layer)) != 0)

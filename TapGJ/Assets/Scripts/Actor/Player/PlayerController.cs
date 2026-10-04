@@ -195,7 +195,7 @@ public class PlayerController : MonoBehaviour, IActor
 
     public void TakeDamage(float damage)
     {
-        // TODO : 受伤处理
+        hp = Mathf.Max(0f, hp - damage);
     }
 
     public bool IsGrounded()
