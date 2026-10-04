@@ -1,8 +1,8 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
-using GlobalService;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -16,6 +16,7 @@ namespace DialogScripts
         public static bool isRunning;
         public static bool isAutoPlay;
         private static StringBuilder _builder { get; set; } = new();
+        public static Action CallBack { get; set; } = () => { };
         
         private static async UniTaskVoid RollText(string text, CancellationToken cancellationToken)
         {
@@ -52,7 +53,7 @@ namespace DialogScripts
         }
 
         /// <summary>
-        /// 这部分还没有测试，故暂不启用
+        /// 
         /// </summary>
         public static void RunDialogLine()
         {
