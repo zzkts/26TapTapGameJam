@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 109bf7ca8bbfcab4f9fd2105d8f8fc21, type: 3}
+  m_Name: DefaultWaterBallWeaponData
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  damage: 1
+  damageMultiplier: 1
+  attackInterval: 0.2
+  projectileSpeed: 5
+  projectileCount: 1
+  projectileSizeMultiplier: 1
+  projectilePrefab: {fileID: 4114492273762899842, guid: bf97c411cc98b044f8850f3f51a2968e, type: 3}
