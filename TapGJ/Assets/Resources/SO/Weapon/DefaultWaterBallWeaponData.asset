@@ -15,7 +15,7 @@ MonoBehaviour:
   damage: 1
   damageMultiplier: 1
   attackInterval: 0.2
-  projectileSpeed: 5
+  projectileSpeed: 10
   projectileCount: 1
-  projectileSizeMultiplier: 1
+  projectileSizeMultiplier: 0.5
   projectilePrefab: {fileID: 4114492273762899842, guid: bf97c411cc98b044f8850f3f51a2968e, type: 3}

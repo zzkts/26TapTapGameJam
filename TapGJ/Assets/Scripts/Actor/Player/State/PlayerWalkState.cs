@@ -18,6 +18,11 @@ public class PlayerWalkState : PlayerState
             player.Machine.Switch(player.AttackState);
         else if (!player.IsGrounded())
             player.Machine.Switch(player.FallState);
+        else if (player.DownPlatformPressed)
+        {
+            if (player.TryDownPlatform())
+                player.Machine.Switch(player.FallState);
+        }
         else if(player.JumpPressed && player.TryJump())
             player.Machine.Switch(player.JumpState);
         else if(player.RollPressed && player.TryRoll())

@@ -1,74 +1,67 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class Projectile : MonoBehaviour
+public abstract class Projectile : MonoBehaviour
 {
-    [SerializeField] private Rigidbody2D rb;
+    [SerializeField] protected Rigidbody2D rb;
+    [SerializeField] protected LayerMask groundLM;
 
-    private float speed;
-    private float damage;
-    private float damageMultiplier;
-    private float lifeTime;
-    private Vector2 direction;
-    private LayerMask targetLM;
+    protected float speed;
+    protected float damage;
+    protected float projectileSizeMultiplier;
+    protected float damageMultiplier;
+    protected float lifeTime;
+    protected Vector2 direction;
+    protected LayerMask targetLM;
 
-    private static LayerMask groundLM;
-
-    private void Awake()
+    public virtual void SetUp(Vector2 pos, Vector2 dir, LayerMask targetLM,
+        float speed, float damage, float damageMultiplier, float projectileSizeMultiplier, float lifeTime)
     {
-        if (rb == null)
-            rb = GetComponent<Rigidbody2D>();
-
-        groundLM = LayerMask.GetMask("Ground");
-    }
-
-    public void SetUp(
-        Vector2 pos,
-        Vector2 dir,
-        LayerMask targetLM,
-        float spd,
-        float dmg,
-        float damageMultiplier,
-        float projectileSizeMultiplier,
-        float lifeTime)
-    {
-        if (rb == null)
-            rb = GetComponent<Rigidbody2D>();
-
         transform.position = pos;
         direction = dir.normalized;
-        speed = spd;
-        damage = dmg;
+        this.speed = speed;
+        this.damage = damage;
         this.damageMultiplier = damageMultiplier;
+        this.projectileSizeMultiplier = projectileSizeMultiplier;
         this.targetLM = targetLM;
         this.lifeTime = lifeTime;
-        transform.localScale *= projectileSizeMultiplier;
-        rb.linearVelocity = direction * speed;
+        rb.linearVelocity = direction * this.speed;
+
+        transform.localScale = Vector3.one * projectileSizeMultiplier;
     }
 
-    public float CalculateDamage()
+    /// <summary>
+    /// 根据规则计算最终伤害
+    /// </summary>
+    protected virtual float CalculateDamage()
     {
         return damage * damageMultiplier;
     }
 
-    private void FixedUpdate()
+    protected abstract void Move();
+    protected abstract void HandleCollision(Collider2D collision);
+
+    protected void FixedUpdate()
     {
-        if (rb != null)
-            rb.linearVelocity = direction * speed;
+        Move();
     }
 
-    private void Update()
+    protected void Update()
     {
         lifeTime -= Time.deltaTime;
         if (lifeTime <= 0f)
         {
-            Destroy(gameObject);
+            Explode();
+            return;
         }
-
-        // TODO : 碰撞检测(碰撞墙体直接销毁，碰撞目标触发爆炸)
     }
 
-    private void Explode()
+    protected void OnTriggerEnter2D(Collider2D collision)
+    {
+        HandleCollision(collision);
+    }
+
+    protected virtual void Explode()
     {
         Destroy(gameObject);
     }

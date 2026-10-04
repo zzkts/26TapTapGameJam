@@ -1,15 +1,17 @@
+using cfg;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(Weapon))]
 [RequireComponent(typeof(Rigidbody2D))]
-public class PlayerController : MonoBehaviour
+public class PlayerController : MonoBehaviour, IActor
 {
     public float XInput { get; private set; }
     public float FaceDir { get; private set; } = 1f;
     public float YVelocity => rb.linearVelocityY;
 
     public bool JumpPressed { get; private set; }
+    public bool DownPlatformPressed { get; private set; }
     public bool RollPressed { get; private set; }
     public bool AttackPressed { get; private set; }
 
@@ -26,6 +28,9 @@ public class PlayerController : MonoBehaviour
     [Header("Input")]
     [SerializeField] private InputActionAsset inputActions;
 
+    [Header("Data")]
+    [SerializeField] private PlayerData playerData;
+
     [Header("Components")]
     [SerializeField] private Rigidbody2D rb;
     [SerializeField] private Animator animator;
@@ -35,6 +40,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Ground Check")]
     [SerializeField] private Transform footBottom;
+    [SerializeField] private BoxCollider2D bodyCollider;
     [SerializeField] private float checkGroundDis = 0.15f;
     [SerializeField] private LayerMask checkGroundLM;
 
@@ -60,28 +66,22 @@ public class PlayerController : MonoBehaviour
     private InputActionMap playerActionMap;
     private InputAction moveAction;
     private InputAction jumpAction;
+    private InputAction downPlatformAction;
     private InputAction rollAction;
     private InputAction attackAction;
+
     private Camera mainCamera;
-    private float attackPointX;
     private Vector2 mouseWorldPosition;
 
 
     private void Awake()
     {
         mainCamera = Camera.main;
-        attackPointX = Mathf.Abs(attackTransform.localPosition.x);
-
-        if (inputActions == null)
-        {
-            Debug.LogError("PlayerController requires an InputActionAsset.", this);
-            enabled = false;
-            return;
-        }
 
         playerActionMap = inputActions.FindActionMap("Player", true);
         moveAction = playerActionMap.FindAction("Move", true);
         jumpAction = playerActionMap.FindAction("Jump", true);
+        downPlatformAction = playerActionMap.FindAction("DownPlatform", true);
         rollAction = playerActionMap.FindAction("Sprint", true);
         attackAction = playerActionMap.FindAction("Attack", true);
 
@@ -93,16 +93,24 @@ public class PlayerController : MonoBehaviour
         RollState = new PlayerRollState("Roll", this, animator);
         AttackState = new PlayerAttackState("Attack", this, animator);
 
-        hp = maxHp;
     }
 
     private void OnEnable()
     {
-        playerActionMap?.Enable();
+        playerActionMap.Enable();
     }
 
     private void Start()
     {
+        moveSpeed = playerData.moveSpeed;
+        Flip(playerData.direction > 0f);
+        jumpVelocity = playerData.jumpVelocity;
+        maxHp = playerData.maxHp;
+        rollCooldown = playerData.rollCooldown;
+        rollSpeedMultiplier = playerData.rollSpeedMultiplier;
+        rollDuration = playerData.rollDuration;
+
+        hp = maxHp;
         Machine.Switch(IdleState);
     }
 
@@ -113,12 +121,20 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        XInput = moveAction.ReadValue<Vector2>().x;
+        XInput = moveAction.ReadValue<float>();
         JumpPressed = jumpAction.WasPressedThisFrame();
+        DownPlatformPressed = downPlatformAction.WasPressedThisFrame();
         RollPressed = rollAction.WasPressedThisFrame();
         AttackPressed = attackAction.WasPressedThisFrame();
 
-        UpdateAim();
+        // 实时计算鼠标世界空间下位置
+        Vector2 mouseScreenPosition = Mouse.current.position.ReadValue();
+        mouseWorldPosition = mainCamera.ScreenToWorldPoint(
+            new Vector3(mouseScreenPosition.x, mouseScreenPosition.y, transform.position.z - mainCamera.transform.position.z));
+
+        float mouseHorizontalDir = mouseWorldPosition.x - transform.position.x;
+        if (Mathf.Abs(mouseHorizontalDir) > 0.01f) Flip(mouseHorizontalDir > 0f);
+
         Machine.Update();
     }
 
@@ -142,15 +158,26 @@ public class PlayerController : MonoBehaviour
         }
         return false;
     }
+    public bool TryDownPlatform()
+    {
+        RaycastHit2D groundHit = GetGroundHit();
+        if (!groundHit) return false;
+        if (!groundHit.collider.TryGetComponent(out OneWayPlatform platform)) return false;
+
+        platform.FallDown(bodyCollider.transform);
+        return true;
+    }
     public bool TryAttack()
     {
         if(weapon.CanAttack())
         {
             Vector3 attackPosition = attackTransform.localPosition;
-            attackPosition.x = attackPointX * FaceDir;
+            attackPosition.x = Mathf.Abs(attackPosition.x) * FaceDir;
             attackTransform.localPosition = attackPosition;
 
-            weapon.Attack(attackTransform.position, GetAimDirection());
+
+
+            weapon.Attack(attackTransform.position, (mouseWorldPosition - (Vector2)transform.position).normalized);
             return true;
         }
         return false;
@@ -173,36 +200,19 @@ public class PlayerController : MonoBehaviour
 
     public bool IsGrounded()
     {
-        return Physics2D.Raycast(footBottom.position, Vector2.down, checkGroundDis, checkGroundLM);
+        RaycastHit2D groundHit = GetGroundHit();
+        if (!groundHit) return false;
+
+        return !Physics2D.GetIgnoreCollision(bodyCollider, groundHit.collider);
     }
+
+    private RaycastHit2D GetGroundHit() =>
+        Physics2D.Raycast(footBottom.position, Vector2.down, checkGroundDis, checkGroundLM);
 
     private void OnDisable()
     {
-        playerActionMap?.Disable();
+        playerActionMap.Disable();
     }
 
-
-    private Vector2 GetAimDirection()
-    {
-        Vector2 direction = mouseWorldPosition - (Vector2)attackTransform.position;
-        if (direction.sqrMagnitude <= Mathf.Epsilon)
-            return Vector2.right * FaceDir;
-
-        return direction.normalized;
-    }
-
-    private void UpdateAim()
-    {
-        Vector2 mouseScreenPosition = Mouse.current.position.ReadValue();
-        float distanceToWorldPlane = transform.position.z - mainCamera.transform.position.z;
-        Vector3 worldPosition = mainCamera.ScreenToWorldPoint(
-            new Vector3(mouseScreenPosition.x, mouseScreenPosition.y, distanceToWorldPlane));
-
-        mouseWorldPosition = worldPosition;
-
-        float horizontalAim = mouseWorldPosition.x - transform.position.x;
-        if (Mathf.Abs(horizontalAim) > 0.01f)
-            Flip(horizontalAim > 0f);
-    }
 }
 

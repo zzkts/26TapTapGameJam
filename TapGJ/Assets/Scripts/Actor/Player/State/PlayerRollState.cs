@@ -14,6 +14,7 @@ public class PlayerRollState : PlayerState
     {
         base.Enter();
         timer = player.rollDuration;
+        rollDirection = player.FaceDir;
     }
 
     public override void FixUpdate()

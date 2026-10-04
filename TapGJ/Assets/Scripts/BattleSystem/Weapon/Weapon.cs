@@ -36,21 +36,9 @@ public class Weapon : MonoBehaviour
         {
             GameObject projectileObject = Instantiate(currentData.projectilePrefab, pos, Quaternion.identity);
             Projectile projectile = projectileObject.GetComponent<Projectile>();
-            if (projectile == null)
-            {
-                Destroy(projectileObject);
-                return;
-            }
 
-            projectile.SetUp(
-                pos,
-                dir,
-                targetLM,
-                currentData.projectileSpeed,
-                currentData.damage,
-                currentData.damageMultiplier,
-                currentData.projectileSizeMultiplier,
-                5f);
+            projectile.SetUp(pos, dir, targetLM, currentData.projectileSpeed,
+                currentData.damage, currentData.damageMultiplier, currentData.projectileSizeMultiplier, 5f);
         }
     }
 
