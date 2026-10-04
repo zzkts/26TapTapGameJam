@@ -6,23 +6,23 @@ namespace DialogScripts
 {
     public class UIButtonFunc: MonoBehaviour
     {
-        public void OnAutoButtonClick(bool isOn)
+        public Toggle toggle;
+        public void OnAutoButtonClick()
         {
-            Debug.Log(isOn);
-            // if (DataManager.IsFulled && isOn)
-            // {
-            //     return;
-            // }
-            // if (isOn)
-            // {
-            //     Debug.Log("OnAutoButtonClick");
-            //     DialogView.StartAutoPlay();
-            // }
-            // else
-            // {
-            //     DialogView.StopAutoPlay();
-            // }
-            // UIHook.Instance.AutoToggle.isOn = !isOn;
+            bool isOn = toggle.isOn;
+            if (DataManager.IsFulled && isOn)
+            {
+                return;
+            }
+            if (isOn)
+            {
+                Debug.Log("OnAutoButtonClick");
+                DialogView.StartAutoPlay();
+            }
+            else
+            {
+                DialogView.StopAutoPlay();
+            }
         }
     }
 }
