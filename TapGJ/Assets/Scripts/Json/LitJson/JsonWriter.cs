@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
+using UnityEngine;
 
 
 namespace LitJson
@@ -383,6 +384,7 @@ namespace LitJson
             context.ExpectingValue = false;
         }
 
+        #pragma warning disable 3021
         [CLSCompliant(false)]
         public void Write (ulong number)
         {
@@ -393,6 +395,7 @@ namespace LitJson
 
             context.ExpectingValue = false;
         }
+        #pragma warning restore 3021
 
         public void WriteArrayEnd ()
         {
@@ -467,6 +470,10 @@ namespace LitJson
             PutString (propertyName);
 
             if (pretty_print) {
+                if (property_name is null)
+                {
+                    throw new ArgumentNullException($"property_name is null");
+                }
                 if (propertyName.Length > context.Padding)
                     context.Padding = propertyName.Length;
 

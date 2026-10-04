@@ -8,6 +8,10 @@ namespace DialogScripts
         public Toggle toggle;
         public void OnAutoButtonClick(bool isOn)
         {
+            if (DataManager.IsFulled)
+            {
+                return;
+            }
             if (isOn)
             {
                 Debug.Log("OnAutoButtonClick");
