@@ -210,6 +210,7 @@ GameObject:
   - component: {fileID: 478770529}
   - component: {fileID: 478770528}
   - component: {fileID: 478770530}
+  - component: {fileID: 478770531}
   m_Layer: 5
   m_Name: AutoButton
   m_TagString: Untagged
@@ -322,10 +323,10 @@ MonoBehaviour:
   onValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 2027108241}
+      - m_Target: {fileID: 478770531}
         m_TargetAssemblyTypeName: DialogScripts.UIButtonFunc, Assembly-CSharp
         m_MethodName: OnAutoButtonClick
-        m_Mode: 6
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
@@ -334,7 +335,20 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-  m_IsOn: 1
+  m_IsOn: 0
+--- !u!114 &478770531
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 478770525}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 010feef10c36404987db2f30eef9177a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DialogScripts.UIButtonFunc
+  toggle: {fileID: 478770530}
 --- !u!1 &530391009
 GameObject:
   m_ObjectHideFlags: 0
@@ -989,7 +1003,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: New Text
+  m_text: "\u6211\u4E5F\u4E0D\u77E5\u9053"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: c3654d817e4071c4e9e0dfc5dd959b7a, type: 2}
   m_sharedMaterial: {fileID: 6584407381826217846, guid: c3654d817e4071c4e9e0dfc5dd959b7a, type: 2}
@@ -1216,6 +1230,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 010feef10c36404987db2f30eef9177a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DialogScripts.UIButtonFunc
+  toggle: {fileID: 0}
 --- !u!1 &2058033276
 GameObject:
   m_ObjectHideFlags: 0
