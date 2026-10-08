@@ -12,7 +12,7 @@ public class BeginPanel : BasePanel
     {
         btnContinue.onClick.AddListener(() =>
         {
-            //´ú×ö
+            //ï¿½ï¿½ï¿½ï¿½
         });
         btnBegin.onClick.AddListener(() =>
         {
@@ -22,7 +22,7 @@ public class BeginPanel : BasePanel
         {
             UIManager.Instance.ShowPanel<SettingPanel>();
         });
-        //ÍË³ö
+        //ï¿½Ë³ï¿½
         btnQuit.onClick.AddListener(() =>
         {
             Application.Quit();
