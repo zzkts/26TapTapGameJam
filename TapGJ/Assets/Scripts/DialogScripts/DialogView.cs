@@ -19,8 +19,15 @@ namespace DialogScripts
         private static StringBuilder _builder { get; set; } = new();
         public static Action CallBack { get; set; } = () =>
         {
-            SceneManager.UnloadSceneAsync("BeginScene");
+            StopOthers();
+            UIManager.Instance.ShowPanel<BeginPanel>();
         };
+
+        private static void StopOthers()
+        {
+            StopAutoPlay();
+            StopRollText();
+        }
         
         private static async UniTaskVoid RollText(string text, CancellationToken cancellationToken)
         {
@@ -52,8 +59,8 @@ namespace DialogScripts
         /// </summary>
         /// <param name="text"></param>
         public static void StartRollText(string text)
-        { 
-            RollText(text, _rollTextSource.Token).Forget();
+        {
+            var task = RollText(text, _rollTextSource.Token);
         }
 
         /// <summary>

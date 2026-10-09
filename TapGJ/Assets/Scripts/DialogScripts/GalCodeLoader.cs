@@ -11,6 +11,10 @@ public static class GalCodeLoader
     /// <param name="code"></param>
     public static void HandleCodeLine(string code)
     {
+        if (code is "")
+        {
+            return;
+        }
         if (!code.Contains(" "))
         {
             Debug.LogWarning($"The Code {code} can't be handled!");
