@@ -13,8 +13,7 @@ public abstract class PlayerState : State
 
     public override void Enter()
     {
-        if (anim != null && anim.runtimeAnimatorController != null)
-            anim.SetBool(stateName, true);
+        player.PlayAnimation(stateName);
     }
 
     public override void FixUpdate() { }
@@ -22,8 +21,6 @@ public abstract class PlayerState : State
 
     public override void Exit()
     {
-        if (anim != null && anim.runtimeAnimatorController != null)
-            anim.SetBool(stateName, false);
     }
 
     protected void SwitchToLocomotionState()

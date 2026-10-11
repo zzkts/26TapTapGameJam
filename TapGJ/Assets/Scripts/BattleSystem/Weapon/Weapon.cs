@@ -9,6 +9,7 @@ public class Weapon : MonoBehaviour
 
     private WeaponData currentData;
     private float nextAttackTime;
+    private GeneChainController genes;
 
     public WeaponData BaseData => baseData;
     public WeaponData CurrentData => currentData;
@@ -16,6 +17,8 @@ public class Weapon : MonoBehaviour
 
     private void Awake()
     {
+        genes = GetComponent<GeneChainController>();
+        if (baseData == null) baseData = Resources.Load<WeaponData>("SO/Weapon/DefaultWaterBallWeaponData");
         ReapplyModifiers();
     }
 
@@ -32,13 +35,20 @@ public class Weapon : MonoBehaviour
 
         nextAttackTime = Time.time + currentData.attackInterval;
 
-        for (int i = 0; i < currentData.projectileCount; i++)
+        BulletSnapshot shot = genes != null ? genes.Capture(currentData) : new BulletSnapshot(currentData, null);
+        var budget = new ShotSpawnBudget(shot.maxSpawn);
+        for (int i = 0; i < currentData.projectileCount && budget.Take(); i++)
         {
             GameObject projectileObject = Instantiate(currentData.projectilePrefab, pos, Quaternion.identity);
             Projectile projectile = projectileObject.GetComponent<Projectile>();
-
-            projectile.SetUp(pos, dir, targetLM, currentData.projectileSpeed,
-                currentData.damage, currentData.damageMultiplier, currentData.projectileSizeMultiplier, 5f);
+            float angle = currentData.projectileCount <= 1 ? 0f : Mathf.Lerp(-currentData.spreadAngle,
+                currentData.spreadAngle, i / (float)(currentData.projectileCount - 1));
+            Vector2 heading = Quaternion.Euler(0f, 0f, angle) * dir;
+            if (projectile is WaterProjectile water)
+                water.Launch(shot, pos, heading, targetLM, transform, currentData.projectilePrefab, budget);
+            else if (projectile != null)
+                projectile.SetUp(pos, heading, targetLM, shot.speed, shot.damage, 1f, shot.size, shot.lifetime);
+            else Destroy(projectileObject);
         }
     }
 
@@ -77,5 +87,6 @@ public class Weapon : MonoBehaviour
 
         currentData = ModifierSystem.Instance.ApplyAllModify(baseData, modifiers);
     }
+    private void OnDestroy() { if (currentData != null) Destroy(currentData); }
 }
 

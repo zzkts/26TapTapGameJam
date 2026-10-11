@@ -15,6 +15,7 @@ public class PlayerRollState : PlayerState
         base.Enter();
         timer = player.rollDuration;
         rollDirection = player.FaceDir;
+        player.BeginDash();
     }
 
     public override void FixUpdate()
@@ -26,6 +27,7 @@ public class PlayerRollState : PlayerState
     {
         timer -= Time.deltaTime;
         if(timer < 0)
-            player.Machine.Switch(player.IdleState);
+            SwitchToLocomotionState();
     }
+    public override void Exit() { player.EndDash(); base.Exit(); }
 }

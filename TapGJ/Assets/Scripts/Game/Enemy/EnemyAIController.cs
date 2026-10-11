@@ -1,9 +1,11 @@
 using UnityEngine;
+using System.Collections;
 
 [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
+[RequireComponent(typeof(EnemyHealthBar))]
 public class EnemyAIController : MonoBehaviour, IActor
 {
-    public enum AttackType { Melee, Ranged }
+    public enum AttackType { Melee, Ranged, Support }
     public enum EnemyState { Idle, Patrol, Chase, Attack, Hurt, Dead }
 
     [Header("Behavior")]
@@ -20,6 +22,9 @@ public class EnemyAIController : MonoBehaviour, IActor
     [SerializeField, Min(0f)] private float chaseSpeed = 3f;
     [SerializeField, Min(0f)] private float detectRange = 10f;
     [SerializeField, Min(1f)] private float loseTargetMultiplier = 1.25f;
+    [SerializeField] private bool retreatFromPlayer;
+    [SerializeField, Min(0f)] private float dangerRadius = 5f;
+    [SerializeField, Min(0f)] private float retreatSpeed = 2f;
     [SerializeField] private LayerMask obstacleMask = (1 << 0) | (1 << 3) | (1 << 9);
     [SerializeField, Min(0.01f)] private float obstacleCheckDistance = 0.18f;
     [SerializeField, Min(0.01f)] private float groundCheckDistance = 0.25f;
@@ -67,6 +72,7 @@ public class EnemyAIController : MonoBehaviour, IActor
     private float cooldownTimer;
     private float attackElapsed;
     private float hurtTimer;
+    private float supportAnimationTimer;
     private float nextTargetSearch;
     private float facingDirection = 1f;
     private bool attackApplied;
@@ -75,11 +81,15 @@ public class EnemyAIController : MonoBehaviour, IActor
     public AttackType Kind => attackType;
     public EnemyState State { get; private set; } = EnemyState.Idle;
     public float Hp { get; private set; }
+    public float MaxHp => maxHp;
+    public float HealthNormalized => maxHp <= 0f ? 0f : Hp / maxHp;
     public bool IsDead => State == EnemyState.Dead;
+    public bool IsSupport => attackType == AttackType.Support;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        if (GetComponent<EnemyHealthBar>() == null) gameObject.AddComponent<EnemyHealthBar>();
         bodyCollider = GetComponent<Collider2D>();
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         animator = GetComponentInChildren<Animator>();
@@ -102,6 +112,12 @@ public class EnemyAIController : MonoBehaviour, IActor
 
         desiredVelocity = Vector2.zero;
         cooldownTimer = Mathf.Max(0f, cooldownTimer - Time.deltaTime);
+        if (supportAnimationTimer > 0f)
+        {
+            supportAnimationTimer -= Time.deltaTime;
+            if (supportAnimationTimer <= 0f && State == EnemyState.Idle)
+                SetState(EnemyState.Idle, true);
+        }
         if (playerTarget == null && Time.time >= nextTargetSearch)
             FindPlayer();
 
@@ -126,6 +142,20 @@ public class EnemyAIController : MonoBehaviour, IActor
         {
             alerted = true;
             Face(TargetPosition().x - bodyCollider.bounds.center.x);
+            if (retreatFromPlayer && Vector2.Distance(bodyCollider.bounds.center, TargetPosition()) <= dangerRadius)
+            {
+                Vector2 away = (Vector2)bodyCollider.bounds.center - TargetPosition();
+                Vector2 retreatDirection = flyingEnemy
+                    ? away.normalized
+                    : new Vector2(Mathf.Sign(away.x), 0f);
+                if (retreatDirection.sqrMagnitude > 0.001f && CanMove(retreatDirection))
+                {
+                    Face(retreatDirection.x);
+                    desiredVelocity = retreatDirection * retreatSpeed;
+                    SetState(EnemyState.Chase);
+                    return;
+                }
+            }
             if (CanAttack())
             {
                 if (cooldownTimer <= 0f)
@@ -185,7 +215,8 @@ public class EnemyAIController : MonoBehaviour, IActor
 
     private bool CanAttack()
     {
-        if (!TargetAvailable() || (attackType == AttackType.Ranged && projectilePrefab == null))
+        if (attackType == AttackType.Support || !TargetAvailable() ||
+            (attackType == AttackType.Ranged && projectilePrefab == null))
             return false;
         float distance = targetCollider != null && targetCollider.enabled
             ? bodyCollider.Distance(targetCollider).distance
@@ -222,6 +253,8 @@ public class EnemyAIController : MonoBehaviour, IActor
             {
                 if (attackType == AttackType.Ranged)
                     Shoot();
+                else if (playerTarget.TryGetComponent(out PlayerController player))
+                    player.TakeDamageFrom(meleeDamage * damageMultiplier, transform.position);
                 else
                     playerTarget.GetComponentInParent<IActor>()?.TakeDamage(meleeDamage * damageMultiplier);
             }
@@ -351,11 +384,36 @@ public class EnemyAIController : MonoBehaviour, IActor
             return;
         }
         attackApplied = true;
+        supportAnimationTimer = 0f;
         cooldownTimer = Mathf.Max(cooldownTimer, hurtDuration + 0.2f);
         hurtTimer = hurtDuration;
         if (spriteRenderer != null)
             spriteRenderer.color = new Color(1f, 0.45f, 0.45f, originalColor.a);
         SetState(EnemyState.Hurt, true);
+    }
+
+    public float Heal(float amount)
+    {
+        if (IsDead || amount <= 0f || Hp >= maxHp)
+            return 0f;
+
+        float previous = Hp;
+        Hp = Mathf.Min(maxHp, Hp + amount);
+        return Hp - previous;
+    }
+
+    public void PlaySupportAnimation()
+    {
+        if (animator == null || animator.runtimeAnimatorController == null)
+            return;
+
+        int hash = Animator.StringToHash("Blood");
+        if (animator.HasState(0, hash))
+        {
+            animator.Play(hash, 0, 0f);
+            animator.Update(0f);
+            supportAnimationTimer = animator.GetCurrentAnimatorStateInfo(0).length;
+        }
     }
 
     private void ResetPatrol()
@@ -373,6 +431,9 @@ public class EnemyAIController : MonoBehaviour, IActor
 
     private void Die()
     {
+        EnemySupportAura supportAura = GetComponent<EnemySupportAura>();
+        if (supportAura != null)
+            supportAura.enabled = false;
         if (spriteRenderer != null)
             spriteRenderer.color = originalColor;
         SetState(EnemyState.Dead);
@@ -386,6 +447,13 @@ public class EnemyAIController : MonoBehaviour, IActor
         rb.simulated = false;
         foreach (Collider2D collider in GetComponentsInChildren<Collider2D>())
             collider.enabled = false;
-        Destroy(gameObject, duration);
+        StartCoroutine(FinishDeath(duration));
+    }
+
+    private IEnumerator FinishDeath(float duration)
+    {
+        yield return new WaitForSeconds(duration);
+        GetComponent<EnemyGeneDrop>()?.Drop();
+        Destroy(gameObject);
     }
 }

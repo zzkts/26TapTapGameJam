@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 5563444044598141206}
   - component: {fileID: 4167363973271344474}
   - component: {fileID: 6619352960177397838}
-  m_Layer: 10
+  m_Layer: 12
   m_Name: JellyfishProjectile
   m_TagString: Untagged
   m_Icon: {fileID: 0}

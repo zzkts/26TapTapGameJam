@@ -56,9 +56,12 @@ public class JellyfishProjectile : Projectile
 
         if (target != null && other.transform.IsChildOf(target))
         {
+            PlayerController player = other.GetComponentInParent<PlayerController>();
+            if (player != null && player.IsInvulnerable) return;
             IActor actor = other.GetComponentInParent<IActor>();
             Explode();
-            actor?.TakeDamage(CalculateDamage());
+            if (player != null) player.TakeDamageFrom(CalculateDamage(), transform.position);
+            else actor?.TakeDamage(CalculateDamage());
         }
         else if (!other.isTrigger && (groundLM.value & (1 << other.gameObject.layer)) != 0)
         {

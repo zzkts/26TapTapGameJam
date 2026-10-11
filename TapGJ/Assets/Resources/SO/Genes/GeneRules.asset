@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d7ec1d7b1e264b41b84966c0227aa3a, type: 3}
+  m_Name: GeneRules
+  m_EditorClassIdentifier: Assembly-CSharp::GeneRules
+  genes:
+  - {fileID: 11400000, guid: b0e5c26c03574c6479d1c23c358ebf82, type: 2}
+  - {fileID: 11400000, guid: b20d846802c13ae458fa1631702a237d, type: 2}
+  - {fileID: 11400000, guid: 540bc46c3577bcf428353859391f62e0, type: 2}
+  - {fileID: 11400000, guid: a9c729be4bea4c64fa10501f3aa9dd4e, type: 2}
+  - {fileID: 11400000, guid: c034da89fbad48d458c56e68ddd21b11, type: 2}
+  - {fileID: 11400000, guid: 4aa739ba1cb8d5d43aad36ea1da9363b, type: 2}
+  - {fileID: 11400000, guid: eb791969193c319428e638f78bac2171, type: 2}
+  - {fileID: 11400000, guid: 158d3e8451beeaa4e8453c1c43659f11, type: 2}
+  slotCount: 6
+  evolutionCopies: 3
+  reloadDuration: 3
+  interactionRange: 1.6
+  noDropProbability: 0.4
+  oneDropProbability: 0.4
+  maxSpawnPerShot: 24
+  maxSplitGeneration: 1
+  statusDuration: 4
+  poisonDuration: 3
+  poisonRadius: 2.5
+  poisonDamage: 1
+  firePercentPerSecond: 0.05
+  explosionHealthFraction: 0.3
+  electricDamage: 1
+  contactDistance: 0.8
+  waterDuration: 4
+  waterRadius: 0.8
+  vortexDuration: 1.5
+  vortexPullSpeed: 2
