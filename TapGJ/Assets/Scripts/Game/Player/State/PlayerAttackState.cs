@@ -1,5 +1,9 @@
 using UnityEngine;
 
+/// <summary>
+/// 玩家执行一次攻击时的状态。
+/// 等待攻击时间结束后，根据玩家所在位置回到地面或空中状态。
+/// </summary>
 public class PlayerAttackState : PlayerState
 {
     private float timer;

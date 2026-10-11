@@ -15,10 +15,9 @@ public class GeneEditPanel : BasePanel
     private PlayerController player;
     private GeneEditStation station;
     private GeneInventory inventory;
-    private GeneChainController chain;
-    private string[] draft;
+    private Modifier[] draft;
     private int selected;
-    public string[] CopyDraft() => draft == null ? Array.Empty<string>() : (string[])draft.Clone();
+    public Modifier[] CopyDraft() => draft == null ? Array.Empty<Modifier>() : (Modifier[])draft.Clone();
     public override void Init()
     {
         for (int i = 0; i < slotButtons.Length; i++)
@@ -37,10 +36,9 @@ public class GeneEditPanel : BasePanel
         if (terminal == null || !terminal.CanUse(owner)) return;
         player = owner;
         station = terminal;
-        inventory = owner.GetComponent<GeneInventory>();
-        chain = owner.GetComponent<GeneChainController>();
-        if (inventory == null || chain == null) return;
-        draft = chain.CopySlots();
+        inventory = owner.Genes;
+        if (inventory == null) return;
+        draft = inventory.CopyChain();
         selected = 0;
         player.SetMenuOpen(true);
         UIManager.Instance.ShowPanel(gameObject);
@@ -70,27 +68,22 @@ public class GeneEditPanel : BasePanel
     private void RebuildInventory()
     {
         foreach (Transform child in inventoryContent) Destroy(child.gameObject);
-        foreach (GeneRecord record in inventory.Records)
+        for (int i = 0; i < inventory.GenInventory.Count; i++)
         {
-            GeneData gene = inventory.Definition(record);
-            if (gene == null) continue;
-            string id = record.instanceId;
-            string type = gene.kind == GeneKind.Modification ? "改造" : "属性";
-            string level = record.level > 1 ? "高级" : record.copies + "/" + inventory.Rules.evolutionCopies;
-            Button row = GameplayUIFactory.Button("Gene " + id, inventoryContent, Vector2.zero, Vector2.one, font,
-                gene.displayName + "    " + type + "\n" + level);
+            int index = i;
+            Modifier gene = inventory.GenInventory[index];
+            Button row = GameplayUIFactory.Button("Gene " + gene.GeneId, inventoryContent,
+                Vector2.zero, Vector2.one, font, gene.Name + "\n" + gene.Desc);
             row.gameObject.AddComponent<LayoutElement>().preferredHeight = 68f;
             row.GetComponentInChildren<Text>().alignment = TextAnchor.MiddleLeft;
-            row.onClick.AddListener(() => Equip(id));
+            row.onClick.AddListener(() => Equip(index));
         }
-        inventoryCount.text = "基因库存  " + inventory.Records.Count;
+        inventoryCount.text = "基因库存  " + inventory.GenInventory.Count;
     }
-    public void Equip(string id)
+    public void Equip(int inventoryIndex)
     {
-        if (inventory == null || inventory.Find(id) == null || draft == null) return;
-        // An instance can move between slots; distinct instances of the same gene can coexist.
-        for (int i = 0; i < draft.Length; i++) if (draft[i] == id) draft[i] = null;
-        draft[selected] = id;
+        if (inventory == null || draft == null) return;
+        draft[selected] = inventory.GenInventory[inventoryIndex];
         Refresh();
     }
     public void SelectSlot(int index) { if (draft != null && index >= 0 && index < draft.Length) { selected = index; Refresh(); } }
@@ -105,35 +98,27 @@ public class GeneEditPanel : BasePanel
     private void Refresh()
     {
         if (draft == null) return;
-        var sequence = new System.Collections.Generic.List<string>();
         for (int i = 0; i < slotButtons.Length; i++)
         {
             bool valid = i < draft.Length;
             slotButtons[i].gameObject.SetActive(valid);
             if (!valid) continue;
-            GeneRecord record = inventory.Find(draft[i]);
-            GeneData gene = inventory.Definition(record);
+            Modifier gene = draft[i];
             slotButtons[i].GetComponentInChildren<Text>().text = gene == null ? (i + 1) + "\n空槽" :
-                (i + 1) + "  " + (gene.kind == GeneKind.Modification ? "改造" : "属性") + "\n" +
-                (record.level > 1 ? "高级" : "") + gene.displayName;
+                (i + 1) + "\n" + gene.Name;
             slotButtons[i].GetComponent<Image>().color = i == selected ? new Color(0.18f, 0.45f, 0.38f) : new Color(0.18f, 0.2f, 0.21f);
-            if (gene != null && gene.kind == GeneKind.Attribute) sequence.Add(gene.displayName);
         }
-        GeneRecord selectedRecord = inventory.Find(draft[selected]);
-        GeneData selectedGene = inventory.Definition(selectedRecord);
+        Modifier selectedGene = draft[selected];
         detail.text = selectedGene == null ? "槽位 " + (selected + 1) + "\n\n未装配" :
-            (selectedRecord.level > 1 ? "高级" : "") + selectedGene.displayName + "\n\n" +
-            (selectedGene.kind == GeneKind.Modification ? "改造基因 · 持续生效" : "属性基因 · 附魔 " + selectedGene.enchantDuration + " 秒") +
-            "\n\n" + (selectedRecord.level > 1 ? selectedGene.evolvedDescription : selectedGene.description);
-        rotation.text = "属性轮换  " + (sequence.Count == 0 ? "无" : string.Join("  >  ", sequence)) +
-            "\n整链重载  " + inventory.Rules.reloadDuration + " 秒";
+            selectedGene.Name + "\n\n" + selectedGene.Desc;
+        rotation.text = "基因按槽位从左到右结算";
         leftButton.interactable = selected > 0;
         rightButton.interactable = selected + 1 < draft.Length;
         removeButton.interactable = selectedGene != null;
     }
     public void Confirm()
     {
-        if (chain != null && chain.Commit(station, draft)) Close();
+        if (inventory != null && inventory.Commit(station, player, draft)) Close();
     }
     public void Cancel() => Close();
     private void Close()

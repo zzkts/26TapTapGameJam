@@ -1,9 +1,14 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
+/// <summary>
+/// 敌人的基础行为与战斗控制器。
+/// 负责移动、攻击、生命值和临时状态的运行时更新。
+/// </summary>
 [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
 [RequireComponent(typeof(EnemyHealthBar))]
-public class EnemyAIController : MonoBehaviour, IActor
+public class EnemyAIController : MonoBehaviour, ICombatable
 {
     public enum AttackType { Melee, Ranged, Support }
     public enum EnemyState { Idle, Patrol, Chase, Attack, Hurt, Dead }
@@ -77,6 +82,7 @@ public class EnemyAIController : MonoBehaviour, IActor
     private float facingDirection = 1f;
     private bool attackApplied;
     private bool alerted;
+    private readonly BuffComponent buffs = new();
 
     public AttackType Kind => attackType;
     public EnemyState State { get; private set; } = EnemyState.Idle;
@@ -85,6 +91,7 @@ public class EnemyAIController : MonoBehaviour, IActor
     public float HealthNormalized => maxHp <= 0f ? 0f : Hp / maxHp;
     public bool IsDead => State == EnemyState.Dead;
     public bool IsSupport => attackType == AttackType.Support;
+    public IReadOnlyList<BuffInstance> BuffList => buffs.BuffList;
 
     private void Awake()
     {
@@ -107,6 +114,7 @@ public class EnemyAIController : MonoBehaviour, IActor
 
     private void Update()
     {
+        buffs.Update(Time.deltaTime);
         if (IsDead)
             return;
 
@@ -372,11 +380,17 @@ public class EnemyAIController : MonoBehaviour, IActor
             animator.Play(hash, 0, 0f);
     }
 
-    public void TakeDamage(float damage)
+    public void TakeDamage(float damage) => TakeDamage(new DamageInfo(damage));
+
+    public void TakeDamage(DamageInfo damageInfo)
     {
+        float damage = damageInfo.damage;
         if (IsDead || damage <= 0f)
             return;
         Hp = Mathf.Max(0f, Hp - damage);
+        if (Hp > 0f && damageInfo.elementType != E_ElementType.None)
+            ElementSystem.Apply(buffs, damageInfo.elementType, damageInfo.hitPoint,
+                damageInfo.damage, damageInfo.targetLM);
         StopMoving();
         if (Hp <= 0f)
         {
@@ -391,6 +405,11 @@ public class EnemyAIController : MonoBehaviour, IActor
             spriteRenderer.color = new Color(1f, 0.45f, 0.45f, originalColor.a);
         SetState(EnemyState.Hurt, true);
     }
+
+    public void AddBuff(E_ElementType elementType) =>
+        ElementSystem.Apply(buffs, elementType, transform.position);
+
+    public void RemBuff(E_ElementType elementType) => buffs.Remove(elementType);
 
     public float Heal(float amount)
     {

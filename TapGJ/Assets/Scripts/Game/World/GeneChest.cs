@@ -2,7 +2,8 @@ using UnityEngine;
 
 public class GeneChest : WorldInteractable
 {
-    public GeneRules rules;
+    [SerializeField] private Modifier[] genePool;
+    [SerializeField] private float pickupRange = 1.6f;
     public AudioClip openingSound;
     public bool Opened { get; private set; }
     public override string Title => "基因冷库";
@@ -10,9 +11,9 @@ public class GeneChest : WorldInteractable
     public override bool CanUse(PlayerController player) => !Opened && base.CanUse(player);
     public override bool Interact(PlayerController player)
     {
-        if (!CanUse(player) || rules == null || rules.genes == null || rules.genes.Length == 0) return false;
+        if (!CanUse(player) || genePool.Length == 0) return false;
         Opened = true;
-        DropService.Spawn(rules.genes, 2, transform.position, rules.interactionRange);
+        DropService.Spawn(genePool, 2, transform.position, pickupRange);
         TapGJ.WaterProjectiles.WaterVfx.SpawnSplash(transform.position, Color.white, 1f, Vector2.up);
         PlayOpeningSound();
         SpriteRenderer visual = GetComponent<SpriteRenderer>();

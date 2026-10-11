@@ -1,5 +1,9 @@
 using UnityEngine;
 
+/// <summary>
+/// 玩家在地面翻滚时的状态。
+/// 按进入时的方向移动，并在翻滚期间开启无敌。
+/// </summary>
 public class PlayerRollState : PlayerState
 {
     private float timer;
@@ -13,9 +17,15 @@ public class PlayerRollState : PlayerState
     public override void Enter()
     {
         base.Enter();
+        player.SetInvincible(true);
         timer = player.rollDuration;
         rollDirection = player.FaceDir;
-        player.BeginDash();
+    }
+
+    public override void Exit()
+    {
+        player.SetInvincible(false);
+        base.Exit();
     }
 
     public override void FixUpdate()
@@ -27,7 +37,6 @@ public class PlayerRollState : PlayerState
     {
         timer -= Time.deltaTime;
         if(timer < 0)
-            SwitchToLocomotionState();
+            player.Machine.Switch(player.IdleState);
     }
-    public override void Exit() { player.EndDash(); base.Exit(); }
 }

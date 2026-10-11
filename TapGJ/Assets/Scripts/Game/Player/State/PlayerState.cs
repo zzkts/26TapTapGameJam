@@ -1,5 +1,9 @@
 using UnityEngine;
 
+/// <summary>
+/// 所有玩家状态的共同基类。
+/// 保存玩家和动画引用，并提供常用的地面移动状态切换。
+/// </summary>
 public abstract class PlayerState : State
 {
     protected Animator anim;
@@ -13,7 +17,8 @@ public abstract class PlayerState : State
 
     public override void Enter()
     {
-        player.PlayAnimation(stateName);
+        if (anim != null && anim.runtimeAnimatorController != null)
+            anim.SetBool(stateName, true);
     }
 
     public override void FixUpdate() { }
@@ -21,6 +26,8 @@ public abstract class PlayerState : State
 
     public override void Exit()
     {
+        if (anim != null && anim.runtimeAnimatorController != null)
+            anim.SetBool(stateName, false);
     }
 
     protected void SwitchToLocomotionState()

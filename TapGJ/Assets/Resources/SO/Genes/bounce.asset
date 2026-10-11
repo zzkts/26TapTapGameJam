@@ -9,19 +9,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c96c2c8ba1cff71479a4adfc37f8b7df, type: 3}
+  m_Script: {fileID: 11500000, guid: 537622d80466a2a45a20ae6673a384ed, type: 3}
   m_Name: bounce
-  m_EditorClassIdentifier: Assembly-CSharp::GeneData
-  geneId: bounce
-  displayName: "\u53CD\u5F39"
-  description: "\u5B50\u5F39\u53EF\u5728\u5899\u9762\u53CD\u5F39 3 \u6B21\u3002"
-  evolvedDescription: "\u5B50\u5F39\u53EF\u5728\u5899\u9762\u53CD\u5F39 5 \u6B21\u3002"
-  kind: 0
-  element: 0
-  enchantDuration: 4
-  effects:
-  - kind: 4
-    trigger: 1
-    value: 3
-    evolvedValue: 5
-  color: {r: 0.95, g: 0.86, b: 0.5, a: 1}
+  m_EditorClassIdentifier: Assembly-CSharp::Modifier
+  geneId: 6
+  geneName: 反弹
+  desc: 子弹可在墙面反弹 2 次。
+  modifierType: 7
+  modifierValue: 2

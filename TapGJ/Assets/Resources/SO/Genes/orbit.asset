@@ -9,19 +9,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c96c2c8ba1cff71479a4adfc37f8b7df, type: 3}
+  m_Script: {fileID: 11500000, guid: 537622d80466a2a45a20ae6673a384ed, type: 3}
   m_Name: orbit
-  m_EditorClassIdentifier: Assembly-CSharp::GeneData
-  geneId: orbit
-  displayName: "\u73AF\u6D41"
-  description: "\u5B50\u5F39\u6CBF\u534A\u5F84 2 \u7C73\u7684\u73AF\u7ED5\u8DEF\u5F84\u98DE\u884C\u3002"
-  evolvedDescription: "\u73AF\u7ED5\u534A\u5F84\u589E\u52A0\u81F3 3 \u7C73\u3002"
-  kind: 0
-  element: 0
-  enchantDuration: 4
-  effects:
-  - kind: 5
-    trigger: 1
-    value: 2
-    evolvedValue: 3
-  color: {r: 0.95, g: 0.86, b: 0.5, a: 1}
+  m_EditorClassIdentifier: Assembly-CSharp::Modifier
+  geneId: 7
+  geneName: 环流
+  desc: 子弹改为环绕轨迹。
+  modifierType: 13
+  modifierValue: 1

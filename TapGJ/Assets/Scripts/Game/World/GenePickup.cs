@@ -2,17 +2,17 @@ using UnityEngine;
 
 public class GenePickup : WorldInteractable
 {
-    public GeneData gene;
-    public override string Title => gene != null ? gene.displayName : "基因";
-    public override string Detail => gene == null ? "" : (gene.kind == GeneKind.Modification ? "改造" : "属性") + " · " + gene.description;
+    public Modifier gene;
+    public override string Title => gene != null ? gene.Name : "基因";
+    public override string Detail => gene == null ? "" : gene.Desc;
     private void Start()
     {
-        if (gene != null) PrototypeVisual.Add(gameObject, Color.Lerp(Color.white, gene.color, 0.45f), new Vector2(0.28f, 0.28f));
+        if (gene != null) PrototypeVisual.Add(gameObject, Color.white, new Vector2(0.28f, 0.28f));
     }
     public override bool Interact(PlayerController player)
     {
-        if (!CanUse(player) || gene == null || !player.TryGetComponent(out GeneInventory inventory)) return false;
-        if (inventory.Acquire(gene) == null) return false;
+        if (!CanUse(player) || gene == null) return false;
+        player.Genes.Acquire(gene);
         gameObject.SetActive(false);
         Destroy(gameObject);
         return true;

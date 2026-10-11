@@ -14,18 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerData
   moveSpeed: 3
   direction: 1
-  jumpVelocity: 4
+  jumpVelocity: 8
   maxHp: 10
   rollCooldown: 2
   rollSpeedMultiplier: 1.5
-  rollDuration: 0.2
-  dashUnlocked: 0
-  coyoteTime: 0.1
-  jumpBuffer: 0.1
-  invulnerabilityTime: 0.8
-  hitStopTime: 0.1
-  knockbackSpeed: 2.5
-  hurtTime: 0.25
-  landingTime: 0.12
-  poisonResistance: 0
-  fallDeathY: -12
+  rollDuration: 0.5

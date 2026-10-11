@@ -1,20 +1,18 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 public class EnemyGeneDrop : MonoBehaviour
 {
-    public GeneRules rules;
-    public CombatElement dropElement = CombatElement.Water;
+    [SerializeField] private Modifier[] genePool;
+    [SerializeField, Range(0f, 1f)] private float noDropProbability = 0.4f;
+    [SerializeField, Range(0f, 1f)] private float oneDropProbability = 0.4f;
+    [SerializeField] private float pickupRange = 1.6f;
     private bool dropped;
     public void Drop()
     {
-        if (dropped || rules == null) return;
+        if (dropped || genePool.Length == 0) return;
         dropped = true;
         float roll = Random.value;
-        int count = roll < rules.noDropProbability ? 0 : roll < rules.noDropProbability + rules.oneDropProbability ? 1 : 2;
-        var pool = new List<GeneData>();
-        foreach (GeneData gene in rules.genes)
-            if (gene != null && (gene.kind == GeneKind.Modification || gene.element == dropElement)) pool.Add(gene);
-        DropService.Spawn(pool.ToArray(), count, transform.position, rules.interactionRange);
+        int count = roll < noDropProbability ? 0 : roll < noDropProbability + oneDropProbability ? 1 : 2;
+        DropService.Spawn(genePool, count, transform.position, pickupRange);
     }
 }

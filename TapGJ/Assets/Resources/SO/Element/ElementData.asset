@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d49e03cd64e149c083357765812423e0, type: 3}
+  m_Name: ElementData
+  m_EditorClassIdentifier: Assembly-CSharp::ElementData
+  elements:
+  - type: 2
+    desc: "\u9644\u7740\u706B\u5143\u7D20\uFF0C\u53EF\u4E0E\u6C34\u6216\u6BD2\u53D1\u751F\u53CD\u5E94\u3002"
+    duration: 10
+    projectilePrefab: {fileID: 4114492273762899842, guid: 80cffaa92ce6d1b45ac7a8d61a25000c, type: 3}
+  - type: 1
+    desc: "\u9644\u7740\u6C34\u5143\u7D20\u3002"
+    duration: 10
+    projectilePrefab: {fileID: 4114492273762899842, guid: 4281c5f8fdd860149947ce7aa2b4f13b, type: 3}
+  - type: 4
+    desc: "\u9644\u7740\u6BD2\u5143\u7D20\uFF0C\u53EF\u4E0E\u6C34\u6216\u706B\u53D1\u751F\u53CD\u5E94\u3002"
+    duration: 10
+    projectilePrefab: {fileID: 4114492273762899842, guid: cad5ee8ad9c41144290b94f022e9289e, type: 3}

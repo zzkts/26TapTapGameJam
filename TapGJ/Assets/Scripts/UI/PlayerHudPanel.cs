@@ -10,20 +10,18 @@ public class PlayerHudPanel : BasePanel
     public RunMenuPanel runMenu;
     private PlayerController player;
     private GeneInventory inventory;
-    private GeneChainController chain;
     private PlayerInteraction interaction;
     private float toastUntil, deathElapsed;
     public override void Init()
     {
         player = FindFirstObjectByType<PlayerController>();
         if (player == null) return;
-        inventory = player.GetComponent<GeneInventory>();
-        chain = player.GetComponent<GeneChainController>();
+        inventory = player.Genes;
         interaction = player.GetComponent<PlayerInteraction>();
         if (inventory != null) inventory.Acquired += OnAcquired;
-        if (chain != null && slotTexts.Length != chain.CopySlots().Length)
+        if (inventory != null && slotTexts.Length != inventory.SlotCount)
         {
-            int count = chain.CopySlots().Length;
+            int count = inventory.SlotCount;
             Text[] resized = new Text[count];
             for (int i = 0; i < count; i++)
             {
@@ -36,11 +34,9 @@ public class PlayerHudPanel : BasePanel
             slotTexts = resized;
         }
     }
-    private void OnAcquired(GeneRecord record, bool evolved)
+    private void OnAcquired(Modifier gene)
     {
-        GeneData gene = inventory.Definition(record);
-        toastText.text = evolved ? gene.displayName + " 已进化为高级基因" :
-            "获得 " + gene.displayName + "  " + record.copies + "/" + inventory.Rules.evolutionCopies;
+        toastText.text = "获得 " + gene.Name;
         toastUntil = Time.unscaledTime + 3f;
     }
     protected override void Update()
@@ -51,21 +47,17 @@ public class PlayerHudPanel : BasePanel
         healthText.text = "生命  " + player.hp.ToString("0.#") + " / " + player.maxHp.ToString("0.#");
         dashText.text = !player.DashUnlocked ? "冲刺 · 未解锁" : player.DashCooldownRemaining > 0f ?
             "冲刺  " + player.DashCooldownRemaining.ToString("0.0") + "s" : "冲刺 · 就绪";
-        if (chain != null)
+        if (inventory != null)
         {
-            string[] slots = chain.CopySlots();
+            Modifier[] slots = inventory.CopyChain();
             for (int i = 0; i < slotTexts.Length; i++)
             {
-                GeneRecord record = i < slots.Length ? inventory.Find(slots[i]) : null;
-                GeneData gene = inventory.Definition(record);
-                slotTexts[i].text = gene == null ? (i + 1) + "\n-" : (gene.kind == GeneKind.Modification ? "改" : "属") + "\n" + gene.displayName;
-                slotTexts[i].color = gene == null ? new Color(0.5f, 0.55f, 0.54f) : gene.color;
+                Modifier gene = i < slots.Length ? slots[i] : null;
+                slotTexts[i].text = gene == null ? (i + 1) + "\n-" : (i + 1) + "\n" + gene.Name;
+                slotTexts[i].color = gene == null ? new Color(0.5f, 0.55f, 0.54f) : Color.white;
             }
-            string name = chain.CurrentAttribute != null ? chain.CurrentAttribute.displayName : "无属性";
-            attributeText.text = chain.State == GeneChainController.Phase.Reloading ? "基因重载  " + chain.Remaining.ToString("0.0") + "s" :
-                chain.State == GeneChainController.Phase.Active ? name + "  " + chain.Remaining.ToString("0.0") + "s" : name + " · 就绪";
-            stageFill.fillAmount = chain.State == GeneChainController.Phase.Ready ? 1f :
-                chain.Remaining / (chain.State == GeneChainController.Phase.Reloading ? inventory.Rules.reloadDuration : chain.CurrentAttribute.enchantDuration);
+            attributeText.text = "基因链";
+            stageFill.fillAmount = 1f;
         }
         WorldInteractable near = interaction != null ? interaction.Nearby : null;
         interactionText.text = near != null && !player.MenuOpen && !player.IsDead ? "[E]  " + near.Title + "\n" + near.Detail : "";

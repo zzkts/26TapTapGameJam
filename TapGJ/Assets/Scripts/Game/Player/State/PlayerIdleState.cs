@@ -1,8 +1,33 @@
 using UnityEngine;
 
+/// <summary>
+/// 玩家站立待机状态。
+/// 停止水平移动，并接收移动、跳跃、下跳、翻滚和攻击输入。
+/// </summary>
 public class PlayerIdleState : PlayerState
 {
-    public PlayerIdleState(string name, PlayerController player, Animator anim) : base(name, player, anim) { }
-    public override void FixUpdate() => player.Move(player.XInput, player.moveSpeed);
-    public override void Update() => player.UpdateLocomotion();
+    public PlayerIdleState(string stateName, PlayerController player, Animator anim)
+        : base(stateName, player, anim) { }
+
+    public override void Enter()
+    {
+        base.Enter();
+        player.FrzeeHorizontalVelocity();
+    }
+
+    public override void Update()
+    {
+        if (player.AttackPressed && player.TryAttack())
+            player.Machine.Switch(player.AttackState);
+        else if (!player.IsGrounded())
+            player.Machine.Switch(player.FallState);
+        else if (player.DownPlatformPressed && player.TryDownPlatform())
+            player.Machine.Switch(player.FallState);
+        else if (player.JumpPressed && player.TryJump())
+            player.Machine.Switch(player.JumpState);
+        else if (player.RollPressed && player.TryRoll())
+            player.Machine.Switch(player.RollState);
+        else if (Mathf.Abs(player.XInput) > Mathf.Epsilon)
+            player.Machine.Switch(player.WalkState);
+    }
 }

@@ -11,7 +11,7 @@
 - 基因树结构；
 - 主动技能；
 - 基因获取、解锁与升级方式；
-- 未确定的元素融合与特殊发射规则。
+- 未确定的元素反应数值与表现预制体。
 
 ## 2. Battle 模块层级划分
 
@@ -30,7 +30,9 @@ BattleSystem
 │
 └── Projectile
     ├── Projectile
-    └── WaterProjectile
+    ├── ProjectileMove
+    ├── StraightMove
+    └── OrbitMove
 ```
 
 ## 3. 模块职责
@@ -79,15 +81,16 @@ BattleSystem
 - 保存方向、速度、伤害和目标层；
 - 计算最终伤害；
 - 更新生存时间；
-- 将移动和碰撞行为交给具体子类。
+- 用组合的 ProjectileMove 执行移动；
+- 根据元素 Buff 改变子弹颜色，命中后将 Buff 交给目标。
 
-### WaterProjectile
+### ProjectileMove
 
-当前默认水球子弹。
+负责子弹的运动轨迹。
 
-- 使用 Rigidbody2D 进行直线移动；
-- 命中外部目标后调用其受伤接口并销毁；
-- 命中地面后销毁。
+- StraightMove 负责直线移动；
+- OrbitMove 负责环绕发射者移动；
+- 新轨迹只需增加新的 ProjectileMove 实现。
 
 ## 4. 层级类图
 
@@ -138,27 +141,27 @@ classDiagram
     }
 
     class Projectile {
-        <<abstract>>
-        #Rigidbody2D rb
-        #LayerMask groundLM
         #float speed
         #float damage
-        #float projectileSizeMultiplier
         #float damageMultiplier
         #float lifeTime
         #Vector2 direction
         #LayerMask targetLM
+        #ProjectileMove movement
         +void SetUp(Vector2 pos, Vector2 dir, LayerMask targetLM, float speed, float damage, float damageMultiplier, float sizeMultiplier, float lifeTime)
         #float CalculateDamage()
-        #void Move()*
-        #void HandleCollision(Collider2D collision)*
+        +void Step(float deltaTime)
         #void Explode()
     }
 
-    class WaterProjectile {
-        #void Move()
-        #void HandleCollision(Collider2D collision)
+    class ProjectileMove {
+        <<abstract>>
+        +void SetUp(Projectile projectile)
+        +void Move(float deltaTime)*
     }
+
+    class StraightMove
+    class OrbitMove
 
     Weapon --> WeaponData : 保存基础与运行时数据
     Weapon o-- Modifier : 持有
@@ -166,7 +169,9 @@ classDiagram
     Weapon --> ModifierSystem : 重新应用修改
     ModifierSystem --> WeaponData : 克隆并修改
     Weapon --> Projectile : 创建并初始化
-    Projectile <|-- WaterProjectile
+    Projectile o-- ProjectileMove : 组合轨迹
+    ProjectileMove <|-- StraightMove
+    ProjectileMove <|-- OrbitMove
 ```
 
 ## 5. 内部行为流转

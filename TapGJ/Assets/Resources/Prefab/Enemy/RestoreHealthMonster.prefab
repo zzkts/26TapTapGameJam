@@ -283,5 +283,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c6f034108be9d21499752a8ade5454a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyGeneDrop
-  rules: {fileID: 11400000, guid: 786ed6bed99f1cc4c8ebe6c4b99c2c1a, type: 2}
-  dropElement: 1
+  genePool:
+  - {fileID: 11400000, guid: 4aa739ba1cb8d5d43aad36ea1da9363b, type: 2}
+  - {fileID: 11400000, guid: c034da89fbad48d458c56e68ddd21b11, type: 2}
+  noDropProbability: 0.4
+  oneDropProbability: 0.4
+  pickupRange: 1.6
