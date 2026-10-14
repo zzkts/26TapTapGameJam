@@ -10,6 +10,7 @@ public sealed class CompleteLevelFlow : MonoBehaviour
     public Vector2 spawn = new Vector2(3f, 1f);
     public Vector2[] checkpoints = { new Vector2(16f, 1f), new Vector2(41f, 1f), new Vector2(78f, 1f) };
     public float firstRegionEnd = 38f, secondRegionEnd = 78f, recoveryY = -5f;
+    public float guardianEntryX=84f;
     public bool CoreDefeated { get; private set; }
     public bool BattleStarted { get; private set; }
     public bool ExitUsed { get; private set; }

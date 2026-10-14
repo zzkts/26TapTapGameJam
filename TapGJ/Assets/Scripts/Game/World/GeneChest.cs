@@ -5,13 +5,15 @@ public class GeneChest : WorldInteractable
     [SerializeField] private Modifier[] genePool;
     [SerializeField] private float pickupRange = 1.6f;
     public AudioClip openingSound;
+    public bool offerChoice;
     public bool Opened { get; private set; }
     public override string Title => "基因冷库";
-    public override string Detail => "开启后获得两份基因";
+    public override string Detail => offerChoice ? "三种变化中选一种 · 获得两份样本" : "开启后获得两份基因";
     public override bool CanUse(PlayerController player) => !Opened && base.CanUse(player) && CompleteRewardState.IsAvailable(this);
     public override bool Interact(PlayerController player)
     {
         if (!CanUse(player) || genePool == null || genePool.Length == 0) return false;
+        if (offerChoice) { GeneDraftPanel.Ensure().Open(player,this,genePool); return true; }
         Opened = true;
         DropService.Spawn(genePool, 2, transform.position, pickupRange);
         CompleteRewardState.Claim(this);
@@ -19,6 +21,15 @@ public class GeneChest : WorldInteractable
         PlayOpeningSound();
         SpriteRenderer visual = GetComponentInChildren<SpriteRenderer>();
         if (visual != null) visual.color = new Color(0.4f, 0.45f, 0.45f);
+        return true;
+    }
+    public bool ChooseReward(PlayerController player,Modifier chosen)
+    {
+        if (!CanUse(player) || chosen == null || System.Array.IndexOf(genePool,chosen) < 0) return false;
+        Opened=true;
+        player.Genes.Acquire(chosen);player.Genes.Acquire(chosen);
+        CompleteRewardState.Claim(this);PlayOpeningSound();
+        SpriteRenderer visual=GetComponentInChildren<SpriteRenderer>();if(visual!=null)visual.color=new Color(.4f,.45f,.45f);
         return true;
     }
     private void PlayOpeningSound()

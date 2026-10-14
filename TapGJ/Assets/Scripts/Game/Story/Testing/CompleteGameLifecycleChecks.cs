@@ -172,14 +172,14 @@ public sealed class CompleteGameLifecycleChecks : MonoBehaviour
     private IEnumerator FinishEnding(bool coexistence)
     {
         Stage = coexistence ? "coexistence ending" : "sealed ending";
-        Teleport(new Vector2(84f, 1f)); yield return Wait(.25f); yield return DrainDialogue();
+        Teleport(new Vector2(level.guardianEntryX, 1f)); yield return Wait(.25f); yield return DrainDialogue();
         Check(level.BattleStarted && level.guardians.Length == 3 && level.guardians.All(g => g != null && g.gameObject.activeInHierarchy),
             "The guardian story trigger activates all three core guardians");
         foreach (EnemyAIController guardian in level.guardians) guardian.TakeDamage(guardian.MaxHp + 1f);
         yield return Frames(3); yield return DrainDialogue();
         Check(level.CoreDefeated && story.GuardianCleared && level.barriers.All(b => b == null || !b.activeSelf),
             "Defeating living guardians updates story progress and opens the physical seal");
-        Teleport(new Vector2(107.2f, 1f)); yield return Wait(.2f); yield return DrainDialogue(); yield return Press(Key.E);
+        Teleport(new Vector2(Object.FindFirstObjectByType<CompleteWorldExit>().transform.position.x-.8f, 1f)); yield return Wait(.2f); yield return DrainDialogue(); yield return Press(Key.E);
         yield return DrainDialogue();
         Check(level.ExitUsed && story.dialogue.IsChoosing && player.MenuOpen,
             "Real E input at the core exit opens the final decision UI");

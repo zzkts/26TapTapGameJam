@@ -253,6 +253,13 @@ public class PlayerController : MonoBehaviour, ICombatable
         UpdateFeedback(false);
     }
     public void UnlockDash() => DashUnlocked = true;
+    public void LaunchFromEnvironment(float velocity)
+    {
+        if (IsDead || MenuOpen) return;
+        if (IsDashing) Machine.Switch(FallState);
+        Machine.Switch(JumpState);
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, Mathf.Clamp(velocity, 4f, 9f));
+    }
     public void SetInvincible(bool value) { forcedInvulnerable = value; UpdateFeedback(); }
     public void TakeDamage(float damage) => TakeDamageFrom(damage, (Vector2)transform.position - Vector2.right * FaceDir);
     public void TakeDamage(DamageInfo info)

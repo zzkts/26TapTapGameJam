@@ -223,7 +223,9 @@ public class GeneEditPanel : BasePanel
         }
         rotation.fontSize = 18; rotation.color = PlayerUIStyle.Ink;
         rotation.text = "属性轮换  " + (sequence.Count == 0 ? "无 · 改造始终生效" : string.Join("  →  ", sequence)) +
-            (sequence.Count == 0 ? "" : "\n右键逐次开启 · 整链重载 " + player.GetComponent<GeneChainController>().reloadDuration + " 秒");
+            (sequence.Count == 0 ? "" : "\n右键逐次开启 · 整链重载 " + player.GetComponent<GeneChainController>().reloadDuration + " 秒") +
+            "\n" + GeneBuildAnalysis.Describe(draft);
+        rotation.fontSize = 15;
         leftButton.interactable = selected > 0; rightButton.interactable = selected + 1 < draft.Length;
         removeButton.interactable = selectedGene != null;
         if (filterButtons != null) for (int i = 0; i < filterButtons.Length; i++)

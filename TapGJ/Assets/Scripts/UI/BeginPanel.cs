@@ -8,8 +8,10 @@ public class BeginPanel : BasePanel
     public Button btnBegin;
     public Button btnSetting;
     public Button btnQuit;
+    public Button btnTrial;
     public override void Init()
     {
+        if(btnTrial!=null)btnTrial.onClick.AddListener(RunProgress.BeginExperimentRun);
         btnContinue.onClick.AddListener(() =>
         {
             RunProgress.ContinueRun();

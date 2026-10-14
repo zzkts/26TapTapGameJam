@@ -62,6 +62,7 @@ public static class CompleteGameWorldBuilder
         interactions = Group("04 - Rewards and Stations", world.transform);
         BuildBackdrop(world.transform);
         BuildTerrain(); BuildScenery(); BuildRewards(); BuildEncounters(); BuildStory(scene);
+        EmergenceWorldBuilder.Expand(flow,view);
         player.transform.position = new Vector3(3f, 1f, 0f);
         if (player.gameObject.layer != LayerMask.NameToLayer("Player")) player.gameObject.layer = LayerMask.NameToLayer("Player");
         player.gameObject.SetActive(true);
@@ -78,7 +79,7 @@ public static class CompleteGameWorldBuilder
         view.backgroundColor = new Color(.16f, .13f, .25f);
         PlayerCameraFollow cameraFollow = view.GetComponent<PlayerCameraFollow>();
         if (cameraFollow == null) cameraFollow = view.gameObject.AddComponent<PlayerCameraFollow>();
-        cameraFollow.target = player.transform; cameraFollow.horizontalLimits = new Vector2(9.6f, 103f); cameraFollow.smoothing = .16f;
+        cameraFollow.target = player.transform; cameraFollow.horizontalLimits = new Vector2(9.6f, 253f); cameraFollow.smoothing = .16f;
         foreach (string actorLayer in new[] { "Player", "PlayerInvulnerable", "Enemy" })
         foreach (string groundLayer in new[] { "Ground", "Wall", "OneWayPlatform" })
             Physics2D.IgnoreLayerCollision(LayerMask.NameToLayer(actorLayer), LayerMask.NameToLayer(groundLayer), false);
@@ -218,7 +219,7 @@ public static class CompleteGameWorldBuilder
         }
         Sign("01 / 废弃实验区", new Vector2(4f, 4.8f));
         Sign("02 / 荧光生态区", new Vector2(42f, 4.8f));
-        Sign("03 / 排水核心", new Vector2(82f, 4.8f));
+        Sign("06 / 排水核心", new Vector2(82f, 4.8f));
         Sign("空格跳跃  ·  S + 空格穿下平台", new Vector2(8f, 2.25f));
         Sign("冷库与终端  ·  E 交互", new Vector2(16f, 3.3f));
         Sign("裂缝可跳过  ·  失足返回安全区", new Vector2(56f, 4.2f));
@@ -292,7 +293,7 @@ public static class CompleteGameWorldBuilder
     }
     private static EnemyAIController Enemy(int kind, float x, float y, float hp, float range = 2f)
     {
-        string path = kind == 6 ? "Assets/Resources/Prefab/Enemy/Ranged/Monster6.prefab" : "Assets/Resources/Prefab/Enemy/Melee/Monster" + kind + ".prefab";
+        string path = kind >= 6 ? "Assets/Resources/Prefab/Enemy/Ranged/Monster"+kind+".prefab" : kind==4 ? "Assets/Resources/Prefab/Enemy/Support/Monster4.prefab" : "Assets/Resources/Prefab/Enemy/Melee/Monster" + kind + ".prefab";
         GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
         if (prefab == null) throw new InvalidOperationException("Missing enemy prefab " + path);
         GameObject obj = (GameObject)PrefabUtility.InstantiatePrefab(prefab, actors);
@@ -380,13 +381,13 @@ public static class CompleteGameWorldBuilder
         CompleteLevelFlow level = Object.FindFirstObjectByType<CompleteLevelFlow>();
         if (level == null) throw new InvalidOperationException("Complete chapter is missing.");
         Require(level.guardians.Length == 3 && level.guardians.All(g => g != null), "Three core guardians are assigned");
-        Require(Object.FindObjectsByType<GeneEditStation>(FindObjectsSortMode.None).Length == 3, "Three safe gene terminals exist");
+        Require(Object.FindObjectsByType<GeneEditStation>(FindObjectsSortMode.None).Length == 6, "Six gene terminals support repeated build decisions");
         Require(Object.FindObjectsByType<CompleteWorldExit>(FindObjectsSortMode.None).Length == 1, "The chapter has a guarded ending exit");
         Require(Object.FindObjectsByType<CompleteGeneSample>(FindObjectsSortMode.None).All(sample => sample.gene != null), "Fixed rewards reference actual gene assets");
         CompleteRewardState[] rewards = level.GetComponentsInChildren<CompleteRewardState>(true);
-        Require(rewards.Length == 13 && rewards.All(reward => !string.IsNullOrEmpty(reward.rewardId)) &&
+        Require(rewards.Length >= 20 && rewards.All(reward => !string.IsNullOrEmpty(reward.rewardId)) &&
             rewards.Select(reward => reward.rewardId).Distinct().Count() == rewards.Length,
-            "All thirteen authored rewards have unique persistent identities");
+            "All authored rewards have unique persistent identities");
         Require(Object.FindObjectsByType<UnityEngine.Tilemaps.Tilemap>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length == 0, "All prototype Tilemaps were removed");
         PlayerController player = level.player;
         SerializedObject fields = new(player); PlayerData data = fields.FindProperty("playerData").objectReferenceValue as PlayerData;
@@ -394,11 +395,18 @@ public static class CompleteGameWorldBuilder
         float jumpHeight = data.jumpVelocity * data.jumpVelocity / (2f * gravity);
         float jumpRange = data.moveSpeed * 2f * data.jumpVelocity / gravity;
         Require(jumpHeight >= .85f && jumpRange >= 2.8f, "Jump reaches all .75m steps and 2.4m gaps");
-        Require(level.checkpoints.Length == 3 && level.recoveryY > data.fallDeathY, "Fall recovery runs before the player death plane");
+        Require(level.checkpoints.Length == 6 && level.recoveryY > data.fallDeathY, "Six checkpoints recover falls before the player death plane");
         foreach (SpriteRenderer renderer in level.GetComponentsInChildren<SpriteRenderer>(true))
             if (!renderer.name.Contains("Enemy") && renderer.sprite == null) throw new InvalidOperationException("Unassigned artwork: " + renderer.name);
-        LastValidation.Add("Chapter extent 118m; continuous main route with two recoverable 2.4m jumps");
+        LastValidation.Add("Chapter extent 268m; three new systemic districts and alternate solutions");
     }
+    internal static void AddGround(string name,float left,float right,float top,float depth=4f)=>Ground(name,left,right,top,depth);
+    internal static void AddPlatform(string name,float x,float top,float width)=>Platform(name,x,top,width);
+    internal static void AddSign(string text,Vector2 position)=>Sign(text,position);
+    internal static GameObject AddItem(string name,string key,Vector2 position,Vector2 size)=>Item(name,key,position,size);
+    internal static SpriteRenderer AddVisual(string name,Transform parent,string key,Vector2 position,Vector2 size,int order)=>Visual(name,parent,key,position,size,order);
+    internal static void AddChest(string name,Vector2 position,params string[] genes)=>Chest(name,position,genes);
+    internal static EnemyAIController AddEnemy(int kind,float x,float y,float hp,float range=2f)=>Enemy(kind,x,y,hp,range);
     private static void Require(bool success, string description)
     { if (!success) throw new InvalidOperationException(description); LastValidation.Add("PASS: " + description); }
 }

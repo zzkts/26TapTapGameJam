@@ -20,7 +20,7 @@ public class ElementField : MonoBehaviour
         ElementField field = obj.AddComponent<ElementField>();
         field.element = element; field.size = size; field.duration = lifetime;
         field.created = Time.time; field.expires = Time.time + lifetime;
-        field.targetMask = targets; field.vortex = pull;
+        field.targetMask = element == E_ElementType.Water ? targets | LayerMask.GetMask("Player","PlayerInvulnerable") : targets; field.vortex = pull;
         field.visual = obj.AddComponent<SpriteRenderer>(); field.visual.sprite = PrototypeVisual.WhiteSprite;
         field.visual.sortingOrder = 3;
         field.visual.color = element == E_ElementType.None ? new Color(1f, 1f, 1f, 0.3f) :
@@ -56,6 +56,7 @@ public class ElementField : MonoBehaviour
                 actor.AddBuff(element);
             }
         }
+        EmergenceReactions.ApplyAround(transform.position, Radius, element);
     }
     private void FixedUpdate()
     {
@@ -63,6 +64,14 @@ public class ElementField : MonoBehaviour
     }
     public static void Pull(Vector2 origin, Vector2 area, LayerMask targets, float step)
     {
+        foreach (EmergenceBody material in new List<EmergenceBody>(EmergenceBody.Active))
+        {
+            if (material == null || !material.Has(EmergenceMaterial.Movable)) continue;
+            Vector2 delta = (Vector2)material.transform.position - origin;
+            if (Mathf.Abs(delta.x) > area.x * .5f || Mathf.Abs(delta.y) > area.y * .5f) continue;
+            Rigidbody2D movable = material.GetComponent<Rigidbody2D>();
+            if (movable != null) movable.MovePosition(Vector2.MoveTowards(movable.position, origin, step));
+        }
         HashSet<Rigidbody2D> seen = new();
         foreach (Collider2D collider in Physics2D.OverlapBoxAll(origin, area, 0f, targets))
         {
@@ -84,6 +93,7 @@ public class ElementField : MonoBehaviour
     }
     public static void ReactFields(Vector2 origin, float radius, E_ElementType incoming)
     {
+        EmergenceReactions.ApplyAround(origin, radius, incoming);
         foreach (ElementField field in new List<ElementField>(Active))
         {
             if (field == null || Vector2.Distance(field.transform.position, origin) > radius + field.Radius) continue;
@@ -109,6 +119,7 @@ public class ElementField : MonoBehaviour
             }
         }
         TapGJ.WaterProjectiles.WaterVfx.SpawnSplash(transform.position, new Color(1f, 0.5f, 0.15f), Radius, Vector2.up);
+        EmergenceReactions.Emit("explosion",transform.position,"毒雾 + 火焰 → 范围爆破",1);
         Destroy(gameObject);
     }
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

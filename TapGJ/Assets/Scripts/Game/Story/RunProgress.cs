@@ -14,7 +14,9 @@ public sealed class SavedGene
 [Serializable]
 public sealed class RunSaveData
 {
-    public int version = 1;
+    public int version = 2;
+    public bool experimentMode;
+    public int runSeed;
     public string scene = "GameScene";
     public float checkpointX = 3f, checkpointY = 1f, elapsedSeconds;
     public int storyFlags, region;
@@ -31,14 +33,17 @@ public static class RunProgress
     public const string SaveKey = "TapGJ.ChapterCheckpoint.v1";
     public const string EndingKey = "TapGJ.DiscoveredEndings.v1";
     private static bool resumeRequested, sessionStarted;
+    public static bool ExperimentMode { get; private set; }
+    public static int RunSeed { get; private set; }
     public static bool CanContinue => Read() is RunSaveData data && !data.completed;
     public static int DiscoveredEndings => PlayerPrefs.GetInt(EndingKey, 0);
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void ResetSession() { resumeRequested = false; sessionStarted = false; }
+    private static void ResetSession() { resumeRequested = false; sessionStarted = false; ExperimentMode=false;RunSeed=0; }
 
     public static void BeginNewRun()
     {
+        ExperimentMode=false;RunSeed=0;
         PlayerPrefs.DeleteKey(SaveKey); PlayerPrefs.Save();
         resumeRequested = false; sessionStarted = false;
         Time.timeScale = 1f; SceneManager.LoadSceneAsync("GameScene");
@@ -48,6 +53,7 @@ public static class RunProgress
     {
         RunSaveData data = Read();
         if (data == null || data.completed) return false;
+        ExperimentMode=data.experimentMode;RunSeed=data.runSeed;
         resumeRequested = true; Time.timeScale = 1f;
         SceneManager.LoadSceneAsync(data.scene); return true;
     }
@@ -56,6 +62,7 @@ public static class RunProgress
     {
         RunSaveData data = resumeRequested || sessionStarted ? Read() : null;
         resumeRequested = false; sessionStarted = true;
+        if(data!=null){ExperimentMode=data.experimentMode;RunSeed=data.runSeed;}
         return data != null && !data.completed && data.scene == SceneManager.GetActiveScene().name ? data : null;
     }
 
@@ -65,10 +72,11 @@ public static class RunProgress
         try
         {
             RunSaveData data = JsonUtility.FromJson<RunSaveData>(PlayerPrefs.GetString(SaveKey));
-            if (data == null || data.version != 1 || data.scene != "GameScene" ||
+            if (data == null || (data.version != 1 && data.version != 2) || data.scene != "GameScene" ||
                 float.IsNaN(data.checkpointX) || float.IsInfinity(data.checkpointX) ||
                 float.IsNaN(data.checkpointY) || float.IsInfinity(data.checkpointY) ||
                 float.IsNaN(data.elapsedSeconds) || float.IsInfinity(data.elapsedSeconds)) return null;
+            if(data.version==1){if(data.checkpointX>=78f)data.checkpointX+=150f;data.version=2;}
             data.genes ??= new List<SavedGene>(); data.equipped ??= Array.Empty<int>();
             data.completedTriggers ??= new List<string>();
             data.elapsedSeconds = Mathf.Max(0f, data.elapsedSeconds);
@@ -78,6 +86,13 @@ public static class RunProgress
         catch (ArgumentException) { return null; }
     }
 
+    public static void BeginExperimentRun()=>BeginExperimentSeed(UnityEngine.Random.Range(1,100000));
+    public static void BeginExperimentSeed(int seed)
+    {
+        PlayerPrefs.DeleteKey(SaveKey);PlayerPrefs.Save();
+        ExperimentMode=true;RunSeed=Mathf.Max(1,seed);resumeRequested=false;sessionStarted=false;
+        Time.timeScale=1f;SceneManager.LoadSceneAsync("GameScene");
+    }
     public static void Write(RunSaveData data)
     {
         if (data == null) return;
@@ -90,6 +105,7 @@ public static class RunProgress
         RunSaveData data = new RunSaveData
         {
             checkpointX = checkpoint.x, checkpointY = checkpoint.y, storyFlags = storyFlags,
+            experimentMode=ExperimentMode,runSeed=RunSeed,
             region = region, guardianCleared = guardianCleared, elapsedSeconds = elapsedSeconds,
             dashUnlocked = player != null && player.DashUnlocked,
             scene = SceneManager.GetActiveScene().name

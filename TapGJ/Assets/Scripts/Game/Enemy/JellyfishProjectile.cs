@@ -54,6 +54,11 @@ public class JellyfishProjectile : Projectile
             other.GetComponentInParent<EnemyAIController>() != null)
             return;
 
+        EmergenceBody material=other.GetComponentInParent<EmergenceBody>();
+        if(material!=null)
+        {
+            material.ReceiveShot(0f,elementType,direction,speed*.2f);Explode();return;
+        }
         if (target != null && other.transform.IsChildOf(target))
         {
             PlayerController player = other.GetComponentInParent<PlayerController>();

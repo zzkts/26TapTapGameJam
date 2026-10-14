@@ -216,6 +216,13 @@ public sealed class StorySession : MonoBehaviour
         else if(!Has(StoryBeat.Dash))target="寻找回流模块 · 解锁冲刺";
         else if(!Has(StoryBeat.ExperimentRecord))target="进入生态区 · 阅读实验记录";
         else target="前往净化核心 · 使用终端构筑";
+        EmergenceProgress emergence=EmergenceProgress.Current;
+        if(emergence!=null&&emergence.InExperimentDistrict&&!GuardianCleared)
+        {
+            chapter="涌现 · "+emergence.DistrictName;
+            target=emergence.CompletionCount>=2?"回流锁已解开 · 前往净化核心":
+                "解开任意两条通路 · "+emergence.CompletionCount+" / 2";
+        }
         string progress=Time.unscaledTime<checkpointNoticeUntil?"检查点已记录 · 生命已恢复":
             "水 "+(Has(StoryBeat.SampleWater)?"●":"○")+"   火 "+(Has(StoryBeat.SampleFire)?"●":"○")+"   毒 "+(Has(StoryBeat.SamplePoison)?"●":"○")+"   冲刺 "+(player!=null&&player.DashUnlocked?"●":"○");
         objective.Set(chapter,target,progress);

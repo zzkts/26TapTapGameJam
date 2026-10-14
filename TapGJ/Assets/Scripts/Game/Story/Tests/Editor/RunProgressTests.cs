@@ -73,7 +73,7 @@ public sealed class RunProgressTests
     }
 
     [TestCase("not json")]
-    [TestCase("{\"version\":2,\"scene\":\"GameScene\"}")]
+    [TestCase("{\"version\":999,\"scene\":\"GameScene\"}")]
     [TestCase("{\"version\":1,\"scene\":\"BeginScene\"}")]
     public void InvalidOrUnsupportedSaveDoesNotEnableContinue(string json)
     {

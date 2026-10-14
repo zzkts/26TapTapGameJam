@@ -99,6 +99,8 @@ public sealed class CompleteWorldRunthrough : MonoBehaviour
         yield return WalkTo(23f); yield return JumpOnto(25.7f, 1.5f);
         GeneChest laboratoryChest = Object.FindObjectsByType<GeneChest>(FindObjectsSortMode.None).Single(chest => chest.name == "Laboratory Branch Cold Storage");
         yield return Press(Key.E);
+        GeneDraftPanel draft=Object.FindFirstObjectByType<GeneDraftPanel>();
+        if(draft!=null){draft.Choose(0);yield return null;}
         Check(laboratoryChest.Opened, "Normal jumps reach the optional laboratory shelf and E opens its reward");
         yield return DropToFloor();
         yield return WalkTo(31f);
@@ -113,6 +115,8 @@ public sealed class CompleteWorldRunthrough : MonoBehaviour
         yield return WalkTo(50.5f); yield return JumpOnto(53f, 2.25f);
         GeneChest ecologyChest = Object.FindObjectsByType<GeneChest>(FindObjectsSortMode.None).Single(chest => chest.name == "Ecology Upper Branch Cold Storage");
         yield return Press(Key.E);
+        draft=Object.FindFirstObjectByType<GeneDraftPanel>();
+        if(draft!=null){draft.Choose(0);yield return null;}
         Check(ecologyChest.Opened, "The three-step ecology branch is physically reachable and contains a usable cold store");
         yield return DropToFloor();
         yield return WalkTo(54.25f); int falls = level.FallRecoveries;
@@ -126,7 +130,7 @@ public sealed class CompleteWorldRunthrough : MonoBehaviour
         Check(level.FallRecoveries == falls + 1 && Mathf.Abs(player.transform.position.x - 41f) < .1f && !player.IsDead,
             "Falling below a fissure restores the safe checkpoint before the death plane");
         // Resume beyond the already-verified jumps; test both the real arena and projectile damage.
-        Teleport(new Vector2(85.5f, 1f)); yield return Wait(.2f); level.BeginGuardianBattle(); yield return null;
+        Teleport(new Vector2(level.guardianEntryX+1.5f, 1f)); yield return Wait(.2f); level.BeginGuardianBattle(); yield return null;
         Check(level.BattleStarted && level.guardians.All(g => g != null && g.gameObject.activeInHierarchy && g.Hp > 0f),
             "The core encounter activates three living guardians");
         foreach (EnemyAIController guardian in level.guardians)
@@ -144,7 +148,7 @@ public sealed class CompleteWorldRunthrough : MonoBehaviour
         }
         yield return null;
         Check(level.CoreDefeated && level.barriers.All(b => b == null || !b.activeSelf), "Defeating all guardians opens the physical core seal");
-        Teleport(new Vector2(107.2f, 1f)); yield return Wait(.2f);
+        Teleport(new Vector2(exit.transform.position.x-.8f, 1f)); yield return Wait(.2f);
         bool reached = false; Action onExit = () => reached = true; level.ExitReached += onExit;
         yield return Press(Key.E);
         Check(reached && level.ExitUsed, "The ending exit accepts E input and fires the story completion event");
