@@ -1,0 +1,27 @@
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"success\":true,\"message\":\"Code executed successfully.\",\"data\":{\"result\":{\"hp\":10.0,\"max\":10.0,\"menu\":false,\"alive\":true,\"time\":1.0},\"compiler\":\"codedom\"}}"
+      }
+    ],
+    "structuredContent": {
+      "success": true,
+      "message": "Code executed successfully.",
+      "data": {
+        "result": {
+          "hp": 10.0,
+          "max": 10.0,
+          "menu": false,
+          "alive": true,
+          "time": 1.0
+        },
+        "compiler": "codedom"
+      }
+    },
+    "isError": false
+  }
+}
