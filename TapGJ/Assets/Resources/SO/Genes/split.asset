@@ -13,7 +13,15 @@ MonoBehaviour:
   m_Name: split
   m_EditorClassIdentifier: Assembly-CSharp::Modifier
   geneId: 4
-  geneName: 分裂
-  desc: 每次攻击多发射 1 颗子弹。
-  modifierType: 3
-  modifierValue: 1
+  geneName: "\u5206\u88C2"
+  desc: "\u5B50\u5F39\u547D\u4E2D\u6216\u6D88\u5931\u65F6\u5206\u88C2\u4E3A 2 \u679A\u5B50\u5F39\uFF0C\u6700\u591A\u4E00\u4EE3\u3002"
+  modifierType: 14
+  modifierValue: 2
+  enchantDuration: 4
+  hasEvolution: 1
+  evolvedValue: 3
+  evolvedDescription: "\u5B50\u5F39\u547D\u4E2D\u6216\u6D88\u5931\u65F6\u5206\u88C2\u4E3A
+    3 \u679A\u5B50\u5F39\uFF0C\u6700\u591A\u4E00\u4EE3\u3002"
+  effectRadius: 3
+  evolvedRadius: 5
+  vortex: 0

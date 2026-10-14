@@ -22,11 +22,14 @@ public static class ElementReactionSystem
 
     public static GameObject Spawn(ElementEffectInfo info)
     {
+        if (info.effect == E_ElementEffect.PoisonCloud)
+            return ElementField.Create(E_ElementType.Poison, info.position, new Vector2(5f, 3f), 3f, info.targetLM).gameObject;
         ElementReactionData.Info reaction = data.Get(info.current, info.incoming);
+        if (reaction.reactionPrefab == null) return null;
         GameObject effect = Object.Instantiate(reaction.reactionPrefab,
             info.position, Quaternion.identity);
         effect.name = $"{reaction.effect}Reaction";
-        effect.GetComponent<IElementReaction>().SetUp(info);
+        effect.GetComponent<IElementReaction>()?.SetUp(info);
         return effect;
     }
 }

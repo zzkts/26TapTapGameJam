@@ -44,10 +44,10 @@ public class ExplosionReaction : MonoBehaviour, IElementReaction
         {
             IActor actor = hitBuffer[i].GetComponentInParent<IActor>();
             Object actorObject = actor as Object;
-            if (!damagedTargets.Add(actorObject.GetInstanceID()))
+            if (actorObject == null || !damagedTargets.Add(actorObject.GetInstanceID()))
                 continue;
 
-            actor.TakeDamage(damage);
+            actor.TakeDamage(actor is IHealthActor health ? health.MaxHp * 0.3f : damage);
         }
 
     }

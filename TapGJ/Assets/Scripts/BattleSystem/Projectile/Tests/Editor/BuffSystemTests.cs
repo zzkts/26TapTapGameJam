@@ -77,7 +77,9 @@ public class BuffSystemTests
         serialized.FindProperty("modifierValue").floatValue = (float)E_ElementType.Water;
         serialized.ApplyModifiedPropertiesWithoutUndo();
 
-        BulletSnapshot result = ModifierSystem.Instance.Apply(weapon, new[] { modifier });
+        BulletSnapshot idle = ModifierSystem.Instance.Apply(weapon, new[] { modifier });
+        Assert.That(idle.projectilePrefab, Is.SameAs(originalPrefab));
+        BulletSnapshot result = ModifierSystem.Instance.Apply(weapon, new[] { modifier }, modifier);
 
         Assert.That(result.projectilePrefab,
             Is.SameAs(Resources.Load<GameObject>("Prefab/Projectile/WaterProjectile")));
@@ -91,6 +93,17 @@ public class BuffSystemTests
     {
         Assert.That(typeof(IHealthActor).IsAssignableFrom(typeof(ICombatable)), Is.True);
         Assert.That(typeof(ICombatable).GetMethod("TakeDamage", new[] { typeof(DamageInfo) }), Is.Not.Null);
+    }
+
+    [Test]
+    public void EvolvedFireKeepsTheFirePrefabAndElement()
+    {
+        Modifier fire = Object.Instantiate(Resources.Load<Modifier>("SO/Genes/ember")); fire.Level = 2;
+        WeaponData weapon = Resources.Load<WeaponData>("SO/Weapon/DefaultWaterBallWeaponData");
+        BulletSnapshot shot = ModifierSystem.Instance.Apply(weapon, new[] {fire}, fire);
+        Assert.That(shot.element, Is.EqualTo(E_ElementType.Fire));
+        Assert.That(shot.projectilePrefab, Is.SameAs(ElementSystem.GetProjectilePrefab(E_ElementType.Fire)));
+        Object.DestroyImmediate(fire);
     }
 
 }

@@ -13,7 +13,14 @@ MonoBehaviour:
   m_Name: water
   m_EditorClassIdentifier: Assembly-CSharp::Modifier
   geneId: 8
-  geneName: 水元素
-  desc: 将子弹转换为水元素。
+  geneName: "\u6269\u6563"
+  desc: "\u547D\u4E2D\u65F6\u4F7F\u534A\u5F84 3 \u7C73\u5185\u7684\u654C\u4EBA\u6E7F\u6DA6\u3002"
   modifierType: 12
   modifierValue: 1
+  enchantDuration: 4
+  hasEvolution: 1
+  evolvedValue: 1
+  evolvedDescription: "\u547D\u4E2D\u65F6\u4F7F\u534A\u5F84 5 \u7C73\u5185\u7684\u654C\u4EBA\u6E7F\u6DA6\u3002"
+  effectRadius: 3
+  evolvedRadius: 5
+  vortex: 0

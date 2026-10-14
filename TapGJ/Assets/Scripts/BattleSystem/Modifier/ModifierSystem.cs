@@ -25,7 +25,7 @@ public class ModifierSystem
         moveData = Resources.Load<MoveStrategyData>(MoveDataPath);
     }
 
-    public BulletSnapshot Apply(WeaponData src, IReadOnlyList<Modifier> modifiers)
+    public BulletSnapshot Apply(WeaponData src, IReadOnlyList<Modifier> modifiers, Modifier activeAttribute = null)
     {
         BulletSnapshot result = new(src);
 
@@ -68,7 +68,9 @@ public class ModifierSystem
                     result.speed *= modifier.ModifierValue;
                     break;
                 case E_ModifierType.Element:
-                    ApplyElement(result, modifier.ModifierValue);
+                    break;
+                case E_ModifierType.Split:
+                    result.splitCount += Mathf.RoundToInt(modifier.ModifierValue);
                     break;
                 case E_ModifierType.ProjectileMove:
                     ApplyMove(result, modifier.ModifierValue);
@@ -76,6 +78,14 @@ public class ModifierSystem
             }
         }
 
+        if (activeAttribute != null)
+        {
+            ApplyElement(result, (float)activeAttribute.Element);
+            result.element = activeAttribute.Element;
+            result.effectRadius = activeAttribute.Radius;
+            result.vortex = activeAttribute.IsVortex;
+            result.movingVortex = activeAttribute.IsVortex && activeAttribute.Level > 1;
+        }
         result.Clamp();
         return result;
     }
@@ -83,7 +93,8 @@ public class ModifierSystem
     private void ApplyElement(BulletSnapshot result, float value)
     {
         E_ElementType elementType = ElementSystem.GetElementType(value);
-        result.projectilePrefab = ElementSystem.GetProjectilePrefab(elementType);
+        GameObject prefab = ElementSystem.GetProjectilePrefab(elementType);
+        if (prefab != null) result.projectilePrefab = prefab;
     }
 
     private void ApplyMove(BulletSnapshot result, float value)
@@ -93,8 +104,8 @@ public class ModifierSystem
         switch (result.moveType)
         {
             case E_ProjectileMoveType.Orbit:
-                result.orbitRadius = moveData.orbit.radius;
-                result.orbitAngularSpeed = moveData.orbit.angularSpeed;
+                result.orbitRadius = moveData != null ? moveData.orbit.radius : 2f;
+                result.orbitAngularSpeed = moveData != null ? moveData.orbit.angularSpeed : 180f;
                 break;
         }
     }

@@ -13,7 +13,14 @@ MonoBehaviour:
   m_Name: pierce
   m_EditorClassIdentifier: Assembly-CSharp::Modifier
   geneId: 5
-  geneName: 穿透
-  desc: 子弹可额外穿透 1 个目标。
+  geneName: "\u7A7F\u900F"
+  desc: "\u5B50\u5F39\u53EF\u989D\u5916\u7A7F\u900F 1 \u4E2A\u76EE\u6807\u3002"
   modifierType: 6
   modifierValue: 1
+  enchantDuration: 4
+  hasEvolution: 1
+  evolvedValue: 2
+  evolvedDescription: 
+  effectRadius: 3
+  evolvedRadius: 5
+  vortex: 0

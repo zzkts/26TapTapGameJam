@@ -11,12 +11,12 @@ public class GeneChest : WorldInteractable
     public override bool CanUse(PlayerController player) => !Opened && base.CanUse(player);
     public override bool Interact(PlayerController player)
     {
-        if (!CanUse(player) || genePool.Length == 0) return false;
+        if (!CanUse(player) || genePool == null || genePool.Length == 0) return false;
         Opened = true;
         DropService.Spawn(genePool, 2, transform.position, pickupRange);
         TapGJ.WaterProjectiles.WaterVfx.SpawnSplash(transform.position, Color.white, 1f, Vector2.up);
         PlayOpeningSound();
-        SpriteRenderer visual = GetComponent<SpriteRenderer>();
+        SpriteRenderer visual = GetComponentInChildren<SpriteRenderer>();
         if (visual != null) visual.color = new Color(0.4f, 0.45f, 0.45f);
         return true;
     }

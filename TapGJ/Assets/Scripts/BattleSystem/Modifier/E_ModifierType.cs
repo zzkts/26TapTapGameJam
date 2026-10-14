@@ -17,4 +17,5 @@ public enum E_ModifierType
     None = 11,
     Element = 12,
     ProjectileMove = 13,
+    Split = 14,
 }

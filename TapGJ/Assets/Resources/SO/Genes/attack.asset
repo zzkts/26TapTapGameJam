@@ -13,7 +13,14 @@ MonoBehaviour:
   m_Name: attack
   m_EditorClassIdentifier: Assembly-CSharp::Modifier
   geneId: 1
-  geneName: 攻击强化
-  desc: 子弹基础伤害增加 2。
+  geneName: "\u653B\u51FB\u5F3A\u5316"
+  desc: "\u5B50\u5F39\u57FA\u7840\u4F24\u5BB3\u589E\u52A0 2\u3002"
   modifierType: 0
   modifierValue: 2
+  enchantDuration: 4
+  hasEvolution: 1
+  evolvedValue: 4
+  evolvedDescription: 
+  effectRadius: 3
+  evolvedRadius: 5
+  vortex: 0

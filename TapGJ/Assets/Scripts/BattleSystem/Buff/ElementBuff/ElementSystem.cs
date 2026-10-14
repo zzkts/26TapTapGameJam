@@ -27,6 +27,10 @@ public static class ElementSystem
     public static E_ElementEffect Apply(BuffComponent target, E_ElementType elementType,
         Vector2 position, float damage = 0f, LayerMask targetLM = default)
     {
+        if (target == null || elementType == E_ElementType.None) return E_ElementEffect.None;
+        ElementField.ReactFields(position, 0.1f, elementType);
+        if (elementType == E_ElementType.Electric)
+            ActorElementEffects.Conduct(position, 0.9f);
         BuffInstance sameElement = null;
 
         for (int i = 0; i < target.BuffList.Count; i++)
@@ -44,6 +48,8 @@ public static class ElementSystem
 
             target.Remove(instance);
             Trigger(reaction, position, instance.ElementType, elementType, damage, targetLM);
+            if (reaction == E_ElementEffect.Steam)
+                target.Add(E_ElementType.Water, GetDuration(E_ElementType.Water));
             return reaction;
         }
 

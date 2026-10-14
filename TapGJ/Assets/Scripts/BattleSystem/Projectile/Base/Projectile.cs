@@ -32,6 +32,39 @@ public class Projectile : MonoBehaviour
     protected bool isExpired;
     protected Transform owner;
     private ProjectileMove projectileMove;
+    private BulletSnapshot snapshot;
+    private ShotSpawnBudget spawnBudget;
+    private int generation;
+    private bool hasSplit;
+    private MaterialPropertyBlock visualProperties;
+    private SpriteRenderer visual;
+    public BulletSnapshot Snapshot => snapshot;
+    public int Generation => generation;
+    public E_ElementType ElementType => elementType;
+
+    public void LaunchSnapshot(Vector2 position, Vector2 heading, LayerMask targets, Transform source,
+        BulletSnapshot shot, ShotSpawnBudget budget, int splitGeneration = 0)
+    {
+        snapshot = shot.Copy(); spawnBudget = budget; generation = splitGeneration;
+        SetOwner(source);
+        elementType = snapshot.element;
+        SetUp(position, heading, targets, shot.speed, shot.damage, shot.damageMultiplier, shot.size,
+            shot.lifeTime, shot.pierceCount, shot.reboundCount, shot.reboundCoefficient,
+            shot.moveType, shot.orbitRadius, shot.orbitAngularSpeed);
+        visual = GetComponentInChildren<SpriteRenderer>();
+        if (Application.isPlaying && visual != null && GetComponentInChildren<TrailRenderer>() == null)
+            TapGJ.WaterProjectiles.WaterVfx.AddRibbon(transform,
+                elementType == E_ElementType.Fire ? new Color(1f,.5f,.1f) :
+                elementType == E_ElementType.Poison ? new Color(.5f,.9f,.2f) : new Color(.2f,.8f,1f), .1f, visual.sortingOrder - 1);
+        Material material = Resources.Load<Material>("Material/Combat/ElementSprite");
+        if (visual != null && material != null)
+        {
+            visual.sharedMaterial = material; visualProperties = new MaterialPropertyBlock();
+            visualProperties.SetFloat("_Mode", 1f);
+            visualProperties.SetFloat("_Element", (float)elementType);
+            visual.SetPropertyBlock(visualProperties);
+        }
+    }
 
     internal Vector2 Position => rb.position;
     internal Vector2 Direction => direction;
@@ -76,11 +109,14 @@ public class Projectile : MonoBehaviour
         this.reboundCount = reboundCount;
         this.reboundCoefficient = reboundCoefficient;
         isExpired = false;
+        hasSplit = false;
 
         rb = GetComponent<Rigidbody2D>();
         projectileCollider = GetComponent<Collider2D>();
         projectileCollider.isTrigger = true;
         rb.gravityScale = 0f;
+        rb.bodyType = RigidbodyType2D.Kinematic;
+        rb.position = pos;
         rb.linearVelocity = Vector2.zero;
         damagedTargets.Clear();
 
@@ -112,7 +148,7 @@ public class Projectile : MonoBehaviour
             combatable.TakeDamage(new DamageInfo(amount, elementType,
                 collision.bounds.center, targetLM));
         else
-            actor.TakeDamage(amount);
+            actor?.TakeDamage(amount);
     }
 
     protected virtual void Move()
@@ -123,11 +159,19 @@ public class Projectile : MonoBehaviour
     protected virtual void HandleCollision(Collider2D collision)
     {
         DealDamage(collision, CalculateDamage());
+        if (snapshot != null)
+        {
+            if (snapshot.effectRadius > 0f && elementType != E_ElementType.None)
+                ElementField.ApplyAround(collision.bounds.center, snapshot.effectRadius, elementType, targetLM);
+            if (snapshot.vortex)
+                ElementField.Create(E_ElementType.Water, collision.bounds.center, new Vector2(3f, 1f), 2f, targetLM, true);
+            Split(rb.position);
+        }
     }
 
     public void Step(float deltaTime)
     {
-        projectileMove.Move(this, deltaTime);
+        if (!isExpired && projectileMove != null) projectileMove.Move(this, deltaTime);
     }
 
     internal void MoveForward(float deltaTime)
@@ -152,6 +196,7 @@ public class Projectile : MonoBehaviour
             return;
 
         Vector2 moveDirection = movement / moveDistance;
+        Vector2 start = rb.position;
         direction = moveDirection;
         int hitCount = projectileCollider.Cast(moveDirection, hitFilter, hitBuffer, moveDistance);
         SortHitsByDistance(hitCount);
@@ -159,11 +204,14 @@ public class Projectile : MonoBehaviour
         for (int i = 0; i < hitCount; i++)
         {
             RaycastHit2D hit = hitBuffer[i];
+            if (hit.collider == null || hit.collider == projectileCollider ||
+                (owner != null && hit.collider.transform.IsChildOf(owner))) continue;
             int layer = 1 << hit.collider.gameObject.layer;
+            IActor actor = hit.collider.GetComponentInParent<IActor>();
 
-            if ((groundLM.value & layer) != 0)
+            if ((groundLM.value & layer) != 0 && actor == null && !hit.collider.isTrigger)
             {
-                rb.position += moveDirection * hit.distance;
+                rb.position = start + moveDirection * hit.distance;
 
                 if (reboundCount > 0)
                 {
@@ -179,14 +227,15 @@ public class Projectile : MonoBehaviour
 
             if ((targetLM.value & layer) == 0)
                 continue;
+            if (actor == null) continue;
 
-            IActor actor = hit.collider.GetComponentInParent<IActor>();
             int targetId = actor is Object actorObject
                 ? actorObject.GetInstanceID()
                 : hit.collider.GetInstanceID();
             if (!damagedTargets.Add(targetId))
                 continue;
 
+            rb.position = start + moveDirection * hit.distance;
             HandleCollision(hit.collider);
             if (isExpired)
                 return;
@@ -201,7 +250,7 @@ public class Projectile : MonoBehaviour
             return;
         }
 
-        rb.position += moveDirection * moveDistance;
+        rb.position = start + moveDirection * moveDistance;
     }
 
     private void SortHitsByDistance(int hitCount)
@@ -223,7 +272,9 @@ public class Projectile : MonoBehaviour
 
     protected void FixedUpdate()
     {
-        Move();
+        if (!isExpired && projectileMove != null) Move();
+        if (snapshot != null && snapshot.movingVortex)
+            ElementField.Pull(transform.position, new Vector2(3f, 1f), targetLM, 2f * Time.fixedDeltaTime);
     }
 
     protected void Update()
@@ -241,8 +292,40 @@ public class Projectile : MonoBehaviour
 
     protected virtual void Explode()
     {
+        if (isExpired) return;
+        if (Application.isPlaying)
+            TapGJ.WaterProjectiles.WaterVfx.SpawnSplash(rb.position,
+                elementType == E_ElementType.Fire ? new Color(1f, 0.45f, 0.1f) :
+                elementType == E_ElementType.Poison ? new Color(0.5f, 0.9f, 0.2f) : Color.cyan, 0.3f, -direction);
+        if (snapshot != null)
+        {
+            if (elementType == E_ElementType.Poison)
+                ElementField.Create(E_ElementType.Poison, rb.position, Vector2.one * 5f, 3f, targetLM);
+            else if (elementType == E_ElementType.Water)
+                ElementField.Create(E_ElementType.Water, rb.position, new Vector2(1.5f, 0.2f), 4f, targetLM);
+            Split(rb.position);
+        }
         isExpired = true;
         rb.linearVelocity = Vector2.zero;
         Destroy(gameObject);
+    }
+
+    private void Split(Vector2 position)
+    {
+        if (hasSplit || snapshot == null || snapshot.splitCount <= 0 || generation >= snapshot.maxGeneration || spawnBudget == null) return;
+        hasSplit = true;
+        for (int i = 0; i < snapshot.splitCount && spawnBudget.Take(); i++)
+        {
+            float angle = snapshot.splitCount == 1 ? 0f : Mathf.Lerp(-35f, 35f, i / (float)(snapshot.splitCount - 1));
+            Vector2 heading = Quaternion.Euler(0f, 0f, angle) * direction;
+            Vector2 origin = position + heading * 0.03f;
+            Projectile child = Instantiate(snapshot.projectilePrefab, origin, Quaternion.identity).GetComponent<Projectile>();
+            if (child != null)
+            {
+                child.LaunchSnapshot(origin, heading, targetLM, owner, snapshot, spawnBudget, generation + 1);
+                // A split belongs to the same shot and cannot re-hit the parent impact target.
+                child.damagedTargets.UnionWith(damagedTargets);
+            }
+        }
     }
 }

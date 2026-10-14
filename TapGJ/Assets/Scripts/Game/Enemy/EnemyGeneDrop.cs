@@ -9,7 +9,7 @@ public class EnemyGeneDrop : MonoBehaviour
     private bool dropped;
     public void Drop()
     {
-        if (dropped || genePool.Length == 0) return;
+        if (dropped || genePool == null || genePool.Length == 0) return;
         dropped = true;
         float roll = Random.value;
         int count = roll < noDropProbability ? 0 : roll < noDropProbability + oneDropProbability ? 1 : 2;

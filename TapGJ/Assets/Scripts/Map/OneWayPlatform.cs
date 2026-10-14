@@ -1,27 +1,34 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// 支持向下穿越的单向平台。
-/// 下跳时暂时忽略玩家碰撞，玩家离开触发范围后恢复阻挡。
-/// </summary>
 public class OneWayPlatform : MonoBehaviour
 {
     [SerializeField] private BoxCollider2D trigger;
     [SerializeField] private BoxCollider2D boxCollider;
-    private Collider2D targetCollider;
-
+    private readonly HashSet<Collider2D> ignoring = new();
     public void FallDown(Transform target)
     {
-        targetCollider = target.GetComponent<Collider2D>();
-        Physics2D.IgnoreCollision(boxCollider, targetCollider, true);
-        trigger.enabled = true;
+        if (boxCollider == null)
+            foreach (BoxCollider2D candidate in GetComponents<BoxCollider2D>()) if (!candidate.isTrigger) { boxCollider = candidate; break; }
+        Collider2D actor = target != null ? target.GetComponent<Collider2D>() : null;
+        if (actor == null || boxCollider == null || !ignoring.Add(actor)) return;
+        Physics2D.IgnoreCollision(boxCollider, actor, true);
+        StartCoroutine(RestoreWhenClear(actor));
     }
-
-    private void OnTriggerExit2D(Collider2D collision)
+    private IEnumerator RestoreWhenClear(Collider2D actor)
     {
-        if (collision != targetCollider) return;
-
-        Physics2D.IgnoreCollision(boxCollider, targetCollider, false);
-        trigger.enabled = false;
+        yield return new WaitForSeconds(0.2f);
+        while (actor != null && actor.bounds.max.y >= boxCollider.bounds.min.y &&
+            actor.bounds.min.x <= boxCollider.bounds.max.x && actor.bounds.max.x >= boxCollider.bounds.min.x)
+            yield return new WaitForFixedUpdate();
+        if (actor != null && boxCollider != null) Physics2D.IgnoreCollision(boxCollider, actor, false);
+        ignoring.Remove(actor);
+    }
+    private void OnDisable()
+    {
+        StopAllCoroutines();
+        foreach (Collider2D actor in ignoring) if (actor != null && boxCollider != null) Physics2D.IgnoreCollision(boxCollider, actor, false);
+        ignoring.Clear();
     }
 }

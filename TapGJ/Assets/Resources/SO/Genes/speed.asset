@@ -13,7 +13,14 @@ MonoBehaviour:
   m_Name: speed
   m_EditorClassIdentifier: Assembly-CSharp::Modifier
   geneId: 2
-  geneName: 加速
-  desc: 子弹飞行速度乘以 1.25。
+  geneName: "\u52A0\u901F"
+  desc: "\u5B50\u5F39\u98DE\u884C\u901F\u5EA6\u4E58\u4EE5 1.25\u3002"
   modifierType: 9
   modifierValue: 1.25
+  enchantDuration: 4
+  hasEvolution: 1
+  evolvedValue: 1.5
+  evolvedDescription: 
+  effectRadius: 3
+  evolvedRadius: 5
+  vortex: 0

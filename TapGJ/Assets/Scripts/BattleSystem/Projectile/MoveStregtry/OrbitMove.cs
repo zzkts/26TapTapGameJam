@@ -23,6 +23,7 @@ public sealed class OrbitMove : ProjectileMove
 
     public override void Move(Projectile projectile, float deltaTime)
     {
+        if (projectile.Owner == null) { projectile.MoveForward(deltaTime); return; }
         Vector2 center = projectile.Owner.position;
         Vector2 offset = projectile.Position - center;
         if (offset.sqrMagnitude <= 0f)

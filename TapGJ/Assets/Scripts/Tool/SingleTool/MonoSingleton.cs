@@ -7,6 +7,11 @@ public abstract class MonoSingleton<T> : MonoBehaviour where T : MonoSingleton<T
 {
     private static T _instance;
     private static bool _isQuitting;
+    protected static void ResetSession()
+    {
+        _instance = null;
+        _isQuitting = false;
+    }
 
     public static T Instance
     {

@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b61a3ab629227344a91dfc3836ec4e2, type: 3}
+  m_Name: GameplayUITheme
+  m_EditorClassIdentifier: Assembly-CSharp::GameplayUITheme
+  book: {fileID: 21300000, guid: 6d627329261c61f47a762f8f94bd62b4, type: 3}
+  chainBackground: {fileID: 21300000, guid: 7cb1bea3533a5874babad46aabbca2bb, type: 3}
+  chain: {fileID: 21300000, guid: 8bb6e3895f9c661449fda66e20e5b973, type: 3}
+  slot: {fileID: 21300000, guid: 89247dbda14f93e429d948e61bd957e5, type: 3}
+  iconBorder: {fileID: 21300000, guid: 0281e5b8102ae8142826bce101d3c608, type: 3}
+  description: {fileID: 21300000, guid: be44d6c139a454a4293b3b8cdd9a0dd1, type: 3}
+  element: {fileID: -409164155, guid: b50e7d86a84f1884e969ece135660a25, type: 3}
+  star: {fileID: 781638366, guid: 5ee487c5e4c0ed240af19101c8592f8f, type: 3}

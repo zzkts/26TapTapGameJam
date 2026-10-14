@@ -56,10 +56,10 @@ public class PoisonCloudReaction : MonoBehaviour, IElementReaction
         {
             IActor actor = hitBuffer[i].GetComponentInParent<IActor>();
             Object actorObject = actor as Object;
-            if (!damagedTargets.Add(actorObject.GetInstanceID()))
+            if (actorObject == null || !damagedTargets.Add(actorObject.GetInstanceID()))
                 continue;
 
-            actor.TakeDamage(damage);
+            if (actor is ICombatable combatable) combatable.AddBuff(E_ElementType.Poison);
         }
     }
 }

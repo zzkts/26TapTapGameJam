@@ -13,7 +13,14 @@ MonoBehaviour:
   m_Name: orbit
   m_EditorClassIdentifier: Assembly-CSharp::Modifier
   geneId: 7
-  geneName: 环流
-  desc: 子弹改为环绕轨迹。
+  geneName: "\u73AF\u6D41"
+  desc: "\u5B50\u5F39\u6539\u4E3A\u73AF\u7ED5\u8F68\u8FF9\u3002"
   modifierType: 13
   modifierValue: 1
+  enchantDuration: 4
+  hasEvolution: 1
+  evolvedValue: 1
+  evolvedDescription: 
+  effectRadius: 3
+  evolvedRadius: 5
+  vortex: 0

@@ -21,6 +21,12 @@ public sealed class BulletSnapshot
     public E_ProjectileMoveType moveType;
     public float orbitRadius;
     public float orbitAngularSpeed;
+    public E_ElementType element;
+    public float effectRadius;
+    public bool vortex, movingVortex;
+    public int splitCount, maxGeneration = 1, maxSpawn = 24;
+
+    public BulletSnapshot Copy() => (BulletSnapshot)MemberwiseClone();
 
     public BulletSnapshot(WeaponData weapon)
     {
@@ -36,6 +42,8 @@ public sealed class BulletSnapshot
         reboundCoefficient = weapon.reboundCoefficient;
         spreadAngle = weapon.spreadAngle;
         projectilePrefab = weapon.projectilePrefab;
+        Projectile template = projectilePrefab != null ? projectilePrefab.GetComponent<Projectile>() : null;
+        element = template != null ? template.ElementType : E_ElementType.None;
         moveType = E_ProjectileMoveType.Straight;
     }
 
@@ -43,11 +51,11 @@ public sealed class BulletSnapshot
     {
         damage = Mathf.Max(0f, damage);
         damageMultiplier = Mathf.Max(0f, damageMultiplier);
-        attackInterval = Mathf.Max(0f, attackInterval);
+        attackInterval = Mathf.Max(0.04f, attackInterval);
         speed = Mathf.Clamp(speed, 0.1f, 100f);
         size = Mathf.Clamp(size, 0.05f, 3f);
         lifeTime = Mathf.Clamp(lifeTime, 0.1f, 30f);
-        projectileCount = Mathf.Max(1, projectileCount);
+        projectileCount = Mathf.Clamp(projectileCount, 1, maxSpawn);
         pierceCount = Mathf.Max(0, pierceCount);
         reboundCount = Mathf.Max(0, reboundCount);
         reboundCoefficient = Mathf.Clamp01(reboundCoefficient);

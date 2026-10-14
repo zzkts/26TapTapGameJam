@@ -3,6 +3,8 @@ using UnityEngine;
 [DefaultExecutionOrder(-100)]
 public class GlobalManager : MonoSingleton<GlobalManager>
 {
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetForPlay() => ResetSession();
     private const string BackgroundVolumeKey = "Audio.BackgroundVolume";
     private const string GameVolumeKey = "Audio.GameVolume";
 
@@ -16,6 +18,9 @@ public class GlobalManager : MonoSingleton<GlobalManager>
 
     protected override void OnSingletonInit()
     {
+        if (backgroundAudioSource == null) backgroundAudioSource = gameObject.AddComponent<AudioSource>();
+        if (gameAudioSource == null) gameAudioSource = gameObject.AddComponent<AudioSource>();
+        backgroundAudioSource.loop = true;
         backgroundAudioSource.volume = PlayerPrefs.GetFloat(BackgroundVolumeKey, 1f);
         gameAudioSource.volume = PlayerPrefs.GetFloat(GameVolumeKey, 1f);
     }

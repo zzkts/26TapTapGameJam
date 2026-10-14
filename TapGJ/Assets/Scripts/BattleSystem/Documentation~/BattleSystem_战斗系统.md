@@ -1,5 +1,7 @@
 # BattleSystem 战斗系统
 
+> 本文保留早期设计记录，部分接口与范围已过时。2026-10-13 的基因链、角色、敌人与 UI 实现说明见 [GameplayPolish](../../../../Docs/GameplayPolish.md)。
+
 ## 1. 当前设计范围
 
 仅包含：

@@ -1,65 +1,35 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
 /// 水火反应生成的蒸汽区域。
-/// 在持续时间内按间隔对范围内目标造成伤害。
+/// 消耗火焰后的视觉反馈，湿润状态保留，不重复结算伤害。
 /// </summary>
 public class SteamReaction : MonoBehaviour, IElementReaction
 {
-    private const int HitBufferSize = 32;
-    private readonly Collider2D[] hitBuffer = new Collider2D[HitBufferSize];
-    private readonly HashSet<int> damagedTargets = new();
-
     [SerializeField] private Vector2 size = new(3f, 2f);
     [SerializeField] private float duration = 2f;
-    [SerializeField] private float tickInterval = 0.5f;
-    [SerializeField] private float damageMultiplier = 0.25f;
-
-    private ContactFilter2D hitFilter;
-    private float damage;
-    private float remainingTime;
-    private float tickTimer;
+    private float elapsed;
+    private SpriteRenderer visual;
+    private MaterialPropertyBlock properties;
 
     public void SetUp(ElementEffectInfo info)
     {
-        damage = info.damage * damageMultiplier;
-        remainingTime = duration;
-        tickTimer = tickInterval;
-        hitFilter = new ContactFilter2D { useTriggers = true };
-        hitFilter.SetLayerMask(info.targetLM);
         transform.localScale = new Vector3(size.x, size.y, 1f);
+        visual = GetComponent<SpriteRenderer>();
+        Material material = Resources.Load<Material>("Material/Combat/ElementSprite");
+        if (visual != null && material != null) visual.sharedMaterial = material;
+        properties = new MaterialPropertyBlock(); properties.SetFloat("_Field", 1f);
+        foreach (Collider2D collider in GetComponents<Collider2D>()) collider.enabled = false;
     }
 
     private void Update()
     {
-        remainingTime -= Time.deltaTime;
-        tickTimer -= Time.deltaTime;
-
-        if (tickTimer <= 0f)
+        elapsed += Time.deltaTime;
+        if (visual != null && properties != null)
         {
-            tickTimer += tickInterval;
-            DamageTargets();
+            visual.color = new Color(.85f, .94f, 1f, .35f * Mathf.Clamp01(1f - elapsed / duration));
+            properties.SetFloat("_Progress", elapsed / duration); visual.SetPropertyBlock(properties);
         }
-
-        if (remainingTime <= 0f)
-            Destroy(gameObject);
-    }
-
-    private void DamageTargets()
-    {
-        damagedTargets.Clear();
-        int count = Physics2D.OverlapBox(transform.position, size, 0f,
-            hitFilter, hitBuffer);
-
-        for (int i = 0; i < count; i++)
-        {
-            IActor actor = hitBuffer[i].GetComponentInParent<IActor>();
-            Object actorObject = actor as Object;
-            if (!damagedTargets.Add(actorObject.GetInstanceID()))
-                continue;
-
-            actor.TakeDamage(damage);
-        }
+        if (elapsed >= duration) Destroy(gameObject);
     }
 }

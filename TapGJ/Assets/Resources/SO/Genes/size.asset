@@ -13,7 +13,14 @@ MonoBehaviour:
   m_Name: size
   m_EditorClassIdentifier: Assembly-CSharp::Modifier
   geneId: 3
-  geneName: 膨胀
-  desc: 子弹大小增加 0.25。
+  geneName: "\u81A8\u80C0"
+  desc: "\u5B50\u5F39\u5927\u5C0F\u589E\u52A0 0.25\u3002"
   modifierType: 4
   modifierValue: 0.25
+  enchantDuration: 4
+  hasEvolution: 1
+  evolvedValue: 0.5
+  evolvedDescription: 
+  effectRadius: 3
+  evolvedRadius: 5
+  vortex: 0

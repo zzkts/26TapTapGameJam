@@ -1,24 +1,51 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
-/// <summary>
-/// 玩家角色控制器。
-/// 保存玩家数据、读取输入，并向各个状态提供角色操作接口。
-/// </summary>
 [RequireComponent(typeof(Weapon), typeof(Rigidbody2D))]
 public class PlayerController : MonoBehaviour, ICombatable
 {
+    [SerializeField] private InputActionAsset inputActions;
+    [SerializeField] private PlayerData playerData;
+    [SerializeField] private Rigidbody2D rb;
+    [SerializeField] private Animator animator;
+    [SerializeField] private SpriteRenderer sr;
+    [SerializeField] private Weapon weapon;
+    [SerializeField] private GeneInventory geneInventory;
+    [SerializeField] private Transform attackTransform;
+    [SerializeField] private Transform footBottom;
+    [SerializeField] private BoxCollider2D bodyCollider;
+    [SerializeField] private float checkGroundDis = 0.08f;
+    [SerializeField] private LayerMask checkGroundLM = (1 << 3) | (1 << 9);
+    public float moveSpeed = 3f, jumpVelocity = 4f, attackDuration = 0.15f;
+    public float rollSpeedMultiplier = 1.5f, rollCooldown = 2f, nextRollTime, rollDuration = 0.2f;
+    public float hp, maxHp = 10f;
     public float XInput { get; private set; }
     public float FaceDir { get; private set; } = 1f;
-    public float YVelocity => rb.linearVelocityY;
-
+    public float YVelocity => rb != null ? rb.linearVelocityY : 0f;
     public bool JumpPressed { get; private set; }
     public bool DownPlatformPressed { get; private set; }
     public bool RollPressed { get; private set; }
     public bool AttackPressed { get; private set; }
-
+    public float Hp => hp;
+    public float MaxHp => maxHp;
+    public bool IsDead => hp <= 0f;
+    public bool IsDashing => Machine != null && Machine.CurrentState == RollState;
+    public bool IsHurt => Machine != null && Machine.CurrentState == HurtState;
+    public bool IsInvulnerable => forcedInvulnerable || IsDashing || Time.time < invulnerableUntil;
+    public bool MenuOpen { get; private set; }
+    public bool DashUnlocked { get; private set; }
+    public float DashCooldownRemaining => Mathf.Max(0f, nextRollTime - Time.time);
+    public float PoisonResistance => playerData != null ? playerData.poisonResistance : 0f;
+    public Vector2 AimPosition { get; private set; }
+    public Weapon Weapon => weapon;
+    public GeneInventory Genes => geneInventory;
+    public IReadOnlyList<BuffInstance> BuffList => buffs.BuffList;
+    public event Action HealthChanged;
+    public event Action Died;
     public StateMachine Machine { get; private set; }
     public PlayerIdleState IdleState { get; private set; }
     public PlayerWalkState WalkState { get; private set; }
@@ -26,277 +53,244 @@ public class PlayerController : MonoBehaviour, ICombatable
     public PlayerFallState FallState { get; private set; }
     public PlayerRollState RollState { get; private set; }
     public PlayerAttackState AttackState { get; private set; }
-
-    [Header("Input")]
-    [SerializeField] private InputActionAsset inputActions;
-
-    [Header("Data")]
-    [SerializeField] private PlayerData playerData;
-
-    [Header("Components")]
-    [SerializeField] private Rigidbody2D rb;
-    [SerializeField] private Animator animator;
-    [SerializeField] private SpriteRenderer sr;
-    [SerializeField] private Weapon weapon;
-    [SerializeField] private GeneInventory geneInventory;
-    [SerializeField] private Transform attackTransform;
-
-    [Header("Ground Check")]
-    [SerializeField] private Transform footBottom;
-    [SerializeField] private BoxCollider2D bodyCollider;
-    [SerializeField] private float checkGroundDis = 0.15f;
-    [SerializeField] private LayerMask checkGroundLM;
-
-    [Header("Movement")]
-    public float moveSpeed = 3f;
-    public float jumpVelocity = 4f;
-
-    [Header("Attack")]
-    public float attackDuration = 0.15f;
-
-    [Header("Roll")]
-    public float rollSpeedMultiplier = 1.5f;
-    public float rollCooldown = 2f;
-    public float nextRollTime;
-    public float rollDuration = 0.5f;
-
-    [Header("Health")]
-    public float hp;
-    public float maxHp = 10f;
-
-    public float Hp => hp;
-    public float MaxHp => maxHp;
-    public bool IsDead => hp <= 0f;
-    public bool IsInvulnerable { get; private set; }
-    public bool MenuOpen { get; private set; }
-    public bool DashUnlocked => true;
-    public float DashCooldownRemaining => Mathf.Max(0f, nextRollTime - Time.time);
-    public float PoisonResistance => 0f;
-    public Vector2 AimPosition => mouseWorldPosition;
-    public Weapon Weapon => weapon;
-    public GeneInventory Genes => geneInventory;
-    public IReadOnlyList<BuffInstance> BuffList => buffs.BuffList;
-
-    public event Action HealthChanged;
-    public event Action Died;
-
-    private InputActionMap playerActionMap;
-    private InputAction moveAction;
-    private InputAction jumpAction;
-    private InputAction downPlatformAction;
-    private InputAction rollAction;
-    private InputAction attackAction;
-
+    public PlayerTimedState HurtState { get; private set; }
+    public PlayerTimedState LandState { get; private set; }
+    public PlayerTimedState DeadState { get; private set; }
+    private InputActionAsset ownedInput;
+    private InputActionMap actions;
     private Camera mainCamera;
-    private Vector2 mouseWorldPosition;
     private readonly BuffComponent buffs = new();
-
+    private readonly RaycastHit2D[] groundHits = new RaycastHit2D[24];
+    private float groundedUntil = float.NegativeInfinity, bufferedUntil = float.NegativeInfinity;
+    private float ignoreGroundUntil, invulnerableUntil, originalGravity, shotVisualUntil;
+    private int normalLayer, invulnerableLayer;
+    private Color originalColor;
+    private bool initialized, wasGrounded, forcedInvulnerable, hitStopped, deathSignaled, ownsData;
     private void Awake()
     {
-        mainCamera = Camera.main;
-
-        playerActionMap = inputActions.FindActionMap("Player", true);
-        moveAction = playerActionMap.FindAction("Move", true);
-        jumpAction = playerActionMap.FindAction("Jump", true);
-        downPlatformAction = playerActionMap.FindAction("DownPlatform", true);
-        rollAction = playerActionMap.FindAction("Sprint", true);
-        attackAction = playerActionMap.FindAction("Attack", true);
-
-        Machine = new StateMachine();
-        IdleState = new PlayerIdleState("idle", this, animator);
-        WalkState = new PlayerWalkState("move", this, animator);
-        JumpState = new PlayerJumpState("jump", this, animator);
-        FallState = new PlayerFallState("fall", this, animator);
-        RollState = new PlayerRollState("roll", this, animator);
-        AttackState = new PlayerAttackState("atk", this, animator);
-    }
-
-    private void OnEnable()
-    {
-        playerActionMap.Enable();
-    }
-
-    private void Start()
-    {
-        moveSpeed = playerData.moveSpeed;
-        Flip(playerData.direction > 0f);
-        jumpVelocity = playerData.jumpVelocity;
-        maxHp = playerData.maxHp;
-        rollCooldown = playerData.rollCooldown;
-        rollSpeedMultiplier = playerData.rollSpeedMultiplier;
-        rollDuration = playerData.rollDuration;
-
+        rb = rb != null ? rb : GetComponent<Rigidbody2D>();
+        bodyCollider = bodyCollider != null ? bodyCollider : GetComponent<BoxCollider2D>();
+        animator = animator != null ? animator : GetComponentInChildren<Animator>();
+        sr = sr != null ? sr : GetComponentInChildren<SpriteRenderer>();
+        weapon = weapon != null ? weapon : GetComponent<Weapon>();
+        geneInventory = geneInventory != null ? geneInventory : GetComponent<GeneInventory>();
+        if (playerData == null) playerData = Resources.Load<PlayerData>("SO/Player/DefaultPlayerData");
+        if (playerData == null) { playerData = ScriptableObject.CreateInstance<PlayerData>(); ownsData = true; }
+        moveSpeed = playerData.moveSpeed; jumpVelocity = playerData.jumpVelocity; maxHp = playerData.maxHp;
+        rollCooldown = playerData.rollCooldown; rollDuration = playerData.rollDuration;
+        rollSpeedMultiplier = playerData.rollSpeedMultiplier; DashUnlocked = playerData.dashUnlocked;
         hp = maxHp;
+        originalGravity = rb.gravityScale;
+        rb.freezeRotation = true; rb.interpolation = RigidbodyInterpolation2D.Interpolate;
+        normalLayer = gameObject.layer; invulnerableLayer = LayerMask.NameToLayer("PlayerInvulnerable");
+        originalColor = sr != null ? sr.color : Color.white;
+        if (inputActions != null) { ownedInput = Instantiate(inputActions); actions = ownedInput.FindActionMap("Player"); }
+        mainCamera = Camera.main; AimPosition = (Vector2)transform.position + Vector2.right;
+        Machine = new StateMachine();
+        IdleState = new PlayerIdleState("Idle", this, animator);
+        WalkState = new PlayerWalkState("move", this, animator);
+        JumpState = new PlayerJumpState("Jump", this, animator);
+        FallState = new PlayerFallState("Fall", this, animator);
+        RollState = new PlayerRollState("Roll", this, animator);
+        AttackState = new PlayerAttackState("Attack", this, animator);
+        HurtState = new PlayerTimedState("Hurt", this, playerData.hurtTime);
+        LandState = new PlayerTimedState("Land", this, playerData.landingTime);
+        DeadState = new PlayerTimedState("Dead", this, 0.7f);
+        Flip(playerData.direction >= 0f); initialized = true;
         Machine.Switch(IdleState);
+        if (GetComponent<ActorElementEffects>() == null) gameObject.AddComponent<ActorElementEffects>();
     }
-
-    private void FixedUpdate()
-    {
-        if (!MenuOpen)
-            Machine.FixUpdate();
-    }
-
+    private void OnEnable() => actions?.Enable();
     private void Update()
     {
-        buffs.Update(Time.deltaTime);
+        if (!initialized) return;
+        buffs.Update(Time.deltaTime); UpdateFeedback();
         if (MenuOpen) return;
-
-        XInput = moveAction.ReadValue<float>();
-        JumpPressed = jumpAction.WasPressedThisFrame();
-        DownPlatformPressed = downPlatformAction.WasPressedThisFrame();
-        RollPressed = rollAction.WasPressedThisFrame();
-        AttackPressed = attackAction.WasPressedThisFrame();
-
-        Vector2 mouseScreenPosition = Mouse.current.position.ReadValue();
-        mouseWorldPosition = mainCamera.ScreenToWorldPoint(
-            new Vector3(mouseScreenPosition.x, mouseScreenPosition.y,
-                transform.position.z - mainCamera.transform.position.z));
-
-        float mouseHorizontalDir = mouseWorldPosition.x - transform.position.x;
-        if (Mathf.Abs(mouseHorizontalDir) > 0.01f)
-            Flip(mouseHorizontalDir > 0f);
-
+        if (transform.position.y < playerData.fallDeathY && !IsDead) Die();
+        if (IsDead || IsDashing || IsHurt) { Machine.Update(); return; }
+        ReadInput();
+        bool grounded = IsGrounded();
+        if (grounded) groundedUntil = Time.time + playerData.coyoteTime;
+        if (grounded && !wasGrounded && Machine.CurrentState == FallState) Machine.Switch(LandState);
+        wasGrounded = grounded;
+        if (JumpPressed) bufferedUntil = Time.time + playerData.jumpBuffer;
         Machine.Update();
+        bool overUi = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+        if (!overUi && AttackPressed) TryAttack();
+        if (!overUi && Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
+            GetComponent<GeneChainController>()?.TryActivate();
+        if (shotVisualUntil > 0f && Time.time >= shotVisualUntil)
+        {
+            shotVisualUntil = 0f;
+            PlayAnimation(Machine.CurrentState == WalkState ? "move" : !grounded ? (YVelocity > 0f ? "Jump" : "Fall") : "Idle");
+        }
     }
-
-    public void Flip(bool isRight)
+    private void ReadInput()
     {
-        sr.flipX = !isRight;
-        FaceDir = isRight ? 1f : -1f;
+        Keyboard keys = Keyboard.current;
+        XInput = actions?.FindAction("Move")?.ReadValue<float>() ??
+            ((keys != null && keys.dKey.isPressed ? 1f : 0f) - (keys != null && keys.aKey.isPressed ? 1f : 0f));
+        JumpPressed = (actions?.FindAction("Jump")?.WasPressedThisFrame() ?? false) ||
+            (keys != null && (keys.wKey.wasPressedThisFrame || keys.spaceKey.wasPressedThisFrame));
+        DownPlatformPressed = JumpPressed && keys != null && keys.sKey.isPressed;
+        RollPressed = (actions?.FindAction("Sprint")?.WasPressedThisFrame() ?? false) ||
+            (keys != null && keys.leftShiftKey.wasPressedThisFrame);
+        AttackPressed = (actions?.FindAction("Attack")?.IsPressed() ?? false) ||
+            (Mouse.current != null && Mouse.current.leftButton.isPressed);
+        if (mainCamera == null) mainCamera = Camera.main;
+        if (Mouse.current != null && mainCamera != null)
+            AimPosition = mainCamera.ScreenToWorldPoint(new Vector3(Mouse.current.position.x.ReadValue(),
+                Mouse.current.position.y.ReadValue(), transform.position.z - mainCamera.transform.position.z));
+        float aim = AimPosition.x - transform.position.x;
+        if (Mathf.Abs(aim) > 0.05f) Flip(aim > 0f);
     }
-
-    public void Move(float xDirection, float speed)
+    private void FixedUpdate() { if (initialized && !MenuOpen) Machine.FixUpdate(); }
+    public bool ProcessMovementActions()
     {
-        rb.linearVelocity = new Vector2(xDirection * speed, rb.linearVelocityY);
+        if (RollPressed && TryRoll()) { Machine.Switch(RollState); return true; }
+        if (DownPlatformPressed && TryDownPlatform()) { bufferedUntil = float.NegativeInfinity; Machine.Switch(FallState); return true; }
+        if (Time.time <= bufferedUntil && TryJump()) { bufferedUntil = float.NegativeInfinity; Machine.Switch(JumpState); return true; }
+        return false;
     }
-
-    public void FrzeeHorizontalVelocity()
+    public void PlayAnimation(string state)
     {
-        rb.linearVelocity = new Vector2(0f, rb.linearVelocityY);
+        if (animator == null || animator.runtimeAnimatorController == null) return;
+        string name = state;
+        if (!animator.HasState(0, Animator.StringToHash(name)))
+            name = state == "Roll" || state == "Fall" ? "Jump" : "Idle";
+        foreach (AnimatorControllerParameter parameter in animator.parameters)
+            if (parameter.type == AnimatorControllerParameterType.Bool) animator.SetBool(parameter.name, false);
+        if (animator.HasState(0, Animator.StringToHash(name))) animator.Play(name, 0, 0f);
     }
-
+    public void Flip(bool right) { if (sr != null) sr.flipX = !right; FaceDir = right ? 1f : -1f; }
+    public void Move(float direction, float speed) { if (rb != null && !IsDead) rb.linearVelocity = new Vector2(direction * speed, rb.linearVelocityY); }
+    public void FrzeeHorizontalVelocity() => Move(0f, 0f);
     public bool TryJump()
     {
-        if (!IsGrounded()) return false;
-
+        if (IsDead || MenuOpen || IsDashing || IsHurt || Time.time < ignoreGroundUntil) return false;
+        if (!IsGrounded() && Time.time > groundedUntil) return false;
+        groundedUntil = float.NegativeInfinity; ignoreGroundUntil = Time.time + 0.08f;
         rb.linearVelocity = new Vector2(rb.linearVelocityX, jumpVelocity);
         return true;
     }
-
     public bool TryDownPlatform()
     {
-        RaycastHit2D groundHit = GetGroundHit();
-        if (!groundHit) return false;
-        if (!groundHit.collider.TryGetComponent(out OneWayPlatform platform)) return false;
-
+        if (IsDead || MenuOpen || IsDashing || IsHurt) return false;
+        RaycastHit2D hit = GetGroundHit();
+        if (!hit || !hit.collider.TryGetComponent(out OneWayPlatform platform)) return false;
         platform.FallDown(bodyCollider.transform);
+        ignoreGroundUntil = Time.time + 0.25f; groundedUntil = float.NegativeInfinity;
+        rb.linearVelocity = new Vector2(rb.linearVelocityX, -1f);
         return true;
     }
-
     public bool TryAttack()
     {
-        if (!weapon.CanAttack()) return false;
-
-        Vector3 attackPosition = attackTransform.localPosition;
-        attackPosition.x = Mathf.Abs(attackPosition.x) * FaceDir;
-        attackTransform.localPosition = attackPosition;
-
-        weapon.Attack(attackTransform.position,
-            (mouseWorldPosition - (Vector2)transform.position).normalized);
+        if (IsDead || MenuOpen || IsDashing || IsHurt || weapon == null || !weapon.CanAttack()) return false;
+        Vector2 center = bodyCollider != null ? bodyCollider.bounds.center : transform.position;
+        Vector2 direction = (AimPosition - center).normalized;
+        if (direction.sqrMagnitude < 0.001f) direction = Vector2.right * FaceDir;
+        if (attackTransform != null)
+        {
+            Vector3 local = attackTransform.localPosition; local.x = Mathf.Abs(local.x) * FaceDir;
+            attackTransform.localPosition = local;
+        }
+        Vector2 origin = attackTransform != null ? attackTransform.position : center;
+        weapon.Attack(origin, direction);
+        if (shotVisualUntil <= Time.time) { PlayAnimation("Attack"); shotVisualUntil = Time.time + attackDuration; }
         return true;
     }
-
     public bool TryRoll()
     {
-        if (Time.time < nextRollTime) return false;
-
-        nextRollTime = Time.time + rollCooldown;
+        if (!DashUnlocked || IsDead || MenuOpen || IsHurt || IsDashing || Time.time < nextRollTime) return false;
+        Flip(AimPosition.x >= transform.position.x);
+        nextRollTime = Time.time + rollCooldown; bufferedUntil = float.NegativeInfinity;
         return true;
     }
-
-    public void SetInvincible(bool value)
+    public void BeginDash() { rb.gravityScale = 0f; rb.linearVelocity = Vector2.right * FaceDir * moveSpeed * rollSpeedMultiplier; }
+    public void EndDash() { rb.gravityScale = originalGravity; rb.linearVelocity = Vector2.zero; }
+    public void UnlockDash() => DashUnlocked = true;
+    public void SetInvincible(bool value) => forcedInvulnerable = value;
+    public void TakeDamage(float damage) => TakeDamageFrom(damage, (Vector2)transform.position - Vector2.right * FaceDir);
+    public void TakeDamage(DamageInfo info)
     {
-        IsInvulnerable = value;
+        if (IsDead || MenuOpen || IsInvulnerable || info.damage <= 0f) return;
+        ApplyDamage(info.damage, info.hitPoint);
+        if (!IsDead && info.elementType != E_ElementType.None)
+            ElementSystem.Apply(buffs, info.elementType, transform.position, info.damage, info.targetLM);
     }
-
-    public void TakeDamage(float damage)
-    {
-        TakeDamage(new DamageInfo(damage));
-    }
-
-    public void TakeDamage(DamageInfo damageInfo)
-    {
-        if (IsDead || IsInvulnerable || damageInfo.damage <= 0f) return;
-
-        hp = Mathf.Max(0f, hp - damageInfo.damage);
-        HealthChanged?.Invoke();
-
-        if (damageInfo.elementType != E_ElementType.None)
-            ElementSystem.Apply(buffs, damageInfo.elementType, damageInfo.hitPoint,
-                damageInfo.damage, damageInfo.targetLM);
-
-        if (IsDead)
-            Died?.Invoke();
-    }
-
     public void TakeDamageFrom(float damage, Vector2 source)
     {
-        TakeDamage(damage);
+        if (IsDead || MenuOpen || IsInvulnerable || damage <= 0f) return;
+        ApplyDamage(damage, source);
     }
-
+    private void ApplyDamage(float damage, Vector2 source)
+    {
+        hp = Mathf.Max(0f, hp - damage); HealthChanged?.Invoke();
+        GetComponent<ActorElementEffects>()?.Flash();
+        if (IsDead) { Die(); return; }
+        float away = Mathf.Sign(transform.position.x - source.x);
+        rb.linearVelocity = new Vector2((away == 0f ? -FaceDir : away) * playerData.knockbackSpeed, 1f);
+        invulnerableUntil = Time.time + playerData.invulnerabilityTime;
+        Machine?.Switch(HurtState); UpdateFeedback();
+        if (Application.isPlaying && playerData.hitStopTime > 0f && !hitStopped) StartCoroutine(HitStop());
+    }
+    private IEnumerator HitStop()
+    {
+        hitStopped = true; Time.timeScale = 0f;
+        yield return new WaitForSecondsRealtime(playerData.hitStopTime);
+        hitStopped = false; Time.timeScale = MenuOpen ? 0f : 1f;
+    }
     public float Heal(float amount)
     {
         if (IsDead || amount <= 0f) return 0f;
-
-        float previousHp = hp;
-        hp = Mathf.Min(maxHp, hp + amount);
-        if (hp != previousHp)
-            HealthChanged?.Invoke();
-        return hp - previousHp;
+        float previous = hp; hp = Mathf.Min(maxHp, hp + amount);
+        if (previous != hp) HealthChanged?.Invoke();
+        return hp - previous;
     }
-
-    public float IncreaseHp(float amount)
+    public float IncreaseHp(float amount) => Heal(amount);
+    public void AddBuff(E_ElementType element) => ElementSystem.Apply(buffs, element, transform.position,
+        0f, LayerMask.GetMask("Player", "PlayerInvulnerable"));
+    public void RemBuff(E_ElementType element) => buffs.Remove(element);
+    private void Die()
     {
-        return Heal(amount);
+        if (deathSignaled) return;
+        deathSignaled = true; hp = 0f;
+        if (rb != null) rb.linearVelocity = Vector2.zero;
+        Machine?.Switch(DeadState); HealthChanged?.Invoke(); Died?.Invoke();
     }
-
-    public void AddBuff(E_ElementType elementType)
-    {
-        ElementSystem.Apply(buffs, elementType, transform.position);
-    }
-
-    public void RemBuff(E_ElementType elementType)
-    {
-        buffs.Remove(elementType);
-    }
-
-    public void UnlockDash()
-    {
-    }
-
     public void SetMenuOpen(bool value)
     {
-        MenuOpen = value;
-        Time.timeScale = value ? 0f : 1f;
+        GameplayUIFactory.ModalInputFrame = Time.frameCount;
+        MenuOpen = value; XInput = 0f;
+        if (value && rb != null) rb.linearVelocity = Vector2.zero;
+        Time.timeScale = value || hitStopped ? 0f : 1f;
     }
-
-    public bool IsGrounded()
+    private void UpdateFeedback()
     {
-        RaycastHit2D groundHit = GetGroundHit();
-        if (!groundHit) return false;
-
-        return !Physics2D.GetIgnoreCollision(bodyCollider, groundHit.collider);
+        if (!initialized) return;
+        gameObject.layer = IsInvulnerable && !IsDead && invulnerableLayer >= 0 ? invulnerableLayer : normalLayer;
+        if (sr != null) { Color color = originalColor; if (IsInvulnerable && !IsDead) color.a *= Mathf.PingPong(Time.unscaledTime * 8f, 0.6f) + 0.4f; sr.color = color; }
     }
-
+    public bool IsGrounded() => Time.time >= ignoreGroundUntil && YVelocity <= 0.1f && GetGroundHit().collider != null;
     private RaycastHit2D GetGroundHit()
     {
-        return Physics2D.Raycast(footBottom.position, Vector2.down, checkGroundDis, checkGroundLM);
+        if (bodyCollider == null) return default;
+        ContactFilter2D filter = new() { useTriggers = false }; filter.SetLayerMask(checkGroundLM);
+        int count = bodyCollider.Cast(Vector2.down, filter, groundHits, checkGroundDis);
+        for (int i = 0; i < count; i++)
+            if (groundHits[i].normal.y > 0.4f && groundHits[i].collider != bodyCollider &&
+                groundHits[i].collider.GetComponentInParent<EnemyAIController>() == null &&
+                !Physics2D.GetIgnoreCollision(bodyCollider, groundHits[i].collider)) return groundHits[i];
+        return default;
     }
-
     private void OnDisable()
     {
-        playerActionMap.Disable();
-        if (MenuOpen)
-            Time.timeScale = 1f;
+        if (!initialized) return;
+        actions?.Disable(); StopAllCoroutines();
+        if (MenuOpen || hitStopped) Time.timeScale = 1f;
+        MenuOpen = hitStopped = false;
+        rb.gravityScale = originalGravity; gameObject.layer = normalLayer;
+        if (sr != null) sr.color = originalColor;
     }
+    private void OnDestroy() { if (ownedInput != null) Destroy(ownedInput); if (ownsData) Destroy(playerData); }
 }

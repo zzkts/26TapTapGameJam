@@ -89,20 +89,18 @@ public class BattleSystemProjectileTests
 
         inventory.Acquire(atk);
         inventory.Acquire(count);
-        inventory.Equip(0, 0);
-        inventory.Equip(1, 1);
-
-        Assert.That(inventory.GenInventory, Is.EqualTo(new[] { atk, count }));
+        Assert.That(inventory.GenInventory.Count, Is.EqualTo(2));
+        Assert.That(inventory.GenInventory[0], Is.Not.SameAs(atk));
+        Assert.That(inventory.GenInventory[0].Definition, Is.SameAs(atk));
         Assert.That(inventory.GenChain.Count, Is.EqualTo(inventory.SlotCount));
-        Assert.That(inventory.GenChain[0], Is.SameAs(atk));
-        Assert.That(inventory.GenChain[1], Is.SameAs(count));
-
-        inventory.Move(1, 0);
-        Assert.That(inventory.GenChain[0], Is.SameAs(count));
-        Assert.That(inventory.GenChain[1], Is.SameAs(atk));
-
-        inventory.Unequip(0);
+        Assert.That(inventory.GenChain[1], Is.Null);
         Assert.That(inventory.GenChain[0], Is.Null);
+        inventory.Acquire(atk);
+        inventory.Acquire(atk);
+        Assert.That(inventory.GenInventory[0].Level, Is.EqualTo(2));
+        Assert.That(atk.Level, Is.EqualTo(1));
+        inventory.Acquire(atk);
+        Assert.That(inventory.GenInventory.Count, Is.EqualTo(3));
     }
 
     [Test]
@@ -157,7 +155,7 @@ public class BattleSystemProjectileTests
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic), Is.Null);
         Assert.That(typeof(Modifier).GetProperty("HitBuff"), Is.Null);
         Assert.That(typeof(Modifier).GetProperty("MoveType"), Is.Null);
-        Assert.That(typeof(Modifier).GetProperty("Color"), Is.Null);
+        Assert.That(typeof(Modifier).GetProperty("Color"), Is.Not.Null);
         Assert.That(typeof(Modifier).GetField("hitBuff",
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic), Is.Null);
         Assert.That(typeof(Modifier).GetField("moveType",
@@ -167,14 +165,14 @@ public class BattleSystemProjectileTests
     }
 
     [Test]
-    public void PoisonCloudReactionDamagesTargetsByTick()
+    public void PoisonCloudReactionAttachesPoisonWithoutInstantDamage()
     {
         GameObject cloudObject = CreateObject("PoisonCloud", Vector2.zero);
         PoisonCloudReaction cloud = cloudObject.AddComponent<PoisonCloudReaction>();
         GameObject target = CreateObject("Target", Vector2.zero);
         target.layer = 0;
         target.AddComponent<CircleCollider2D>().isTrigger = true;
-        TestDamageActor actor = target.AddComponent<TestDamageActor>();
+        ProjectileTestCombatActor actor = target.AddComponent<ProjectileTestCombatActor>();
 
         cloud.SetUp(new ElementEffectInfo(E_ElementEffect.PoisonCloud,
             Vector2.zero, E_ElementType.Water, E_ElementType.Poison,
@@ -184,32 +182,29 @@ public class BattleSystemProjectileTests
             System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
             .Invoke(cloud, null);
 
-        Assert.That(actor.TotalDamage, Is.EqualTo(0.4f));
+        Assert.That(actor.BuffList[0].ElementType, Is.EqualTo(E_ElementType.Poison));
+        Assert.That(actor.Hp, Is.EqualTo(100f));
     }
 
     [Test]
     public void VortexPullsTargetsTowardItsCenter()
     {
-        System.Type type = typeof(Projectile).Assembly.GetType("VortexArea");
-        Assert.That(type, Is.Not.Null);
-
-        GameObject vortexObject = CreateObject("Vortex", Vector2.zero);
-        Component vortex = vortexObject.AddComponent(type);
         GameObject target = CreateObject("Target", new Vector2(1f, 0f));
         target.layer = 0;
         Rigidbody2D targetBody = target.AddComponent<Rigidbody2D>();
         targetBody.gravityScale = 0f;
         target.AddComponent<CircleCollider2D>().isTrigger = true;
-        target.AddComponent<TestDamageActor>();
-
-        type.GetMethod("SetUp").Invoke(vortex, new object[]
-        {
-            new Vector2(3f, 1f), (LayerMask)(1 << target.layer), 2f, 1f,
-        });
+        target.AddComponent<EnemyAIController>();
         Physics2D.SyncTransforms();
-        type.GetMethod("Step").Invoke(vortex, new object[] { 0.25f });
-
-        Assert.That(targetBody.position.x, Is.LessThan(1f));
+        SimulationMode2D previous = Physics2D.simulationMode;
+        try
+        {
+            Physics2D.simulationMode = SimulationMode2D.Script;
+            ElementField.Pull(Vector2.zero, new Vector2(3f, 1f), 1 << target.layer, .25f);
+            Physics2D.Simulate(.02f);
+            Assert.That(targetBody.position.x, Is.LessThan(1f));
+        }
+        finally { Physics2D.simulationMode = previous; }
     }
 
     [Test]
@@ -242,6 +237,7 @@ public class BattleSystemProjectileTests
         target.layer = 0;
         CircleCollider2D targetCollider = target.AddComponent<CircleCollider2D>();
         targetCollider.isTrigger = true;
+        target.AddComponent<TestDamageActor>();
 
         projectile.SetUp(Vector2.zero, Vector2.right, 1 << target.layer,
             10f, 1f, 1f, 1f, 3f, 2, 0, 1f);
@@ -321,4 +317,18 @@ public class TestDamageActor : MonoBehaviour, IActor
     {
         TotalDamage += damage;
     }
+}
+
+public class ProjectileTestCombatActor : MonoBehaviour, ICombatable
+{
+    private readonly BuffComponent buffs = new();
+    public float Hp { get; private set; } = 100f;
+    public float MaxHp => 100f;
+    public bool IsDead => Hp <= 0f;
+    public IReadOnlyList<BuffInstance> BuffList => buffs.BuffList;
+    public void TakeDamage(float damage) => Hp -= damage;
+    public void TakeDamage(DamageInfo info) => TakeDamage(info.damage);
+    public float Heal(float amount) { float before = Hp; Hp = Mathf.Min(MaxHp, Hp + amount); return Hp - before; }
+    public void AddBuff(E_ElementType element) => buffs.Add(element, 5f);
+    public void RemBuff(E_ElementType element) => buffs.Remove(element);
 }

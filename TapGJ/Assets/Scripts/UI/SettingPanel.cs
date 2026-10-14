@@ -50,8 +50,18 @@ public class SettingPanel : BasePanel
 
     private void CloseSettings()
     {
+        GameplayUIFactory.ModalInputFrame = Time.frameCount;
         GlobalManager.Instance.SaveMusic();
         UIManager.Instance.HidePanel(gameObject, true);
+    }
+
+    protected override void Update()
+    {
+        base.Update();
+        if (UnityEngine.InputSystem.Keyboard.current != null &&
+            Time.frameCount > GameplayUIFactory.ModalInputFrame &&
+            UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame)
+            CloseSettings();
     }
 
 }

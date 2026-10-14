@@ -13,7 +13,14 @@ MonoBehaviour:
   m_Name: bounce
   m_EditorClassIdentifier: Assembly-CSharp::Modifier
   geneId: 6
-  geneName: 反弹
-  desc: 子弹可在墙面反弹 2 次。
+  geneName: "\u53CD\u5F39"
+  desc: "\u5B50\u5F39\u53EF\u5728\u5899\u9762\u53CD\u5F39 2 \u6B21\u3002"
   modifierType: 7
   modifierValue: 2
+  enchantDuration: 4
+  hasEvolution: 1
+  evolvedValue: 4
+  evolvedDescription: 
+  effectRadius: 3
+  evolvedRadius: 5
+  vortex: 0

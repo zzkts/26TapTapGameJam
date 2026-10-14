@@ -1,42 +1,20 @@
 using UnityEngine;
 
-/// <summary>
-/// 所有玩家状态的共同基类。
-/// 保存玩家和动画引用，并提供常用的地面移动状态切换。
-/// </summary>
 public abstract class PlayerState : State
 {
     protected Animator anim;
     protected PlayerController player;
-
-    public PlayerState(string stateName, PlayerController player, Animator anim) : base(stateName)
+    public PlayerState(string name, PlayerController player, Animator anim) : base(name) { this.player = player; this.anim = anim; }
+    public override void Enter() => player.PlayAnimation(stateName);
+    public override void Exit() { }
+    public override void FixUpdate() => player.Move(player.XInput, player.moveSpeed);
+    public override void Update()
     {
-        this.anim = anim;
-        this.player = player;
+        if (!player.ProcessMovementActions()) SwitchToLocomotionState();
     }
-
-    public override void Enter()
-    {
-        if (anim != null && anim.runtimeAnimatorController != null)
-            anim.SetBool(stateName, true);
-    }
-
-    public override void FixUpdate() { }
-    public override void Update() { }
-
-    public override void Exit()
-    {
-        if (anim != null && anim.runtimeAnimatorController != null)
-            anim.SetBool(stateName, false);
-    }
-
     protected void SwitchToLocomotionState()
     {
-        if (!player.IsGrounded())
-            player.Machine.Switch(player.FallState);
-        else if (Mathf.Abs(player.XInput) > Mathf.Epsilon)
-            player.Machine.Switch(player.WalkState);
-        else
-            player.Machine.Switch(player.IdleState);
+        if (!player.IsGrounded()) player.Machine.Switch(player.YVelocity > 0f ? player.JumpState : player.FallState);
+        else player.Machine.Switch(Mathf.Abs(player.XInput) > 0.01f ? player.WalkState : player.IdleState);
     }
 }

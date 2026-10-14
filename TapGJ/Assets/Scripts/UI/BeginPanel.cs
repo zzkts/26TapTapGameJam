@@ -12,8 +12,9 @@ public class BeginPanel : BasePanel
     {
         btnContinue.onClick.AddListener(() =>
         {
-            //����
+            SceneManager.LoadSceneAsync("GameScene");
         });
+        btnContinue.interactable = false;
         btnBegin.onClick.AddListener(() =>
         {
             SceneManager.LoadSceneAsync("GameScene");
@@ -22,7 +23,6 @@ public class BeginPanel : BasePanel
         {
             UIManager.Instance.ShowPanel<SettingPanel>();
         });
-        //�˳�
         btnQuit.onClick.AddListener(() =>
         {
             Application.Quit();

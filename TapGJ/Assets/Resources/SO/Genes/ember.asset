@@ -13,7 +13,14 @@ MonoBehaviour:
   m_Name: ember
   m_EditorClassIdentifier: Assembly-CSharp::Modifier
   geneId: 9
-  geneName: 火元素
-  desc: 将子弹转换为火元素。
+  geneName: "\u706B\u79CD"
+  desc: "\u547D\u4E2D\u65F6\u5F15\u71C3\u534A\u5F84 3 \u7C73\u5185\u7684\u654C\u4EBA\u3002"
   modifierType: 12
   modifierValue: 2
+  enchantDuration: 4
+  hasEvolution: 1
+  evolvedValue: 2
+  evolvedDescription: "\u547D\u4E2D\u65F6\u5F15\u71C3\u534A\u5F84 5 \u7C73\u5185\u7684\u654C\u4EBA\u3002"
+  effectRadius: 3
+  evolvedRadius: 5
+  vortex: 0

@@ -1,56 +1,42 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// 玩家当前使用的武器。
-/// 攻击时读取装备栏，生成本次子弹快照并发射子弹。
-/// </summary>
 public class Weapon : MonoBehaviour
 {
     [SerializeField] private WeaponData baseData;
     [SerializeField] private LayerMask targetLM;
-
     private float nextAttackTime;
     private BulletSnapshot currentShot;
-
+    private GeneInventory inventory;
+    private GeneChainController chain;
     public WeaponData BaseData => baseData;
     public BulletSnapshot CurrentShot => currentShot;
-
     private void Awake()
     {
-        currentShot = new BulletSnapshot(baseData);
+        if (baseData == null) baseData = Resources.Load<WeaponData>("SO/Weapon/DefaultWaterBallWeaponData");
+        inventory = GetComponent<GeneInventory>(); chain = GetComponent<GeneChainController>();
+        if (baseData != null) currentShot = new BulletSnapshot(baseData);
     }
-
-    public bool CanAttack()
-    {
-        return currentShot.projectilePrefab != null &&
-               Time.time >= nextAttackTime;
-    }
-
+    public bool CanAttack() => currentShot != null && currentShot.projectilePrefab != null && Time.time >= nextAttackTime;
     public void Apply(IReadOnlyList<Modifier> modifiers)
     {
-        currentShot = ModifierSystem.Instance.Apply(baseData, modifiers);
+        if (baseData == null) return;
+        currentShot = ModifierSystem.Instance.Apply(baseData, modifiers, chain != null ? chain.ActiveAttribute : null);
     }
-
-    public void Attack(Vector2 pos, Vector2 dir)
+    public void Attack(Vector2 position, Vector2 direction)
     {
         if (!CanAttack()) return;
-
-        BulletSnapshot shot = currentShot;
-        nextAttackTime = Time.time + shot.attackInterval;
-
-        for (int i = 0; i < shot.projectileCount; i++)
+        if (inventory != null) Apply(inventory.GenChain);
+        BulletSnapshot shot = currentShot.Copy();
+        nextAttackTime = Time.time + Mathf.Max(0.04f, shot.attackInterval);
+        ShotSpawnBudget budget = new(shot.maxSpawn);
+        direction = direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector2.right;
+        for (int i = 0; i < shot.projectileCount && budget.Take(); i++)
         {
-            GameObject projectileObject = Instantiate(shot.projectilePrefab, pos, Quaternion.identity);
-            Projectile projectile = projectileObject.GetComponent<Projectile>();
-            float angle = shot.projectileCount <= 1 ? 0f : Mathf.Lerp(-shot.spreadAngle,
-                shot.spreadAngle, i / (float)(shot.projectileCount - 1));
-            Vector2 heading = Quaternion.Euler(0f, 0f, angle) * dir;
-            projectile.SetOwner(transform);
-            projectile.SetUp(pos, heading, targetLM, shot.speed, shot.damage,
-                shot.damageMultiplier, shot.size, shot.lifeTime, shot.pierceCount,
-                shot.reboundCount, shot.reboundCoefficient, shot.moveType,
-                shot.orbitRadius, shot.orbitAngularSpeed);
+            float angle = shot.projectileCount <= 1 ? 0f : Mathf.Lerp(-shot.spreadAngle, shot.spreadAngle, i / (float)(shot.projectileCount - 1));
+            Projectile projectile = Instantiate(shot.projectilePrefab, position, Quaternion.identity).GetComponent<Projectile>();
+            if (projectile == null) continue;
+            projectile.LaunchSnapshot(position, Quaternion.Euler(0f, 0f, angle) * direction, targetLM, transform, shot, budget);
         }
     }
 }

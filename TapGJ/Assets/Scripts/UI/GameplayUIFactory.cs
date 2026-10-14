@@ -3,6 +3,9 @@ using UnityEngine.UI;
 
 public static class GameplayUIFactory
 {
+    public static int ModalInputFrame = -1;
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetModalFrame() => ModalInputFrame = -1;
     public static RectTransform Rect(string name, Transform parent, Vector2 min, Vector2 max, Vector2 insetMin = default, Vector2 insetMax = default)
     {
         var obj = new GameObject(name, typeof(RectTransform));

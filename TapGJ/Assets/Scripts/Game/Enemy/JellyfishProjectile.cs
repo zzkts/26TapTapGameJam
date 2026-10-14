@@ -3,10 +3,10 @@ using UnityEngine;
 [RequireComponent(typeof(CircleCollider2D))]
 public class JellyfishProjectile : Projectile
 {
-    private EnemyAIController owner;
+    private EnemyAIController enemyOwner;
     private Transform target;
     private CircleCollider2D hitCollider;
-    private ContactFilter2D hitFilter;
+    private ContactFilter2D enemyHitFilter;
     private readonly RaycastHit2D[] hits = new RaycastHit2D[32];
     private bool spent;
     private bool launched;
@@ -22,12 +22,12 @@ public class JellyfishProjectile : Projectile
     public void Launch(EnemyAIController source, Transform victim, Vector2 position, Vector2 heading,
         LayerMask environment, float velocity, float hitDamage, float size, float lifetime = 5f)
     {
-        owner = source;
+        enemyOwner = source;
         target = victim;
         groundLM = environment;
-        hitFilter = new ContactFilter2D { useTriggers = true };
+        enemyHitFilter = new ContactFilter2D { useTriggers = true };
         int targetLayer = victim != null ? 1 << victim.gameObject.layer : 0;
-        hitFilter.SetLayerMask(environment | targetLayer | LayerMask.GetMask("Player"));
+        enemyHitFilter.SetLayerMask(environment | targetLayer | LayerMask.GetMask("Player"));
         SetUp(position, heading, 0, velocity, hitDamage, 1f, size, lifetime);
         transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(heading.y, heading.x) * Mathf.Rad2Deg);
         launched = true;
@@ -40,7 +40,7 @@ public class JellyfishProjectile : Projectile
         // Sweep the next physics step to catch thin walls and fast projectiles.
         Vector2 origin = transform.TransformPoint(hitCollider.offset);
         float radius = hitCollider.radius * Mathf.Max(Mathf.Abs(transform.lossyScale.x), Mathf.Abs(transform.lossyScale.y));
-        int count = Physics2D.CircleCast(origin, radius, direction, hitFilter, hits, speed * Time.fixedDeltaTime);
+        int count = Physics2D.CircleCast(origin, radius, direction, enemyHitFilter, hits, speed * Time.fixedDeltaTime);
         for (int i = 0; i < count && !spent; i++)
             HandleCollision(hits[i].collider);
         if (!spent)
@@ -50,7 +50,7 @@ public class JellyfishProjectile : Projectile
     protected override void HandleCollision(Collider2D other)
     {
         if (!launched || spent || other == null || other == hitCollider ||
-            (owner != null && other.transform.IsChildOf(owner.transform)) ||
+            (enemyOwner != null && other.transform.IsChildOf(enemyOwner.transform)) ||
             other.GetComponentInParent<EnemyAIController>() != null)
             return;
 
@@ -60,7 +60,7 @@ public class JellyfishProjectile : Projectile
             if (player != null && player.IsInvulnerable) return;
             IActor actor = other.GetComponentInParent<IActor>();
             Explode();
-            if (player != null) player.TakeDamageFrom(CalculateDamage(), transform.position);
+            if (player != null) player.TakeDamage(new DamageInfo(CalculateDamage(), elementType, transform.position, LayerMask.GetMask("Player")));
             else actor?.TakeDamage(CalculateDamage());
         }
         else if (!other.isTrigger && (groundLM.value & (1 << other.gameObject.layer)) != 0)

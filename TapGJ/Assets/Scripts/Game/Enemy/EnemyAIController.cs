@@ -41,6 +41,7 @@ public class EnemyAIController : MonoBehaviour, ICombatable
     [SerializeField, Min(0.01f)] private float attackDuration = 0.8f;
     [SerializeField, Min(0.01f)] private float attackCooldown = 1.5f;
     [SerializeField, Min(0f)] private float meleeDamage = 1f;
+    [SerializeField] private bool contactDamage = true;
     [SerializeField, Min(0f)] private float damageMultiplier = 1f;
 
     [Header("Ranged Attack")]
@@ -82,6 +83,8 @@ public class EnemyAIController : MonoBehaviour, ICombatable
     private float facingDirection = 1f;
     private bool attackApplied;
     private bool alerted;
+    private float previousPatrolX, stuckTimer, nextContactTime;
+    private bool patrolWasMoving;
     private readonly BuffComponent buffs = new();
 
     public AttackType Kind => attackType;
@@ -107,6 +110,7 @@ public class EnemyAIController : MonoBehaviour, ICombatable
         if (flyingEnemy)
             rb.gravityScale = 0f;
         Hp = maxHp;
+        if (GetComponent<ActorElementEffects>() == null) gameObject.AddComponent<ActorElementEffects>();
         ResetPatrol();
         SetTarget(playerTarget);
         SetState(EnemyState.Idle, true);
@@ -117,6 +121,7 @@ public class EnemyAIController : MonoBehaviour, ICombatable
         buffs.Update(Time.deltaTime);
         if (IsDead)
             return;
+        ApplyContactDamage();
 
         desiredVelocity = Vector2.zero;
         cooldownTimer = Mathf.Max(0f, cooldownTimer - Time.deltaTime);
@@ -150,6 +155,11 @@ public class EnemyAIController : MonoBehaviour, ICombatable
         {
             alerted = true;
             Face(TargetPosition().x - bodyCollider.bounds.center.x);
+            if (attackType == AttackType.Ranged && cooldownTimer <= 0f && CanAttack())
+            {
+                BeginAttack();
+                return;
+            }
             if (retreatFromPlayer && Vector2.Distance(bodyCollider.bounds.center, TargetPosition()) <= dangerRadius)
             {
                 Vector2 away = (Vector2)bodyCollider.bounds.center - TargetPosition();
@@ -164,7 +174,7 @@ public class EnemyAIController : MonoBehaviour, ICombatable
                     return;
                 }
             }
-            if (CanAttack())
+            if (!contactDamage && CanAttack())
             {
                 if (cooldownTimer <= 0f)
                     BeginAttack();
@@ -298,14 +308,23 @@ public class EnemyAIController : MonoBehaviour, ICombatable
         }
         float delta = patrolTarget - transform.position.x;
         Vector2 direction = Vector2.right * Mathf.Sign(delta);
-        if (Mathf.Abs(delta) <= 0.08f || !CanMove(direction))
+        if (patrolWasMoving && Mathf.Abs(transform.position.x - previousPatrolX) < 0.002f)
+            stuckTimer += Time.deltaTime;
+        else stuckTimer = 0f;
+        previousPatrolX = transform.position.x;
+        bool blocked = !CanMove(direction);
+        if (Mathf.Abs(delta) <= 0.08f || blocked || stuckTimer > 0.3f)
         {
-            patrolTarget = patrolTarget > patrolCenter ? patrolCenter - patrolRange : patrolCenter + patrolRange;
-            waitTimer = patrolWait;
+            patrolTarget = delta >= 0f ? patrolCenter - patrolRange : patrolCenter + patrolRange;
+            Face(patrolTarget - transform.position.x);
+            waitTimer = blocked || stuckTimer > 0.3f ? Mathf.Min(patrolWait, 0.45f) : patrolWait;
+            stuckTimer = 0f;
+            patrolWasMoving = false;
             return;
         }
         Face(delta);
         desiredVelocity = direction * Mathf.Min(patrolSpeed, Mathf.Abs(delta) / Time.fixedDeltaTime);
+        patrolWasMoving = true;
     }
 
     private bool CanMove(Vector2 direction)
@@ -314,7 +333,8 @@ public class EnemyAIController : MonoBehaviour, ICombatable
         int count = Physics2D.BoxCast(bounds.center, (Vector2)bounds.size * 0.85f, 0f,
             direction, environmentFilter, hits, obstacleCheckDistance + chaseSpeed * Time.fixedDeltaTime);
         for (int i = 0; i < count; i++)
-            if (IsEnvironment(hits[i].collider))
+            if (IsEnvironment(hits[i].collider) && Vector2.Dot(hits[i].normal, direction) < -0.2f &&
+                (flyingEnemy || Mathf.Abs(hits[i].normal.x) > 0.5f))
                 return false;
         if (flyingEnemy)
             return true;
@@ -388,6 +408,7 @@ public class EnemyAIController : MonoBehaviour, ICombatable
         if (IsDead || damage <= 0f)
             return;
         Hp = Mathf.Max(0f, Hp - damage);
+        GetComponent<ActorElementEffects>()?.Flash();
         if (Hp > 0f && damageInfo.elementType != E_ElementType.None)
             ElementSystem.Apply(buffs, damageInfo.elementType, damageInfo.hitPoint,
                 damageInfo.damage, damageInfo.targetLM);
@@ -407,7 +428,7 @@ public class EnemyAIController : MonoBehaviour, ICombatable
     }
 
     public void AddBuff(E_ElementType elementType) =>
-        ElementSystem.Apply(buffs, elementType, transform.position);
+        ElementSystem.Apply(buffs, elementType, transform.position, 0f, LayerMask.GetMask("Enemy"));
 
     public void RemBuff(E_ElementType elementType) => buffs.Remove(elementType);
 
@@ -440,12 +461,27 @@ public class EnemyAIController : MonoBehaviour, ICombatable
         patrolCenter = transform.position.x;
         patrolTarget = patrolCenter + patrolRange;
         waitTimer = 0f;
+        previousPatrolX = transform.position.x;
+        stuckTimer = 0f;
+        patrolWasMoving = false;
     }
 
     private void StopMoving()
     {
         desiredVelocity = Vector2.zero;
         rb.linearVelocity = new Vector2(0f, flyingEnemy ? 0f : rb.linearVelocity.y);
+    }
+
+    private void ApplyContactDamage()
+    {
+        if (!contactDamage || attackType != AttackType.Melee || !TargetAvailable() ||
+            Time.time < nextContactTime || targetCollider == null || !targetCollider.enabled) return;
+        ColliderDistance2D distance = bodyCollider.Distance(targetCollider);
+        if (!distance.isOverlapped && distance.distance > 0.015f) return;
+        PlayerController player = playerTarget.GetComponent<PlayerController>();
+        if (player == null || player.IsInvulnerable || player.MenuOpen) return;
+        nextContactTime = Time.time + 0.8f;
+        player.TakeDamageFrom(meleeDamage * damageMultiplier, bodyCollider.bounds.center);
     }
 
     private void Die()

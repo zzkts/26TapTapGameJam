@@ -7,36 +7,24 @@ public class PlayerHudPanel : BasePanel
     public Image healthFill, stageFill;
     public Text healthText, dashText, attributeText, interactionText, toastText;
     public Text[] slotTexts;
+    public Image[] slotIcons;
     public RunMenuPanel runMenu;
     private PlayerController player;
     private GeneInventory inventory;
+    private GeneChainController chain;
     private PlayerInteraction interaction;
     private float toastUntil, deathElapsed;
     public override void Init()
     {
         player = FindFirstObjectByType<PlayerController>();
         if (player == null) return;
-        inventory = player.Genes;
+        inventory = player.Genes; chain = player.GetComponent<GeneChainController>();
         interaction = player.GetComponent<PlayerInteraction>();
         if (inventory != null) inventory.Acquired += OnAcquired;
-        if (inventory != null && slotTexts.Length != inventory.SlotCount)
-        {
-            int count = inventory.SlotCount;
-            Text[] resized = new Text[count];
-            for (int i = 0; i < count; i++)
-            {
-                resized[i] = i < slotTexts.Length ? slotTexts[i] : Instantiate(slotTexts[0], slotTexts[0].transform.parent);
-                resized[i].rectTransform.anchorMin = new Vector2(0.027f + i * 0.405f / count, 0.035f);
-                resized[i].rectTransform.anchorMax = new Vector2(0.025f + (i + 1) * 0.405f / count, 0.13f);
-                resized[i].rectTransform.offsetMin = resized[i].rectTransform.offsetMax = Vector2.zero;
-            }
-            for (int i = count; i < slotTexts.Length; i++) slotTexts[i].gameObject.SetActive(false);
-            slotTexts = resized;
-        }
     }
     private void OnAcquired(Modifier gene)
     {
-        toastText.text = "获得 " + gene.Name;
+        toastText.text = gene.Level > 1 ? gene.Name + " · 进化完成" : "获得 " + gene.Name + "  " + gene.Copies + " / " + inventory.EvolutionCopies;
         toastUntil = Time.unscaledTime + 3f;
     }
     protected override void Update()
@@ -49,26 +37,33 @@ public class PlayerHudPanel : BasePanel
             "冲刺  " + player.DashCooldownRemaining.ToString("0.0") + "s" : "冲刺 · 就绪";
         if (inventory != null)
         {
-            Modifier[] slots = inventory.CopyChain();
             for (int i = 0; i < slotTexts.Length; i++)
             {
-                Modifier gene = i < slots.Length ? slots[i] : null;
+                Modifier gene = i < inventory.GenChain.Count ? inventory.GenChain[i] : null;
                 slotTexts[i].text = gene == null ? (i + 1) + "\n-" : (i + 1) + "\n" + gene.Name;
-                slotTexts[i].color = gene == null ? new Color(0.5f, 0.55f, 0.54f) : Color.white;
+                slotTexts[i].color = gene == null ? new Color(0.62f,0.7f,0.75f) : Color.white;
+                if (slotIcons != null && i < slotIcons.Length) slotIcons[i].color = gene != null ? gene.Color : new Color(0.2f,0.25f,0.3f);
             }
-            attributeText.text = "基因链";
-            stageFill.fillAmount = 1f;
+        }
+        if (chain != null)
+        {
+            string name = chain.CurrentAttribute != null ? chain.CurrentAttribute.Name : "基础射击";
+            attributeText.text = chain.State == GeneChainController.Phase.Reloading ? "基因链重载  " + chain.Remaining.ToString("0.0") + "s" :
+                chain.State == GeneChainController.Phase.Active ? name + "  " + chain.Remaining.ToString("0.0") + "s" : name + " · 就绪";
+            stageFill.fillAmount = chain.Progress;
+            stageFill.color = chain.State == GeneChainController.Phase.Reloading ? new Color(0.8f,0.82f,0.85f) : chain.CurrentAttribute != null ? chain.CurrentAttribute.Color : Color.cyan;
         }
         WorldInteractable near = interaction != null ? interaction.Nearby : null;
         interactionText.text = near != null && !player.MenuOpen && !player.IsDead ? "[E]  " + near.Title + "\n" + near.Detail : "";
         if (Time.unscaledTime >= toastUntil) toastText.text = "";
         if (player.IsDead)
         {
-            deathElapsed += Time.deltaTime;
-            if (deathElapsed > 0.7f && !runMenu.gameObject.activeSelf) runMenu.Open(player, true);
+            deathElapsed += Time.unscaledDeltaTime;
+            if (deathElapsed > 0.7f && runMenu != null && !runMenu.gameObject.activeSelf) runMenu.Open(player, true);
         }
-        else if (!player.MenuOpen && Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
-            runMenu.Open(player, false);
+        else if (!player.MenuOpen && Time.frameCount > GameplayUIFactory.ModalInputFrame &&
+            Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+            runMenu?.Open(player, false);
     }
     private void OnDestroy() { if (inventory != null) inventory.Acquired -= OnAcquired; }
 }
