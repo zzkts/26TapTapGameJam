@@ -79,16 +79,20 @@ public class GameplayPolishPlayModeChecks : MonoBehaviour
         NewRig(true); yield return new WaitForSeconds(.25f);
         Check(player.IsGrounded() && Mathf.Abs(player.GetComponent<Collider2D>().bounds.min.y + .9f) < .04f,
             "Player feet settle on the floor");
+        Check(player.Presentation != null, "The playable player owns secondary motion feedback");
         Check(!player.DashUnlocked && !player.TryRoll(), "Dash is locked before collecting the module");
         float start = player.transform.position.x;
         Aim(player.transform.position + Vector3.right * 5f); Keys(Key.D); MouseButtons(true);
         yield return new WaitForSeconds(.65f);
         Check(player.transform.position.x > start + 1.5f, "Holding fire does not lock horizontal movement");
+        Check(player.Presentation.ShotCount >= 3, "Every held-fire shot produces character recoil");
         Check(rig.GetComponentsInChildren<Projectile>().Length == 0 &&
             Object.FindObjectsByType<Projectile>(FindObjectsSortMode.None).Count(p => p.Snapshot != null) >= 3,
             "Held mouse produces repeated shots");
         Keys(Key.D, Key.Space); yield return null; yield return new WaitForFixedUpdate();
         Check(player.YVelocity > 2f && !player.IsGrounded(), "Space jumps while moving and shooting");
+        Check(player.Presentation.JumpCount > 0 && !player.IsShooting,
+            "Jump feedback takes priority over the grounded shooting pose");
         Keys(); MouseButtons(false); yield return new WaitForSeconds(.1f);
         player.UnlockDash(); Aim(player.transform.position + Vector3.right * 5f); yield return null;
         Keys(Key.LeftShift); yield return null; yield return new WaitForFixedUpdate();
@@ -102,6 +106,7 @@ public class GameplayPolishPlayModeChecks : MonoBehaviour
             "Dash restores gravity and enforces cooldown");
         player.TakeDamageFrom(1f, (Vector2)player.transform.position + Vector2.right);
         Check(player.Hp == hp - 1f && player.IsHurt && Time.timeScale == 0f, "Damage enters hurt and hit-stop");
+        Check(player.Presentation.HurtCount == 1, "A damaging hit produces one character impact response");
         Check(player.gameObject.layer == LayerMask.NameToLayer("PlayerInvulnerable"), "Hurt invulnerability uses the invulnerable collision layer");
         Check(player.GetComponent<Rigidbody2D>().linearVelocityX < 0f, "Knockback points away from the source");
         player.TakeDamage(1f); Check(player.Hp == hp - 1f, "Invulnerability rejects a second hit");
@@ -111,6 +116,7 @@ public class GameplayPolishPlayModeChecks : MonoBehaviour
         Check(!player.IsInvulnerable && player.gameObject.layer == LayerMask.NameToLayer("Player"),
             "Invulnerability restores the normal player layer");
         Check(player.Heal(100f) == 1f && player.Hp == player.MaxHp, "Healing is clamped to max HP");
+        Check(player.Presentation.LandingCount > 0, "A full airborne movement cycle produces a landing rebound");
 
         NewRig(true); yield return new WaitForSeconds(.2f);
         Rigidbody2D body = player.GetComponent<Rigidbody2D>();
@@ -136,6 +142,16 @@ public class GameplayPolishPlayModeChecks : MonoBehaviour
         player.GetComponent<Rigidbody2D>().linearVelocity = Vector2.down * 2f;
         Keys(Key.Space); yield return null; Keys(); yield return new WaitForSeconds(.08f);
         Check(player.YVelocity > 0f, "Jump buffer fires on landing");
+
+        NewRig(true); yield return new WaitForSeconds(.2f);
+        player.TakeDamage(100f); player.SetMenuOpen(true);
+        Animator deathAnimator = player.GetComponentInChildren<Animator>();
+        yield return new WaitForSecondsRealtime(.8f);
+        Check(Time.timeScale == 0f && deathAnimator.updateMode == AnimatorUpdateMode.UnscaledTime &&
+            deathAnimator.GetCurrentAnimatorStateInfo(0).IsName("Dead") &&
+            deathAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1f,
+            "The death animation finishes and holds its final pose while the menu pauses gameplay");
+        player.SetMenuOpen(false);
     }
 
     private IEnumerator EnemyCases()
@@ -242,11 +258,19 @@ public class GameplayPolishPlayModeChecks : MonoBehaviour
         Check(inv.GenChain[1] == fire && !player.MenuOpen, "Confirm commits the selected instance");
         GeneChainController chain = player.GetComponent<GeneChainController>();
         Check(chain.Attributes.Count == 2 && chain.TryActivate() && chain.ActiveAttribute == water, "Right-click activation starts the first equipped attribute");
+        Keys(); MouseButtons(false); yield return null;
+        float weaponReadyDeadline = Time.time + 1f;
+        while (!player.Weapon.CanAttack() && Time.time < weaponReadyDeadline) yield return null;
+        var priorProjectileIds = new HashSet<int>(Object.FindObjectsByType<Projectile>(FindObjectsSortMode.None)
+            .Select(projectile => projectile.GetInstanceID()));
         player.Weapon.Attack(player.transform.position + Vector3.up * 2f, Vector2.right);
-        Projectile firstShot = Object.FindObjectsByType<Projectile>(FindObjectsSortMode.None).First(p => p.Snapshot != null);
+        Projectile firstShot = Object.FindObjectsByType<Projectile>(FindObjectsSortMode.None)
+            .FirstOrDefault(projectile => !priorProjectileIds.Contains(projectile.GetInstanceID()) &&
+                projectile.Owner == player.transform && projectile.Snapshot != null);
         chain.Tick(water.EnchantDuration + .01f);
         Check(chain.State == GeneChainController.Phase.Ready && chain.CurrentAttribute == fire && chain.TryActivate(), "The second attribute waits for its own activation");
-        Check(firstShot.Snapshot.element == E_ElementType.Water, "Already-fired bullets keep their own element snapshot");
+        Check(firstShot != null && firstShot.Snapshot.element == E_ElementType.Water,
+            "Already-fired bullets keep their own element snapshot");
         chain.Tick(fire.EnchantDuration + .01f);
         Check(chain.State == GeneChainController.Phase.Reloading && !chain.TryActivate(), "The last attribute enters the shared reload");
         chain.Tick(chain.reloadDuration + .01f);

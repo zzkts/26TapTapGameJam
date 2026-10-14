@@ -7,6 +7,8 @@ public class RunMenuPanel : BasePanel
     public Text title;
     public Button resumeButton, retryButton;
     public Button settingsButton, menuButton;
+    public Image portrait;
+    public Sprite alivePortrait, deadPortrait;
     private PlayerController player;
     public override void Init()
     {
@@ -27,9 +29,21 @@ public class RunMenuPanel : BasePanel
     {
         player = owner;
         title.text = dead ? "本次探索结束" : "已暂停";
+        if (portrait != null) portrait.sprite = dead ? deadPortrait : alivePortrait;
         resumeButton.gameObject.SetActive(!dead);
+        Place(retryButton, dead ? .52f : .41f);
+        Place(settingsButton, dead ? .39f : .30f);
+        Place(menuButton, dead ? .26f : .19f);
         player.SetMenuOpen(true);
         UIManager.Instance.ShowPanel(gameObject);
+    }
+    private static void Place(Button button, float bottom)
+    {
+        if (button == null) return;
+        RectTransform rect = button.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(rect.anchorMin.x, bottom);
+        rect.anchorMax = new Vector2(rect.anchorMax.x, bottom + .08f);
+        rect.offsetMin = rect.offsetMax = Vector2.zero;
     }
     private void Resume()
     {

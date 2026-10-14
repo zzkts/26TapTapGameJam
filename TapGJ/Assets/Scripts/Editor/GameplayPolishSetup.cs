@@ -26,6 +26,15 @@ public static class GameplayPolishSetup
         ConfigureLayers(); BuildMaterial(); ConfigureGenes(); BuildTheme(); ConfigurePlayer();
         foreach (int id in new[] {3,4,5,6,7}) BuildMonster(id);
         BuildUI(); ConfigureWorld();
+        // Rebuilding gameplay should keep the approved player artwork and UI once they exist.
+        if (Directory.Exists(PlayerAnimationPolish.Artwork + "/Idle"))
+        {
+            PlayerAnimationPolish.Apply();
+            PlayerController scenePlayer = Object.FindFirstObjectByType<PlayerController>();
+            if (scenePlayer != null) PlayerAnimationPolish.ConfigureVisual(scenePlayer);
+        }
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "GameScene" &&
+            File.Exists("Assets/ArtRes/UI/Player/StatusPanel.png")) PlayerUIPolishSetup.Apply();
         EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
         EditorSceneManager.SaveOpenScenes(); AssetDatabase.SaveAssets();
         Debug.Log("Gameplay polish setup complete.");
