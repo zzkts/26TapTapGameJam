@@ -159,15 +159,29 @@ public class GameplayPolishPlayModeChecks : MonoBehaviour
         foreach (int id in new[] {3, 5})
         {
             NewRig(true); player.enabled = false;
+            player.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeAll;
             EnemyAIController enemy = Enemy(id, Vector2.zero, false);
-            enemy.SetTarget(player.transform); yield return null;
-            Check(player.IsDead, "Monster" + id + " applies the designed 10 contact damage");
+            enemy.SetTarget(player.transform); yield return new WaitForSeconds(.12f);
+            Check(player.Hp == player.MaxHp && enemy.IsWindingUp && enemy.CombatPresentation.WarningVisible,
+                "Monster" + id + " contact is harmless and its attack has a visible warning");
             Check(enemy.Kind == EnemyAIController.AttackType.Melee, "Monster" + id + " is melee");
+            yield return new WaitForSeconds(enemy.AttackWindup + enemy.MeleeStrikeDelay + .05f);
+            Check(player.Hp == player.MaxHp - 2f && !player.IsDead && enemy.CombatPresentation.StrikeCount == 1,
+                "Monster" + id + " deals two HP once at its actual strike frame");
+            Check(enemy.GetComponentInChildren<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Attack"),
+                "Monster" + id + " plays its dedicated attack animation");
+            yield return new WaitForSeconds(.25f);
+            Check(player.Hp == player.MaxHp - 2f, "Monster" + id + " overlap does not repeatedly damage the player");
+            yield return new WaitForSeconds(.25f);
+            Check(enemy.AttackCooldownRemaining > .65f && enemy.CombatPresentation.WindupCount == 1,
+                "Monster" + id + " completes recovery and then waits before another warned attack");
         }
+        yield return MeleeAvoidanceCases();
         foreach (int id in new[] {6, 7})
         {
             NewRig(true); player.enabled = false;
             EnemyAIController enemy = Enemy(id, new Vector2(-4f, 0f), false);
+            float retreatStart = enemy.transform.position.x;
             enemy.SetTarget(player.transform);
             yield return new WaitForSeconds(.35f);
             JellyfishProjectile bullet = Object.FindObjectsByType<JellyfishProjectile>(FindObjectsSortMode.None)
@@ -177,7 +191,7 @@ public class GameplayPolishPlayModeChecks : MonoBehaviour
                 "Monster" + id + " fires its dedicated sprite");
             Check(enemy.Kind == EnemyAIController.AttackType.Ranged, "Monster" + id + " is ranged");
             yield return new WaitForSeconds(.4f);
-            Check(enemy.GetComponent<Rigidbody2D>().linearVelocityX < 0f, "Monster" + id + " retreats inside the danger radius");
+            Check(enemy.transform.position.x < retreatStart - .1f, "Monster" + id + " retreats inside the danger radius");
             yield return new WaitForSeconds(.4f);
             Check(player.Hp < player.MaxHp, "Monster" + id + " projectile actually damages the player");
         }
@@ -226,6 +240,56 @@ public class GameplayPolishPlayModeChecks : MonoBehaviour
         support.TakeDamage(100f); yield return null;
         Check(!aura.enabled && support.GetComponentsInChildren<LineRenderer>().Length == 0,
             "Dead support stops healing and removes its beams");
+    }
+
+    private IEnumerator MeleeAvoidanceCases()
+    {
+        foreach (int id in new[] {3, 5})
+        {
+            NewRig(true); player.enabled = false;
+            player.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeAll;
+            EnemyAIController enemy = Enemy(id, Vector2.left, false);
+            yield return new WaitForSeconds(.12f);
+            enemy.TakeDamage(.5f);
+            yield return new WaitForSeconds(.55f);
+            Check(player.Hp == player.MaxHp && enemy.CombatPresentation.StrikeCount == 0,
+                "Monster" + id + " taking damage cancels its pending melee strike");
+
+            NewRig(true); player.enabled = false;
+            player.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeAll;
+            enemy = Enemy(id, Vector2.left, false);
+            yield return new WaitForSeconds(.12f);
+            float lockedFacing = enemy.AttackFacingDirection;
+            player.transform.position = enemy.transform.position + Vector3.left;
+            Physics2D.SyncTransforms();
+            yield return new WaitForSeconds(.55f);
+            Check(player.Hp == player.MaxHp && enemy.CombatPresentation.StrikeCount == 1 &&
+                enemy.AttackFacingDirection == lockedFacing,
+                "Monster" + id + " cannot turn its warned attack to hit a player who dodges behind it");
+
+            NewRig(true); player.enabled = false;
+            player.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeAll;
+            enemy = Enemy(id, Vector2.left, false);
+            yield return new WaitForSeconds(.12f);
+            player.transform.position += Vector3.right * 4f; Physics2D.SyncTransforms();
+            yield return new WaitForSeconds(.55f);
+            Check(player.Hp == player.MaxHp && enemy.CombatPresentation.StrikeCount == 1,
+                "Monster" + id + " melee misses when the player leaves its reach during the warning");
+
+            NewRig(true); player.enabled = false;
+            player.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeAll;
+            player.SetInvincible(true);
+            enemy = Enemy(id, Vector2.left, false);
+            // The initial rigidbody overlap can take a few frames to settle before
+            // the enemy reaches its warning range. Observe the actual strike.
+            float strikeDeadline = Time.realtimeSinceStartup + 2f;
+            while (enemy.CombatPresentation.StrikeCount == 0 && Time.realtimeSinceStartup < strikeDeadline)
+                yield return null;
+            yield return null;
+            Check(player.Hp == player.MaxHp && enemy.CombatPresentation.StrikeCount == 1,
+                "Monster" + id + " strike respects player invulnerability");
+            player.SetInvincible(false);
+        }
     }
 
     private IEnumerator GeneCases()
@@ -284,7 +348,9 @@ public class GameplayPolishPlayModeChecks : MonoBehaviour
         menu.settingsButton.onClick.Invoke(); yield return new WaitForSecondsRealtime(.15f);
         SettingPanel settings = Object.FindFirstObjectByType<SettingPanel>();
         Check(settings != null && settings.gameObject.activeSelf, "Settings opens from the pause menu");
-        Keys(Key.Escape); yield return null; Keys(); yield return new WaitForSecondsRealtime(.16f);
+        Keys(Key.Escape); yield return null; yield return null; Keys();
+        float closeDeadline = Time.realtimeSinceStartup + 1f;
+        while (settings.gameObject.activeSelf && Time.realtimeSinceStartup < closeDeadline) yield return null;
         Check(!settings.gameObject.activeSelf && player.MenuOpen, "Escape closes only settings and preserves pause");
         menu.resumeButton.onClick.Invoke(); Check(!player.MenuOpen && Time.timeScale == 1f, "Resume restores gameplay");
     }

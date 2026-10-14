@@ -37,11 +37,13 @@ public class EnemyAIController : MonoBehaviour, ICombatable
     [Header("Attack")]
     [Tooltip("Distance between colliders, not between sprite pivots.")]
     [SerializeField, Min(0.01f)] private float attackRange = 0.45f;
-    [SerializeField, Min(0f)] private float attackWindup = 0.3f;
+    [SerializeField, Min(0f)] private float attackWindup = 0.35f;
+    [Tooltip("Melee damage happens after the attack pose has started, never during the warning.")]
+    [SerializeField, Min(0f)] private float meleeStrikeDelay = 0.15f;
     [SerializeField, Min(0.01f)] private float attackDuration = 0.8f;
     [SerializeField, Min(0.01f)] private float attackCooldown = 1.5f;
-    [SerializeField, Min(0f)] private float meleeDamage = 1f;
-    [SerializeField] private bool contactDamage = true;
+    [SerializeField, Min(0f)] private float meleeDamage = 2f;
+    [SerializeField, HideInInspector] private bool contactDamage;
     [SerializeField, Min(0f)] private float damageMultiplier = 1f;
 
     [Header("Ranged Attack")]
@@ -82,8 +84,11 @@ public class EnemyAIController : MonoBehaviour, ICombatable
     private float nextTargetSearch;
     private float facingDirection = 1f;
     private bool attackApplied;
+    private bool attackAnimationStarted;
+    private float attackFacingDirection = 1f, attackAnimationLength;
+    private EnemyCombatPresentation combatPresentation;
     private bool alerted;
-    private float previousPatrolX, stuckTimer, nextContactTime;
+    private float previousPatrolX, stuckTimer;
     private bool patrolWasMoving;
     private readonly BuffComponent buffs = new();
 
@@ -94,6 +99,14 @@ public class EnemyAIController : MonoBehaviour, ICombatable
     public float HealthNormalized => maxHp <= 0f ? 0f : Hp / maxHp;
     public bool IsDead => State == EnemyState.Dead;
     public bool IsSupport => attackType == AttackType.Support;
+    public bool IsWindingUp => attackType == AttackType.Melee && State == EnemyState.Attack && !attackAnimationStarted;
+    public float AttackWindupNormalized => IsWindingUp ? Mathf.Clamp01(attackElapsed / Mathf.Max(.01f, attackWindup)) : 0f;
+    public float FacingDirection => facingDirection;
+    public float AttackFacingDirection => attackFacingDirection;
+    public float AttackWindup => attackWindup;
+    public float MeleeStrikeDelay => meleeStrikeDelay;
+    public float AttackCooldownRemaining => cooldownTimer;
+    public EnemyCombatPresentation CombatPresentation => combatPresentation;
     public IReadOnlyList<BuffInstance> BuffList => buffs.BuffList;
 
     private void Awake()
@@ -110,6 +123,12 @@ public class EnemyAIController : MonoBehaviour, ICombatable
         if (flyingEnemy)
             rb.gravityScale = 0f;
         Hp = maxHp;
+        if (attackType == AttackType.Melee)
+        {
+            combatPresentation = GetComponent<EnemyCombatPresentation>();
+            if (combatPresentation == null) combatPresentation = gameObject.AddComponent<EnemyCombatPresentation>();
+            combatPresentation.Initialize(this, spriteRenderer, bodyCollider);
+        }
         if (GetComponent<ActorElementEffects>() == null) gameObject.AddComponent<ActorElementEffects>();
         ResetPatrol();
         SetTarget(playerTarget);
@@ -121,8 +140,6 @@ public class EnemyAIController : MonoBehaviour, ICombatable
         buffs.Update(Time.deltaTime);
         if (IsDead)
             return;
-        ApplyContactDamage();
-
         desiredVelocity = Vector2.zero;
         cooldownTimer = Mathf.Max(0f, cooldownTimer - Time.deltaTime);
         if (supportAnimationTimer > 0f)
@@ -174,7 +191,7 @@ public class EnemyAIController : MonoBehaviour, ICombatable
                     return;
                 }
             }
-            if (!contactDamage && CanAttack())
+            if (CanAttack())
             {
                 if (cooldownTimer <= 0f)
                     BeginAttack();
@@ -255,19 +272,37 @@ public class EnemyAIController : MonoBehaviour, ICombatable
         aimPosition = TargetPosition();
         attackElapsed = 0f;
         attackApplied = false;
-        cooldownTimer = attackCooldown;
+        attackAnimationStarted = attackType != AttackType.Melee;
+        attackFacingDirection = facingDirection;
+        attackAnimationLength = .25f;
+        // Melee cooldown starts after recovery; ranged keeps its established firing cadence.
+        cooldownTimer = attackType == AttackType.Melee ? 0f : attackCooldown;
         StopMoving();
         SetState(EnemyState.Attack, true);
+        combatPresentation?.BeginWindup();
     }
 
     private void UpdateAttack()
     {
         attackElapsed += Time.deltaTime;
-        if (!attackApplied && attackElapsed >= attackWindup)
+        if (!attackAnimationStarted && attackElapsed >= attackWindup)
+        {
+            attackAnimationStarted = true;
+            PlayAnimation("Attack");
+            if (animator != null && animator.runtimeAnimatorController != null)
+            {
+                animator.Update(0f);
+                attackAnimationLength = Mathf.Max(.25f, animator.GetCurrentAnimatorStateInfo(0).length);
+            }
+            combatPresentation?.BeginStrikeMotion();
+        }
+        float hitTime = attackWindup + (attackType == AttackType.Melee ? meleeStrikeDelay : 0f);
+        if (!attackApplied && attackElapsed >= hitTime)
         {
             attackApplied = true;
+            combatPresentation?.Strike();
             // Recheck at the hit frame so moving away or taking cover can avoid the attack.
-            if (CanAttack() && (TargetPosition().x - bodyCollider.bounds.center.x) * facingDirection >= -0.01f)
+            if (CanAttack() && (TargetPosition().x - bodyCollider.bounds.center.x) * attackFacingDirection >= -0.01f)
             {
                 if (attackType == AttackType.Ranged)
                     Shoot();
@@ -277,8 +312,14 @@ public class EnemyAIController : MonoBehaviour, ICombatable
                     playerTarget.GetComponentInParent<IActor>()?.TakeDamage(meleeDamage * damageMultiplier);
             }
         }
-        if (attackElapsed >= Mathf.Max(attackDuration, attackWindup))
+        float fullDuration = attackType == AttackType.Melee
+            ? Mathf.Max(attackDuration, Mathf.Max(hitTime + .15f, attackWindup + attackAnimationLength))
+            : Mathf.Max(attackDuration, attackWindup);
+        if (attackElapsed >= fullDuration)
+        {
+            if (attackType == AttackType.Melee) cooldownTimer = attackCooldown;
             SetState(EnemyState.Idle);
+        }
     }
 
     private void Shoot()
@@ -393,8 +434,16 @@ public class EnemyAIController : MonoBehaviour, ICombatable
         {
             EnemyState.Patrol => patrolAnimation,
             EnemyState.Chase => chaseAnimation,
+            EnemyState.Attack when attackType == AttackType.Melee => "Windup",
             _ => nextState.ToString()
         };
+        PlayAnimation(animationName);
+    }
+
+    private void PlayAnimation(string animationName)
+    {
+        if (animator == null || animator.runtimeAnimatorController == null) return;
+        if (animationName == "Windup" && !animator.HasState(0, Animator.StringToHash(animationName))) animationName = "Idle";
         int hash = Animator.StringToHash(animationName);
         if (animator.HasState(0, hash))
             animator.Play(hash, 0, 0f);
@@ -419,6 +468,8 @@ public class EnemyAIController : MonoBehaviour, ICombatable
             return;
         }
         attackApplied = true;
+        attackAnimationStarted = true;
+        combatPresentation?.CancelAttack();
         supportAnimationTimer = 0f;
         cooldownTimer = Mathf.Max(cooldownTimer, hurtDuration + 0.2f);
         hurtTimer = hurtDuration;
@@ -472,20 +523,9 @@ public class EnemyAIController : MonoBehaviour, ICombatable
         rb.linearVelocity = new Vector2(0f, flyingEnemy ? 0f : rb.linearVelocity.y);
     }
 
-    private void ApplyContactDamage()
-    {
-        if (!contactDamage || attackType != AttackType.Melee || !TargetAvailable() ||
-            Time.time < nextContactTime || targetCollider == null || !targetCollider.enabled) return;
-        ColliderDistance2D distance = bodyCollider.Distance(targetCollider);
-        if (!distance.isOverlapped && distance.distance > 0.015f) return;
-        PlayerController player = playerTarget.GetComponent<PlayerController>();
-        if (player == null || player.IsInvulnerable || player.MenuOpen) return;
-        nextContactTime = Time.time + 0.8f;
-        player.TakeDamageFrom(meleeDamage * damageMultiplier, bodyCollider.bounds.center);
-    }
-
     private void Die()
     {
+        combatPresentation?.CancelAttack();
         EnemySupportAura supportAura = GetComponent<EnemySupportAura>();
         if (supportAura != null)
             supportAura.enabled = false;

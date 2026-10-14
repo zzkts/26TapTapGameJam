@@ -12,12 +12,12 @@ public class BeginPanel : BasePanel
     {
         btnContinue.onClick.AddListener(() =>
         {
-            SceneManager.LoadSceneAsync("GameScene");
+            RunProgress.ContinueRun();
         });
-        btnContinue.interactable = false;
+        btnContinue.interactable = RunProgress.CanContinue;
         btnBegin.onClick.AddListener(() =>
         {
-            SceneManager.LoadSceneAsync("GameScene");
+            RunProgress.BeginNewRun();
         });
         btnSetting.onClick.AddListener(() =>
         {
@@ -27,5 +27,9 @@ public class BeginPanel : BasePanel
         {
             Application.Quit();
         });
+    }
+    private void OnEnable()
+    {
+        if (btnContinue != null) btnContinue.interactable = RunProgress.CanContinue;
     }
 }

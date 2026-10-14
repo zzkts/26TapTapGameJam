@@ -8,12 +8,13 @@ public class GeneChest : WorldInteractable
     public bool Opened { get; private set; }
     public override string Title => "基因冷库";
     public override string Detail => "开启后获得两份基因";
-    public override bool CanUse(PlayerController player) => !Opened && base.CanUse(player);
+    public override bool CanUse(PlayerController player) => !Opened && base.CanUse(player) && CompleteRewardState.IsAvailable(this);
     public override bool Interact(PlayerController player)
     {
         if (!CanUse(player) || genePool == null || genePool.Length == 0) return false;
         Opened = true;
         DropService.Spawn(genePool, 2, transform.position, pickupRange);
+        CompleteRewardState.Claim(this);
         TapGJ.WaterProjectiles.WaterVfx.SpawnSplash(transform.position, Color.white, 1f, Vector2.up);
         PlayOpeningSound();
         SpriteRenderer visual = GetComponentInChildren<SpriteRenderer>();

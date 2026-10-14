@@ -7,7 +7,7 @@ public class PlayerSupply : WorldInteractable
     [Min(0f)] public float healAmount = 4f;
     public override string Title => kind == SupplyKind.Health ? "恢复药剂" : "冲刺模块";
     public override string Detail => kind == SupplyKind.Health ? "恢复 " + healAmount + " 点生命" : "解锁地面与空中冲刺";
-    public override bool CanUse(PlayerController player) => base.CanUse(player) &&
+    public override bool CanUse(PlayerController player) => base.CanUse(player) && CompleteRewardState.IsAvailable(this) &&
         (kind == SupplyKind.Health ? player.hp < player.maxHp : !player.DashUnlocked);
     private void Awake()
     {
@@ -29,6 +29,7 @@ public class PlayerSupply : WorldInteractable
         if (!CanUse(player)) return false;
         if (kind == SupplyKind.Health) player.Heal(healAmount);
         else player.UnlockDash();
+        CompleteRewardState.Claim(this);
         gameObject.SetActive(false);
         Destroy(gameObject);
         return true;

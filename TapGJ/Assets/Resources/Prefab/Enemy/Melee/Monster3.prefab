@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 2036690411565022704}
   - component: {fileID: 7640549938295665830}
   - component: {fileID: 199936625821222296}
+  - component: {fileID: 3729468892253314895}
   m_Layer: 8
   m_Name: Monster3
   m_TagString: Untagged
@@ -147,8 +148,8 @@ MonoBehaviour:
   playerTarget: {fileID: 0}
   patrolRange: 3
   patrolWait: 1
-  patrolSpeed: 2
-  chaseSpeed: 3
+  patrolSpeed: 1.2
+  chaseSpeed: 2.2
   detectRange: 10
   loseTargetMultiplier: 1.25
   retreatFromPlayer: 0
@@ -159,12 +160,13 @@ MonoBehaviour:
     m_Bits: 16905
   obstacleCheckDistance: 0.18
   groundCheckDistance: 0.25
-  attackRange: 0.12
-  attackWindup: 0.25
-  attackDuration: 0.65
-  attackCooldown: 2
-  meleeDamage: 10
-  contactDamage: 1
+  attackRange: 0.45
+  attackWindup: 0.35
+  meleeStrikeDelay: 0.15
+  attackDuration: 0.85
+  attackCooldown: 0.95
+  meleeDamage: 2
+  contactDamage: 0
   damageMultiplier: 1
   firePoint: {fileID: 0}
   projectilePrefab: {fileID: 0}
@@ -217,6 +219,18 @@ MonoBehaviour:
   noDropProbability: 0.4
   oneDropProbability: 0.4
   pickupRange: 1.6
+--- !u!114 &3729468892253314895
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 258517094565828177}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fcb3179182cffc1409aca9f80d3f7167, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyCombatPresentation
 --- !u!1 &7561640473918211470
 GameObject:
   m_ObjectHideFlags: 0

@@ -21,6 +21,7 @@ public class PlayerHudPanel : BasePanel
     private int shownSlotCount = -1;
     public override void Init()
     {
+        if (inventory != null) inventory.Acquired -= OnAcquired;
         player = FindFirstObjectByType<PlayerController>();
         if (player == null) return;
         inventory = player.Genes; chain = player.GetComponent<GeneChainController>();
@@ -53,6 +54,7 @@ public class PlayerHudPanel : BasePanel
             if (slotIcons != null && i < slotIcons.Length)
             {
                 slotIcons[i].enabled = gene != null; slotIcons[i].sprite = PlayerUIStyle.GeneIcon(gene);
+                slotIcons[i].gameObject.SetActive(gene != null);
                 slotIcons[i].color = PlayerUIStyle.GeneColor(gene);
             }
             if (slotLevels != null && i < slotLevels.Length)
@@ -66,13 +68,17 @@ public class PlayerHudPanel : BasePanel
                 Outline rarity = slotFrames[i].GetComponent<Outline>();
                 if (rarity != null) rarity.enabled = gene != null && gene.Level > 1;
             }
-            if (slotWells != null && i < slotWells.Length) slotWells[i].enabled = gene != null;
+            if (slotWells != null && i < slotWells.Length)
+            { slotWells[i].enabled = gene != null; slotWells[i].gameObject.SetActive(gene != null); }
         }
         shownSlotCount = inventory.GenChain.Count;
     }
     protected override void Update()
     {
-        base.Update(); if (player == null) return;
+        base.Update();
+        // A scene may create or restore its player after the HUD's Start callback.
+        if (player == null) Init();
+        if (player == null) return;
         float dt = Mathf.Min(Time.unscaledDeltaTime, .05f);
         if (visualGroup != null) visualGroup.alpha = Mathf.MoveTowards(visualGroup.alpha, player.MenuOpen ? 0f : 1f, dt * 7f);
         float ratio = HealthRatio;

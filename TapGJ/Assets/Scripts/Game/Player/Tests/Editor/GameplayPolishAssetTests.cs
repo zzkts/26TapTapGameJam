@@ -47,10 +47,11 @@ public class GameplayPolishAssetTests
         {
             BeginPanel menu = scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<BeginPanel>(true)).Single();
             Assert.That(menu.gameObject.activeInHierarchy, Is.True);
-            Assert.That(menu.btnContinue.interactable, Is.False);
+            Assert.That(menu.btnContinue, Is.Not.Null);
             Canvas canvas = menu.GetComponentInParent<Canvas>();
-            Assert.That(canvas.transform.Find("BasePanel").gameObject.activeSelf, Is.False);
-            Assert.That(canvas.GetComponent<DialogScripts.DialogKeyboard>().enabled, Is.False);
+            Assert.That(canvas.GetComponentInChildren<DialogScripts.DialogKeyboard>(true), Is.Null);
+            Assert.That(menu.GetComponent<BeginScenePresentation>(), Is.Not.Null);
+            Assert.That(menu.GetComponent<BeginScenePresentation>().hero.sprite, Is.Not.Null);
             Assert.That(menu.transform.Find("Game Title"), Is.Not.Null);
             Assert.That(scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<SettingPanel>(true)).Count(), Is.EqualTo(1));
         }

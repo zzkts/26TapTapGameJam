@@ -89,6 +89,7 @@ public static class PlayerUIPolishSetup
             hud.slotWells[i] = Draw("Gene Well " + i, card, x + 13, 51, 33, 33, PlayerUIStyle.Ink, circle);
             hud.slotWells[i].enabled = false;
             hud.slotIcons[i] = Draw("Gene Icon " + i, card, x + 15, 53, 29, 29, PlayerUIStyle.Mint, null);
+            hud.slotIcons[i].enabled = false;
             hud.slotLevels[i] = Label("Gene Level " + i, card, x + 43, 79, 16, 18, 11, (i + 1).ToString(), Muted, TextAnchor.MiddleCenter);
             hud.slotTexts[i] = Label("Gene " + i, card, x - 7, 17, 73, 19, 12, "空槽", Muted, TextAnchor.MiddleCenter);
         }

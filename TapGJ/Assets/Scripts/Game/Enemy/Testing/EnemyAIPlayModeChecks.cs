@@ -62,12 +62,12 @@ public class EnemyAIPlayModeChecks : MonoBehaviour, IActor
         CreateFixture(mouseSource, 1f);
         yield return new WaitForSeconds(0.15f);
         Check(enemy.State == EnemyAIController.EnemyState.Attack && target.HitCount == 0, "Melee has a windup");
-        yield return new WaitForSeconds(0.3f);
-        Check(target.HitCount == 1 && Mathf.Approximately(target.DamageTaken, 1f), "Melee damages once at the hit frame");
+        yield return new WaitForSeconds(0.45f);
+        Check(target.HitCount == 1 && Mathf.Approximately(target.DamageTaken, 2f), "Melee damages two HP once at the hit frame");
         Check(CountBullets() == 0, "Melee never spawns projectiles");
-        yield return new WaitForSeconds(0.55f);
+        yield return new WaitForSeconds(0.7f);
         Check(target.HitCount == 1, "Melee cooldown prevents continuous contact damage");
-        yield return new WaitForSeconds(0.95f);
+        yield return new WaitForSeconds(1.35f);
         Check(target.HitCount == 2, "Melee repeats after cooldown");
 
         CreateFixture(mouseSource, 1f);
@@ -78,13 +78,14 @@ public class EnemyAIPlayModeChecks : MonoBehaviour, IActor
 
         CreateFixture(mouseSource, 1f);
         yield return new WaitForSeconds(0.12f);
+        float healthBeforeHit = enemy.Hp;
         enemy.TakeDamage(0.5f);
-        Check(enemy.State == EnemyAIController.EnemyState.Hurt && Mathf.Approximately(enemy.Hp, 2.5f), "Hurt state and health update");
+        Check(enemy.State == EnemyAIController.EnemyState.Hurt && Mathf.Approximately(enemy.Hp, healthBeforeHit - .5f), "Hurt state and health update");
         yield return new WaitForSeconds(0.5f);
         Check(target.HitCount == 0, "Hurt cancels pending melee damage");
         enemy.TakeDamage(100f);
         Check(enemy.IsDead && !enemy.GetComponent<Collider2D>().enabled && !enemy.GetComponent<Rigidbody2D>().simulated, "Death disables combat and physics");
-        Check(enemy.GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Dead"), "Death animation plays");
+        Check(enemy.GetComponentInChildren<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Dead"), "Death animation plays");
         yield return new WaitForSeconds(1f);
         Check(enemy == null, "Dead enemy is removed after animation");
 
