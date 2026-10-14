@@ -16,11 +16,10 @@ TagManager:
   - Enemy
   - Wall
   - Bullet
-  - 
-  - 
-  - 
-  - 
-  - 
+  - EnemyBullet
+  - PlayerInvulnerable
+  - Pickup
+  - OneWayPlatform
   - 
   - 
   - 
