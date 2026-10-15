@@ -20,8 +20,14 @@ MonoBehaviour:
   rollCooldown: 2
   rollSpeedMultiplier: 1.5
   rollDuration: 0.2
-  coyoteTime: 0.1
-  jumpBuffer: 0.1
+  coyoteTime: 0.14
+  jumpBuffer: 0.16
+  heldJumpGravity: 0.85
+  fallingGravity: 1.2
+  pulseCooldown: 2
+  pulseRadius: 3.2
+  pulseImpulse: 2.8
+  pulseFieldShift: 0.75
   invulnerabilityTime: 0.8
   hurtTime: 0.22
   hitStopTime: 0.1

@@ -21,6 +21,7 @@ public sealed class CompleteWorldRunthrough : MonoBehaviour
     private Keyboard keyboard, previousKeyboard;
     private Mouse mouse, previousMouse;
     private InputSettings.BackgroundBehavior originalBackground;
+    private InputSettings.EditorInputBehaviorInPlayMode originalEditorInput;
     private Component story;
     private MethodInfo validationMode;
 
@@ -38,6 +39,8 @@ public sealed class CompleteWorldRunthrough : MonoBehaviour
         if (player == null) { Results.Add("FAIL: no playable complete chapter"); Finish(); return; }
         previousKeyboard = Keyboard.current; previousMouse = Mouse.current;
         originalBackground = InputSystem.settings.backgroundBehavior;
+        originalEditorInput = InputSystem.settings.editorInputBehaviorInPlayMode;
+        InputSystem.settings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
         InputSystem.settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
         keyboard = InputSystem.AddDevice<Keyboard>(); mouse = InputSystem.AddDevice<Mouse>();
         foreach (Behaviour behaviour in Object.FindObjectsByType<Behaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None))
@@ -239,6 +242,7 @@ public sealed class CompleteWorldRunthrough : MonoBehaviour
         if (mouse != null && mouse.added) InputSystem.RemoveDevice(mouse);
         previousKeyboard?.MakeCurrent(); previousMouse?.MakeCurrent();
         InputSystem.settings.backgroundBehavior = originalBackground;
+        InputSystem.settings.editorInputBehaviorInPlayMode = originalEditorInput;
         if (player != null) { player.SetInvincible(false); player.SetMenuOpen(false); }
         foreach (Behaviour behaviour in suspended) if (behaviour != null) behaviour.enabled = true;
         validationMode?.Invoke(story, new object[] { false });

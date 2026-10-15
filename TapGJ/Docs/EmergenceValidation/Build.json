@@ -1,0 +1,16 @@
+{
+  "success": true,
+  "message": "Build Succeeded.",
+  "data": {
+    "job_id": "build-e3fd6f5d2a",
+    "result": "succeeded",
+    "platform": "StandaloneWindows64",
+    "output_path": "D:/My/TapTap/26TapTapGameJam/TapGJ/Builds/WaterDrain/WaterDrain.exe",
+    "started_at": "2026-10-14T13:46:28.4669348Z",
+    "duration_seconds": 15.4526199,
+    "completed_at": "2026-10-14T13:46:43.9195547Z",
+    "total_size_mb": 559.46,
+    "errors": 0,
+    "warnings": 0
+  }
+}

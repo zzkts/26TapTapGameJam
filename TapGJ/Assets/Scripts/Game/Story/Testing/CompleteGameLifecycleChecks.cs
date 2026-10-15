@@ -19,6 +19,7 @@ public sealed class CompleteGameLifecycleChecks : MonoBehaviour
     public static string Stage { get; private set; }
     private Keyboard keyboard, previousKeyboard;
     private InputSettings.BackgroundBehavior originalBackground;
+    private InputSettings.EditorInputBehaviorInPlayMode originalEditorInput;
     private readonly List<Behaviour> suspended = new List<Behaviour>();
     private PlayerController player;
     private StorySession story;
@@ -42,6 +43,8 @@ public sealed class CompleteGameLifecycleChecks : MonoBehaviour
         hadEndings = PlayerPrefs.HasKey(RunProgress.EndingKey); previousEndings = PlayerPrefs.GetInt(RunProgress.EndingKey);
         PlayerPrefs.DeleteKey(RunProgress.SaveKey); PlayerPrefs.DeleteKey(RunProgress.EndingKey); PlayerPrefs.Save();
         previousKeyboard = Keyboard.current; originalBackground = InputSystem.settings.backgroundBehavior;
+        originalEditorInput = InputSystem.settings.editorInputBehaviorInPlayMode;
+        InputSystem.settings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
         InputSystem.settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
         keyboard = InputSystem.AddDevice<Keyboard>(); StartCoroutine(Execute());
     }
@@ -243,6 +246,7 @@ public sealed class CompleteGameLifecycleChecks : MonoBehaviour
         if (cleaned) return; cleaned = true;
         if (keyboard != null && keyboard.added) InputSystem.RemoveDevice(keyboard); previousKeyboard?.MakeCurrent();
         InputSystem.settings.backgroundBehavior = originalBackground;
+        InputSystem.settings.editorInputBehaviorInPlayMode = originalEditorInput;
         foreach (Behaviour item in suspended) if (item != null) item.enabled = true;
         if (preservePrefs)
         {

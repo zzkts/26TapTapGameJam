@@ -20,6 +20,7 @@ public sealed class EmergencePlayModeChecks:MonoBehaviour
     private EmergenceProgress progress;
     private Keyboard keyboard,previousKeyboard;
     private InputSettings.BackgroundBehavior originalBackground;
+    private InputSettings.EditorInputBehaviorInPlayMode originalEditorInput;
     private readonly List<Behaviour> suspended=new();
     private bool hadSave,hadEndings,cleaned;
     private string previousSave;
@@ -36,6 +37,8 @@ public sealed class EmergencePlayModeChecks:MonoBehaviour
         hadSave=PlayerPrefs.HasKey(RunProgress.SaveKey);previousSave=PlayerPrefs.GetString(RunProgress.SaveKey);
         hadEndings=PlayerPrefs.HasKey(RunProgress.EndingKey);previousEndings=PlayerPrefs.GetInt(RunProgress.EndingKey);
         previousKeyboard=Keyboard.current;originalBackground=InputSystem.settings.backgroundBehavior;
+        originalEditorInput=InputSystem.settings.editorInputBehaviorInPlayMode;
+        InputSystem.settings.editorInputBehaviorInPlayMode=InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
         InputSystem.settings.backgroundBehavior=InputSettings.BackgroundBehavior.IgnoreFocus;keyboard=InputSystem.AddDevice<Keyboard>();
         EmergenceReactions.Happened+=OnReaction;Bind();StartCoroutine(Execute());
     }
@@ -108,13 +111,13 @@ public sealed class EmergencePlayModeChecks:MonoBehaviour
 
         Stage="inertia and shared weight";
         Teleport(new Vector2(189,1));EmergenceBody crate=progress.GetComponentsInChildren<EmergenceBody>().First(b=>b.Has(EmergenceMaterial.Movable));
-        float before=crate.transform.position.x;yield return Shoot(crate,E_ElementType.None,false);yield return Wait(.1f);
-        Check(crate.transform.position.x>before+.02f||crate.GetComponent<Rigidbody2D>().linearVelocity.x>.2f,"A real water projectile transfers physical momentum to the crate");
-        Rigidbody2D box=crate.GetComponent<Rigidbody2D>();box.position=new Vector2(197.5f,.1f);box.linearVelocity=Vector2.zero;Physics2D.SyncTransforms();
+        float before=crate.transform.position.x;yield return Shoot(crate,E_ElementType.None,false,true);yield return Wait(.1f);
+        Check(Mathf.Abs(crate.transform.position.x-before)>.02f||Mathf.Abs(crate.GetComponent<Rigidbody2D>().linearVelocity.x)>.2f,"A real water projectile transfers physical momentum to the crate");
+        Rigidbody2D box=crate.GetComponent<Rigidbody2D>();box.position=new Vector2(196.7f,.1f);box.linearVelocity=Vector2.zero;Physics2D.SyncTransforms();
         yield return Shoot(crate,E_ElementType.None,false);yield return Wait(.3f);
         EmergencePlate plate=progress.GetComponentInChildren<EmergencePlate>();
         Check(plate.Pressed&&plate.gate.IsOpen,"The pushed crate's actual mass actuates the pressure gate");
-        EmergenceReactions.Emit("inertia",crate.transform.position,"水球冲量 → 箱体移动 → 重量阀板",1);
+        Check(progress.Discoveries.ContainsKey("inertia"),"Actual pressure activation records the weight rule without a test-injected discovery");
         box.position=new Vector2(195,1);box.linearVelocity=Vector2.zero;Teleport(new Vector2(198,1));yield return Wait(.3f);
         Check(plate.Pressed,"The same pressure rule also accepts the player's body");
         Teleport(new Vector2(208,1));yield return Wait(.3f);yield return Press(Key.E);
@@ -139,6 +142,19 @@ public sealed class EmergencePlayModeChecks:MonoBehaviour
             Check(RunProgress.ExperimentMode&&RunProgress.RunSeed==seed&&progress.CompletionCount==0,"A trial starts a fresh topology with the requested reproducible rule seed");
             Check(progress.GetComponentsInChildren<EmergenceTrialEnemy>().Length>=3,"Trial rules add their own encounter composition");
             if(seed%3==0)Check(progress.GetComponentInChildren<EnvironmentElementSource>().interval==1.1f,"The high-frequency trial changes the actual electrical pulse cadence");
+            if(seed%3==0)
+            {
+                Teleport(new Vector2(106,4.95f));yield return Wait(.3f);yield return Press(Key.E);
+                Check(progress.IsComplete("duct")&&!progress.GetComponentsInChildren<EmergenceBody>().Where(b=>b.Has(EmergenceMaterial.Conductive)).OrderBy(b=>b.transform.position.x).Last().Charged,"The upper calibration solves a fresh district without completing the conductive chain");
+                Teleport(new Vector2(94.8f,2.4f));yield return Wait(.15f);Keys(Key.D,Key.Space);yield return Wait(.7f);Keys();yield return Wait(.2f);
+                Check(player.transform.position.x>96.3f,"The former ladder location no longer blocks platform traversal");
+                Teleport(new Vector2(161,2.4f));yield return Wait(.3f);yield return Press(Key.E);
+                EmergenceBody untouched=progress.GetComponentsInChildren<EmergenceBody>().Single(b=>b.Has(EmergenceMaterial.Fragile));
+                Check(progress.IsComplete("spores")&&!untouched.Broken,"The accessible upper specimen route solves the colony district without destroying its barrier");
+                RunSaveData alternate=StorySession.Current.Capture();RunProgress.Write(alternate);oldScene=SceneManager.GetActiveScene().handle;
+                RunProgress.ContinueRun();yield return NewChapter(oldScene);
+                Check(progress.IsComplete("spores")&&!progress.GetComponentsInChildren<EmergenceBody>().Single(b=>b.Has(EmergenceMaterial.Fragile)).Broken,"Continue preserves a bypassed structure separately from the solved route");
+            }
             if(seed%3==1)Check(progress.GetComponentsInChildren<EmergenceBody>().First(b=>b.Has(EmergenceMaterial.Organic)).growthCooldown==9f,"The living-colony trial changes the actual biological regrowth interval");
             RunSaveData trialSave=StorySession.Current.Capture();Check(trialSave.experimentMode&&trialSave.runSeed==seed,"Trial mode and its rule seed enter the normal checkpoint snapshot");
         }
@@ -151,12 +167,13 @@ public sealed class EmergencePlayModeChecks:MonoBehaviour
         {if(Time.realtimeSinceStartup>deadline)throw new InvalidOperationException("Chapter reload timed out");yield return null;}
         yield return null;yield return null;Bind();yield return null;
     }
-    private IEnumerator Shoot(EmergenceBody target,E_ElementType element,bool fromAbove=true)
+    private IEnumerator Shoot(EmergenceBody target,E_ElementType element,bool fromAbove=true,bool fromRight=false)
     {
         BulletSnapshot shot=player.Weapon.CurrentShot.Copy();shot.element=element;shot.speed=12;shot.effectRadius=0;shot.splitCount=0;shot.pierceCount=0;shot.projectileCount=1;
         Vector2 center=target.GetComponent<Collider2D>().bounds.center;
-        Vector2 direction=fromAbove?Vector2.down:Vector2.right;
-        Vector2 origin=center-direction*1.5f;
+        Vector2 direction=fromAbove?Vector2.down:fromRight?Vector2.left:Vector2.right;
+        // Fire the initial crate probe from its clear side; its west side contains a real rat encounter.
+        Vector2 origin=center-direction*(fromAbove?1.5f:.6f);
         Projectile bullet=Object.Instantiate(shot.projectilePrefab,origin,Quaternion.identity).GetComponent<Projectile>();
         bullet.LaunchSnapshot(origin,direction,LayerMask.GetMask("Enemy"),player.transform,shot,new ShotSpawnBudget(1));
         yield return Wait(.22f);
@@ -173,6 +190,7 @@ public sealed class EmergencePlayModeChecks:MonoBehaviour
         if(cleaned)return;cleaned=true;
         EmergenceReactions.Happened-=OnReaction;
         if(keyboard!=null&&keyboard.added)InputSystem.RemoveDevice(keyboard);previousKeyboard?.MakeCurrent();InputSystem.settings.backgroundBehavior=originalBackground;
+        InputSystem.settings.editorInputBehaviorInPlayMode=originalEditorInput;
         foreach(Behaviour component in suspended)if(component!=null)component.enabled=true;
         if(player!=null){player.SetInvincible(false);player.SetMenuOpen(false);}
         StorySession.Current?.SetValidationMode(false);

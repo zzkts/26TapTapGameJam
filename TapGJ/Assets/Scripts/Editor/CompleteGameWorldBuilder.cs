@@ -307,6 +307,17 @@ public static class CompleteGameWorldBuilder
         Set(enemy, "patrolRange", range); Set(enemy, "detectRange", 7f); Set(enemy, "chaseSpeed", kind == 5 ? 2f : 1.7f);
         Set(enemy, "attackCooldown", kind == 6 ? 2.2f : 1.7f); Set(enemy, "bulletSpeed", 3.5f);
         Set(enemy, "obstacleMask", LayerMask.GetMask("Ground", "Wall", "OneWayPlatform"));
+        if (kind == 4)
+        {
+            // Healers stay with their squad. They never become a second contact attacker.
+            Set(enemy, "patrolSpeed", .6f); Set(enemy, "chaseEnemy", false);
+            Set(enemy, "contactDamage", false); Set(enemy, "meleeDamage", 0f);
+            EnemySupportAura aura = enemy.GetComponent<EnemySupportAura>();
+            if (aura == null) throw new InvalidOperationException("Monster4 is missing its healing aura.");
+            Set(aura, "healRadius", 6f); Set(aura, "healAmount", 20f);
+            Set(aura, "healCooldown", 5f); Set(aura, "maxTargets", 4);
+            Set(aura, "targetMask", LayerMask.GetMask("Enemy"));
+        }
         EnemyGeneDrop drop = obj.GetComponent<EnemyGeneDrop>();
         if (drop != null) Set(drop, "genePool", Resources.LoadAll<Modifier>("SO/Genes").Where(g => g.Element != E_ElementType.Electric).ToArray());
         return enemy;
@@ -315,7 +326,10 @@ public static class CompleteGameWorldBuilder
     {
         Enemy(3, 24f, .5f, 4f, 1.5f); Enemy(3, 34f, .5f, 5f, 2f);
         Enemy(6, 36f, 2.5f, 4f, 1f);
+        Enemy(4, 36.5f, 1.2f, 4f, .65f);
+        Sign("绿色连线正在治疗  ·  先打断治疗怪", new Vector2(34.5f, 4.1f));
         Enemy(5, 44f, .55f, 6f, 1.5f); Enemy(3, 51.5f, .5f, 5f, 1.5f);
+        Enemy(4, 48.8f, 2.7f, 5f, .65f);
         Enemy(6, 53f, 3.7f, 5f, 1f); Enemy(5, 62f, .55f, 6f, 1.5f);
         Enemy(3, 70.5f, .5f, 5f, 1.5f); Enemy(6, 75f, 3f, 5f, 1f);
         Enemy(5, 81.5f, .55f, 6f, 1.2f);
@@ -368,6 +382,7 @@ public static class CompleteGameWorldBuilder
         var serialized = new SerializedObject(target); SerializedProperty property = serialized.FindProperty(field);
         if (property == null) throw new InvalidOperationException(target.GetType().Name + "." + field);
         if (value is Object reference) property.objectReferenceValue = reference;
+        else if (value is bool flag) property.boolValue = flag;
         else if (value is float scalar) property.floatValue = scalar;
         else if (value is int integer) property.intValue = integer;
         else if (value is Modifier[] genes) { property.arraySize = genes.Length; for (int i = 0; i < genes.Length; i++) property.GetArrayElementAtIndex(i).objectReferenceValue = genes[i]; }
@@ -381,6 +396,17 @@ public static class CompleteGameWorldBuilder
         CompleteLevelFlow level = Object.FindFirstObjectByType<CompleteLevelFlow>();
         if (level == null) throw new InvalidOperationException("Complete chapter is missing.");
         Require(level.guardians.Length == 3 && level.guardians.All(g => g != null), "Three core guardians are assigned");
+        EnemySupportAura[] supportSquads = level.GetComponentsInChildren<EnemySupportAura>(true);
+        Require(supportSquads.Length >= 3 && supportSquads.Count(aura => aura.transform.position.x < 78f) == 2,
+            "Laboratory, ecology and spore districts retain their healing squads");
+        foreach (EnemySupportAura healer in supportSquads)
+        {
+            Require(healer.GetComponent<EnemyAIController>().IsSupport && healer.HealCooldown >= 5f && healer.HealRadius <= 6f,
+                "Each healer has a readable five-second support cadence and local squad radius");
+            Require(level.GetComponentsInChildren<EnemyAIController>(true).Any(ally => ally.gameObject.activeSelf &&
+                ally.gameObject != healer.gameObject && !ally.IsSupport && Vector2.Distance(ally.transform.position, healer.transform.position) < healer.HealRadius),
+                "Each healer begins within range of a living combat squad");
+        }
         Require(Object.FindObjectsByType<GeneEditStation>(FindObjectsSortMode.None).Length == 6, "Six gene terminals support repeated build decisions");
         Require(Object.FindObjectsByType<CompleteWorldExit>(FindObjectsSortMode.None).Length == 1, "The chapter has a guarded ending exit");
         Require(Object.FindObjectsByType<CompleteGeneSample>(FindObjectsSortMode.None).All(sample => sample.gene != null), "Fixed rewards reference actual gene assets");

@@ -15,7 +15,10 @@ public sealed class EmergencePlate:MonoBehaviour
             Rigidbody2D body=collider.attachedRigidbody;
             if(body!=null&&body.bodyType==RigidbodyType2D.Dynamic&&seen.Add(body))weight+=body.mass;
         }
+        bool previouslyPressed=Pressed;
         Pressed=weight>=requiredMass;gate?.SetPowered(Pressed);
+        if(Pressed&&!previouslyPressed)
+            EmergenceReactions.Emit("inertia",transform.position,"重量变化 → 阀板下压 → 回路开启",1);
         if(visual!=null)visual.color=Pressed?new Color(.5f,1f,.7f):new Color(.6f,.5f,.8f);
     }
 }

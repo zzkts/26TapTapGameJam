@@ -3,7 +3,8 @@ using System;
 public enum StoryBeat
 {
     Entrance, LabRecord, SampleWater, SampleFire, SamplePoison, Dash, Checkpoint,
-    GuardianGate, Core, Ecology, CoreArea, GuardianCleared, ExperimentRecord
+    GuardianGate, Core, Ecology, CoreArea, GuardianCleared, ExperimentRecord,
+    PhaseDistrict, SporeDistrict, FactoryDistrict
 }
 
 [Serializable]
@@ -71,6 +72,19 @@ public static class StoryContent
                     B("核心区封锁。异常样本不得进入。执行最终净化程序。"),
                     P("这张封锁令，比实验室建造的日期还早。它们害怕的，真的只是污染吗？"),
                     R("最后一座终端", "前方是核心守卫。先在安全区确认构筑、恢复生命，再进入战斗。常驻改造始终有效；属性阶段结束后，需要再次按右键。") };
+            case StoryBeat.PhaseDistrict:
+                return new[] {
+                    R("泵站记录", "我们切断了导线，却没能切断回流。水把原本孤立的东西重新接在一起。高处的检修节点也仍然能用。"),
+                    P("水球不只会击退它们。也许，我能改变这整个地方。"),
+                    R("探索提示", "解开三个区域中的任意两条通路，就能进入核心。试试让不同规则相遇；F 推动湿润箱体，S + F 吸回它们。") };
+            case StoryBeat.SporeDistrict:
+                return new[] {
+                    R("菌落观察", "少量的水让一个菌落苏醒。过了一会儿，附近的菌落也开始变化。没有谁在指挥它们。"),
+                    P("一件小事，竟然能传到这么远。我可以利用这条连锁，也可以从上方绕过去。") };
+            case StoryBeat.FactoryDistrict:
+                return new[] {
+                    R("工人便笺", "止回阀只认重量。是箱子、是人，还是路过的怪物，它从来分不清。别忘了把那边的控制台锁住。"),
+                    P("它们一直遵守同样的规则。换一种排列，结果就不一样了。") };
             case StoryBeat.GuardianGate:
                 return new[] {
                     B("三号回流阀禁止开启。核心守卫唤醒。净化目标：所有无法识别的生命。"),

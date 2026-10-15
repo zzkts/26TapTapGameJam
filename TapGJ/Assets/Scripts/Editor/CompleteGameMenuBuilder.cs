@@ -46,7 +46,7 @@ public static class CompleteGameMenuBuilder
         menu.btnTrial = Button("Backflow Trial",menu.transform,.13f,.275f,.53f,.345f,"回流试验 · 不同规则再来一局",new Color(.34f,.64f,.65f),21);
         menu.btnSetting = Button("Settings Button",menu.transform,.13f,.18f,.32f,.25f,"设置",PlayerUIStyle.Cream,22);
         menu.btnQuit = Button("Quit Button",menu.transform,.34f,.18f,.53f,.25f,"退出游戏",new Color(.51f,.41f,.69f),22);
-        Label("Control Hint",menu.transform,.135f,.115f,.55f,.17f,14,"A / D 移动 · 空格跳跃 · 鼠标射击\nE 交互 · 右键附魔 · TAB 涌现笔记",new Color(.77f,.77f,.85f));
+        Label("Control Hint",menu.transform,.135f,.115f,.55f,.17f,14,"空格跳跃 · E 交互 · 右键附魔\nF 推动湿箱 · S + F 吸回 · TAB 涌现笔记",new Color(.77f,.77f,.85f));
         Label("Jam Credit",menu.transform,.135f,.05f,.7f,.09f,13,"TapTap GameJam 2026  /  探索 · 重组 · 回流",new Color(.74f,.7f,.83f));
         BeginScenePresentation presentation = menuObj.AddComponent<BeginScenePresentation>();
         presentation.hero = Art("Drain Hero",menu.transform,new Vector2(.655f,.145f),new Vector2(.93f,.7f),null,Color.white);

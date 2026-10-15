@@ -131,6 +131,8 @@ public class Projectile : MonoBehaviour
             ? new OrbitMove(orbitRadius, orbitAngularSpeed)
             : new StraightMove();
         projectileMove.SetUp(this);
+        // Manual collider casts can run before the next simulation; apply the spawn scale now.
+        Physics2D.SyncTransforms();
     }
 
     /// <summary>

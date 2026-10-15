@@ -21,6 +21,7 @@ public class GameplayPolishPlayModeChecks : MonoBehaviour
     private Keyboard previousKeyboard;
     private Mouse previousMouse;
     private InputSettings.BackgroundBehavior previousBackground;
+    private InputSettings.EditorInputBehaviorInPlayMode previousEditorInput;
     private GameObject rig;
     private PlayerController player;
     private int rigIndex;
@@ -32,6 +33,8 @@ public class GameplayPolishPlayModeChecks : MonoBehaviour
         Results.Clear(); Running = true;
         previousKeyboard = Keyboard.current; previousMouse = Mouse.current;
         previousBackground = InputSystem.settings.backgroundBehavior;
+        previousEditorInput = InputSystem.settings.editorInputBehaviorInPlayMode;
+        InputSystem.settings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
         InputSystem.settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
         keyboard = InputSystem.AddDevice<Keyboard>(); mouse = InputSystem.AddDevice<Mouse>();
         foreach (Behaviour behaviour in Object.FindObjectsByType<Behaviour>(FindObjectsSortMode.None))
@@ -495,6 +498,7 @@ public class GameplayPolishPlayModeChecks : MonoBehaviour
         if (mouse != null) InputSystem.RemoveDevice(mouse);
         previousKeyboard?.MakeCurrent(); previousMouse?.MakeCurrent();
         InputSystem.settings.backgroundBehavior = previousBackground;
+        InputSystem.settings.editorInputBehaviorInPlayMode = previousEditorInput;
         foreach (Behaviour behaviour in suspended) if (behaviour != null) behaviour.enabled = true;
         suspended.Clear(); Time.timeScale = 1f;
     }

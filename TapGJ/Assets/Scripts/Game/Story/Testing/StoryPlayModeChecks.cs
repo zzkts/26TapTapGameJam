@@ -115,7 +115,10 @@ public sealed class StoryPlayModeChecks:MonoBehaviour
         PlayerController player=Object.Instantiate(Resources.Load<GameObject>("Prefab/Player/Player"),holder.transform).GetComponent<PlayerController>();
         GeneInventory inventory=player.GetComponent<GeneInventory>();
         Set(inventory,"genInventory",new List<Modifier>());Set(inventory,"genChain",new List<Modifier>());
-        holder.SetActive(true);player.GetComponent<Rigidbody2D>().gravityScale=0f;player.enabled=false;
+        holder.SetActive(true);player.enabled=false;
+        // Narrative fixtures intentionally have no locomotion; OnDisable restores production gravity.
+        Rigidbody2D body=player.GetComponent<Rigidbody2D>();body.bodyType=RigidbodyType2D.Kinematic;
+        body.constraints=RigidbodyConstraints2D.FreezeAll;body.interpolation=RigidbodyInterpolation2D.None;body.gravityScale=0f;
         foreach(Collider2D collider in player.GetComponentsInChildren<Collider2D>(true))collider.enabled=false;
         PlayerInteraction interaction=player.GetComponent<PlayerInteraction>();if(interaction!=null)interaction.enabled=false;
         return player;

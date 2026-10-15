@@ -44,6 +44,7 @@ public static class EmergenceWorldBuilder
             var collider=trigger.GetComponent<BoxCollider2D>();collider.isTrigger=true;collider.size=new Vector2(2.6f,3);
         }
         DuctDistrict();SporeDistrict();InertiaDistrict();Rewards();Encounters();
+        AddDistrictStory(80,StoryBeat.PhaseDistrict);AddDistrictStory(126,StoryBeat.SporeDistrict);AddDistrictStory(181,StoryBeat.FactoryDistrict);
         progress.coreGate=Gate("核心回流锁",222,0,5.5f,"gate-core");
         Sign("解开任意两条回流通路，再进入核心",new Vector2(220,4));
         foreach(GeneChest chest in root.GetComponentsInChildren<GeneChest>())chest.offerChoice=true;
@@ -56,7 +57,10 @@ public static class EmergenceWorldBuilder
         var emitter=new GameObject("裸露电源");emitter.transform.SetParent(root);emitter.transform.position=new Vector2(84.2f,.5f);
         var source=emitter.AddComponent<EnvironmentElementSource>();source.element=E_ElementType.Electric;source.radius=1;source.interval=2.4f;
         V("电源指示","crystal",new Vector2(84.2f,1),new Vector2(.6f,1.2f),4).color=PlayerUIStyle.Gold;
-        EmergenceGate sideGate=Gate("管网侧门",96,2.25f,2.2f,"gate-wire");
+        // A receiver belongs above the circuit, never between the player's jump platforms.
+        EmergenceGate sideGate=Gate("管网回流信标",91.4f,3.6f,1.2f,"gate-wire");
+        sideGate.barrier.isTrigger=true;
+        Sign("回流接收端",new Vector2(91.4f,5.15f));
         for(int i=0;i<5;i++)
         {
             var body=Body("导体 "+i,"crystal",new Vector2(85+i*1.6f,.2f),new Vector2(.6f,.8f),EmergenceMaterial.Conductive,false);
@@ -80,6 +84,7 @@ public static class EmergenceWorldBuilder
         EmergenceBody barrier=Body("脆弱隔板","metal_deck",new Vector2(153,0),new Vector2(.6f,2.1f),EmergenceMaterial.Fragile|EmergenceMaterial.Flammable,true);
         barrier.durability=8;barrier.completionId="spores";
         P("菌落观察一层",136,.75f,3);P("菌落观察二层",139.5f,1.5f,3);P("菌落观察廊",143.5f,2.25f,4);
+        P("隔板绕行起点",149.5f,.75f,2.7f);P("隔板绕行阶梯",151.8f,1.5f,2.7f);P("隔板绕行桥",154.2f,2.25f,3.4f);
         P("燃烧隔板绕行一层",157,.75f,3);P("菌落侧藏",160.5f,1.5f,3.2f);
         var alternative=CompleteGameWorldBuilder.AddItem("菌落标本台","gene_terminal",new Vector2(161,1.5f),new Vector2(.8f,1));
         var console=alternative.AddComponent<EmergenceConsole>();console.kind=EmergenceConsole.ConsoleKind.Calibration;console.completionId="spores";
@@ -97,10 +102,11 @@ public static class EmergenceWorldBuilder
         }
         var plateObject=new GameObject("重量阀板");plateObject.transform.SetParent(root);plateObject.transform.position=new Vector2(198,0);
         var plate=plateObject.AddComponent<EmergencePlate>();plate.visual=V("压板","metal_deck",new Vector2(198,.055f),new Vector2(1.8f,.11f),4);
-        plate.gate=Gate("重量回路门",202,0,2.1f,"gate-factory");
+        plate.gate=Gate("重量回路门",202,0,1.8f,"gate-factory");
         var leverObject=CompleteGameWorldBuilder.AddItem("止回控制台","core_gate",new Vector2(208,0),new Vector2(.9f,1.2f));
         var lever=leverObject.AddComponent<EmergenceConsole>();lever.kind=EmergenceConsole.ConsoleKind.BackflowSwitch;lever.completionId="factory";lever.gate=plate.gate;
-        P("惯性绕行一层",197,.75f,2.8f);P("惯性绕行二层",199.8f,1.5f,2.8f);P("惯性绕行廊",203,2.25f,3.8f);
+        // Keep the plate in exposed floor space, rather than under a one-way landing platform.
+        P("惯性绕行一层",200,.75f,2.8f);P("惯性绕行二层",202.5f,1.5f,2.8f);P("惯性绕行廊",205.5f,2.25f,3.8f);
         P("回流箱体观察",211,.75f,3);P("回流奖励台",214,1.5f,3);
     }
     private static void Rewards()
@@ -137,9 +143,15 @@ public static class EmergenceWorldBuilder
         var obj=new GameObject(name);obj.transform.SetParent(root);obj.transform.position=new Vector2(x,bottom);obj.layer=LayerMask.NameToLayer("Wall");
         var gate=obj.AddComponent<EmergenceGate>();gate.persistentId=id;
         var collider=obj.AddComponent<BoxCollider2D>();collider.size=new Vector2(.55f,height);collider.offset=Vector2.up*height*.5f;gate.barrier=collider;
-        gate.artwork=CompleteGameWorldBuilder.AddVisual(name+"面板",obj.transform,"pipe_horizontal",new Vector2(x,bottom+height*.5f),new Vector2(.6f,height),4);return gate;
+        gate.artwork=CompleteGameWorldBuilder.AddVisual(name+"面板",obj.transform,"core_gate",new Vector2(x,bottom+height*.5f),new Vector2(.7f,height),4);return gate;
     }
     private static void P(string name,float x,float y,float width)=>CompleteGameWorldBuilder.AddPlatform(name,x,y,width);
+    private static void AddDistrictStory(float x,StoryBeat beat)
+    {
+        var obj=new GameObject("区域观察 "+beat);obj.transform.SetParent(root);obj.transform.position=new Vector2(x,1);
+        var trigger=obj.AddComponent<StoryTrigger>();trigger.beat=beat;trigger.triggerId="emergence-story-"+beat;
+        var collider=obj.GetComponent<BoxCollider2D>();collider.isTrigger=true;collider.size=new Vector2(1.5f,5);
+    }
     private static void Sign(string text,Vector2 at)=>CompleteGameWorldBuilder.AddSign(text,at);
     private static SpriteRenderer V(string name,string key,Vector2 at,Vector2 size,int order)=>CompleteGameWorldBuilder.AddVisual(name,root,key,at,size,order);
 }

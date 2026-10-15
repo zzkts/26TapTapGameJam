@@ -40,6 +40,8 @@ public static class PlayerUIPolishSetup
             label.font = font;
             label.resizeTextForBestFit = false;
         }
+        GeneEditPanel geneEditor = Object.FindFirstObjectByType<GeneEditPanel>(FindObjectsInactive.Include);
+        if (geneEditor != null) GeneEditorLayoutPolish.Rebuild(geneEditor);
         EditorUtility.SetDirty(hud);
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);

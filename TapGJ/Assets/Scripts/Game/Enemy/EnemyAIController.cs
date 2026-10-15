@@ -145,8 +145,8 @@ public class EnemyAIController : MonoBehaviour, ICombatable
         if (supportAnimationTimer > 0f)
         {
             supportAnimationTimer -= Time.deltaTime;
-            if (supportAnimationTimer <= 0f && State == EnemyState.Idle)
-                SetState(EnemyState.Idle, true);
+            if (supportAnimationTimer <= 0f)
+                SetState(State, true);
         }
         if (playerTarget == null && Time.time >= nextTargetSearch)
             FindPlayer();

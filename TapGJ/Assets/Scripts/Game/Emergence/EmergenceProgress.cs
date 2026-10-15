@@ -28,7 +28,7 @@ public sealed class EmergenceProgress:MonoBehaviour
         foreach(EmergenceGate gate in GetComponentsInChildren<EmergenceGate>(true))
             if(IsComplete(gate.persistentId))gate.OpenPermanently();
         foreach(EmergenceBody body in GetComponentsInChildren<EmergenceBody>(true))
-            if(body.Has(EmergenceMaterial.Fragile)&&IsComplete(body.completionId))body.RestoreBroken();
+            if(body.Has(EmergenceMaterial.Fragile)&&StorySession.Current.WasTriggerCompleted("structure:"+body.completionId))body.RestoreBroken();
         if(CompletionCount>=2||StorySession.Current.GuardianCleared)coreGate?.OpenPermanently();
         EmergenceUI.Ensure(this);
         if(RunProgress.ExperimentMode)ApplyVariation();

@@ -4,12 +4,14 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
+[DefaultExecutionOrder(-350)]
 public class GeneEditPanel : BasePanel
 {
     public Font font;
     public Button[] slotButtons;
     public RectTransform inventoryContent;
     public Text detail, rotation, inventoryCount;
+    public Text selectedSlotLabel, buildHint, inventoryHint;
     public Button confirmButton, cancelButton, removeButton, leftButton, rightButton;
     public Button[] filterButtons;
     public Image detailIcon;
@@ -57,8 +59,9 @@ public class GeneEditPanel : BasePanel
         if (owner == null || owner.MenuOpen || terminal == null || !terminal.CanUse(owner)) return;
         player = owner; station = terminal; inventory = owner.Genes;
         if (inventory == null) return;
-        draft = inventory.CopyChain(); selected = 0;
+        draft = inventory.CopyChain(); selected = 0; filter = 0;
         player.SetMenuOpen(true); UIManager.Instance.ShowPanel(gameObject);
+        transform.SetAsLastSibling();
         EnsureSlotCount(draft.Length); StyleControls(); RebuildInventory(); Refresh();
         ScrollRect scroll = inventoryContent.GetComponentInParent<ScrollRect>();
         if (scroll != null) scroll.verticalNormalizedPosition = 1f;
@@ -71,8 +74,11 @@ public class GeneEditPanel : BasePanel
         {
             resized[i] = i < slotButtons.Length ? slotButtons[i] : Instantiate(slotButtons[0], slotButtons[0].transform.parent);
             RectTransform rect = resized[i].GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.12f + i * 0.75f / count, 0.205f);
-            rect.anchorMax = new Vector2(0.12f + (i + 1) * 0.75f / count - 0.012f, 0.335f);
+            int columns = 3;
+            int rows = Mathf.CeilToInt(count / (float)columns);
+            float width = .46f / columns, height = .255f / rows;
+            rect.anchorMin = new Vector2(.49f + (i % columns) * width, .73f - (i / columns + 1) * height);
+            rect.anchorMax = new Vector2(.49f + (i % columns + 1) * width - .012f, .73f - (i / columns) * height - .015f);
             rect.offsetMin = rect.offsetMax = Vector2.zero; resized[i].gameObject.SetActive(true);
         }
         for (int i = count; i < slotButtons.Length; i++) Destroy(slotButtons[i].gameObject);
@@ -131,7 +137,7 @@ public class GeneEditPanel : BasePanel
             rows.Add(new InventoryRow { gene = gene, instanceNumber = index + 1, border = background, surface = surface, state = state });
             row.onClick.AddListener(() => Equip(index));
         }
-        inventoryCount.text = "基因库存  " + shown;
+        inventoryCount.text = "基因库存  ·  " + shown;
         if (shown == 0)
         {
             Text empty = GameplayUIFactory.Label("Empty Inventory", inventoryContent, Vector2.zero, Vector2.one,
@@ -164,27 +170,37 @@ public class GeneEditPanel : BasePanel
             Modifier gene = draft[i];
             Text label = slotButtons[i].transform.Find("Label").GetComponent<Text>();
             label.text = gene == null ? "空槽" : gene.Name;
-            label.color = gene == null ? new Color(.76f,.73f,.87f) : PlayerUIStyle.Cream;
+            label.color = gene == null ? new Color(.72f,.70f,.80f) : PlayerUIStyle.Cream;
             label.fontSize = gene != null && gene.Name.Length > 5 ? 16 : 18;
-            label.rectTransform.anchorMin = new Vector2(.10f,.10f);
-            label.rectTransform.anchorMax = new Vector2(.90f,.35f);
+            label.alignment = TextAnchor.MiddleLeft;
+            label.rectTransform.anchorMin = new Vector2(.34f,.34f);
+            label.rectTransform.anchorMax = new Vector2(.95f,.76f);
             Transform face = slotButtons[i].transform.Find("Gene Face");
             if (face != null)
             {
                 face.gameObject.SetActive(gene != null);
                 Image icon = face.GetComponent<Image>(); icon.sprite = PlayerUIStyle.GeneIcon(gene);
                 icon.color = PlayerUIStyle.GeneColor(gene); icon.preserveAspect = true;
-                icon.rectTransform.anchorMin = new Vector2(.34f,.42f);
-                icon.rectTransform.anchorMax = new Vector2(.66f,.82f);
+                icon.rectTransform.anchorMin = new Vector2(.075f,.25f);
+                icon.rectTransform.anchorMax = new Vector2(.265f,.75f);
             }
             Transform well = slotButtons[i].transform.Find("Slot Well");
-            if (well != null) well.gameObject.SetActive(gene != null);
-            slotButtons[i].GetComponent<Image>().color = i == selected ? PlayerUIStyle.Mint : new Color(.9f,.85f,1f);
+            if (well != null) well.gameObject.SetActive(true);
+            Transform emptyGlyph = slotButtons[i].transform.Find("Empty Glyph");
+            if (emptyGlyph != null) emptyGlyph.gameObject.SetActive(gene == null);
+            Transform slotState = slotButtons[i].transform.Find("Slot State");
+            if (slotState != null)
+            {
+                Text state = slotState.GetComponent<Text>();
+                state.text = gene == null ? i == selected ? "选中 · 点击库存装入" : "点击选择此槽" : gene.IsAttribute ? "属性 · 依次附魔" : "改造 · 常驻生效";
+                state.color = i == selected ? PlayerUIStyle.Mint : new Color(.65f,.63f,.74f);
+            }
+            slotButtons[i].GetComponent<Image>().color = i == selected ? new Color(.21f,.29f,.34f) : PlayerUIStyle.Ink;
             Outline outline = slotButtons[i].GetComponent<Outline>();
             outline.enabled = i == selected || gene != null && gene.Level > 1;
             outline.effectColor = i == selected ? PlayerUIStyle.Mint : PlayerUIStyle.Gold;
             Text number = slotButtons[i].transform.Find("Slot Number").GetComponent<Text>();
-            number.text = (i + 1).ToString("00"); number.color = i == selected ? PlayerUIStyle.Mint : PlayerUIStyle.Cream;
+            number.text = (i + 1).ToString("00"); number.color = i == selected ? PlayerUIStyle.Mint : new Color(.60f,.58f,.70f);
             Text level = slotButtons[i].transform.Find("Level Mark").GetComponent<Text>();
             level.text = gene != null && gene.Level > 1 ? "高" : "";
             if (gene != null && gene.IsAttribute) sequence.Add(gene.Name);
@@ -200,9 +216,12 @@ public class GeneEditPanel : BasePanel
             row.state.color = occupied >= 0 ? PlayerUIStyle.Mint : new Color(.73f,.72f,.82f);
         }
         Modifier selectedGene = draft[selected];
-        detail.text = selectedGene == null ? "槽位 " + (selected + 1).ToString("00") + " · 等待装配\n点击左页基因装入此槽\n确认后才会应用构筑" :
+        if (selectedSlotLabel != null) selectedSlotLabel.text = "槽位 " + (selected + 1).ToString("00") + "  ·  " + (selectedGene == null ? "等待装配" : selectedGene.Name);
+        detail.text = selectedGene == null ? "点击左侧库存，将基因装入此槽。\n属性会按槽位顺序附魔，改造同时生效。" :
+            selectedSlotLabel == null ?
             selectedGene.Name + "\n" + (selectedGene.IsAttribute ? "属性 · 附魔 " + selectedGene.EnchantDuration + " 秒" : "改造 · 常驻生效") +
-            "\n" + selectedGene.Desc;
+            "\n" + selectedGene.Desc :
+            (selectedGene.IsAttribute ? "属性 · 每次附魔 " + selectedGene.EnchantDuration + " 秒" : "改造 · 装配后常驻生效") + "\n" + selectedGene.Desc;
         detail.color = PlayerUIStyle.Cream;
         if (detailIcon != null)
         {
@@ -212,20 +231,25 @@ public class GeneEditPanel : BasePanel
         }
         if (detailLevel != null)
         {
-            detailLevel.text = selectedGene == null ? "选择基因开始构筑" : selectedGene.Level > 1 ? "高级基因 · 完成进化" : "初级基因  " + selectedGene.Copies + " / " + inventory.EvolutionCopies;
-            detailLevel.color = selectedGene != null && selectedGene.Level > 1 ? new Color(.58f,.33f,.12f) : PlayerUIStyle.Ink;
+            detailLevel.text = selectedGene == null ? "选择与装配仍是预览；确认后才应用" : selectedGene.Level > 1 ? "高级基因 · 完成进化" : "进化进度  " + selectedGene.Copies + " / " + inventory.EvolutionCopies + "  ·  收集同名基因可进化";
+            detailLevel.color = selectedGene != null && selectedGene.Level > 1 ? PlayerUIStyle.Gold : new Color(.70f,.68f,.79f);
         }
         if (evolutionSegments != null) for (int i = 0; i < evolutionSegments.Length; i++)
         {
             evolutionSegments[i].enabled = selectedGene != null;
             evolutionSegments[i].color = selectedGene != null && (selectedGene.Level > 1 || selectedGene.Copies > i + 1) ?
-                selectedGene.Level > 1 ? PlayerUIStyle.Gold : new Color(.16f,.68f,.51f) : new Color(.3f,.25f,.4f,.22f);
+                selectedGene.Level > 1 ? PlayerUIStyle.Gold : PlayerUIStyle.Mint : new Color(.39f,.34f,.52f);
         }
-        rotation.fontSize = 18; rotation.color = PlayerUIStyle.Ink;
-        rotation.text = "属性轮换  " + (sequence.Count == 0 ? "无 · 改造始终生效" : string.Join("  →  ", sequence)) +
-            (sequence.Count == 0 ? "" : "\n右键逐次开启 · 整链重载 " + player.GetComponent<GeneChainController>().reloadDuration + " 秒") +
-            "\n" + GeneBuildAnalysis.Describe(draft);
-        rotation.fontSize = 15;
+        rotation.fontSize = 17; rotation.color = PlayerUIStyle.Cream;
+        rotation.text = "附魔顺序  " + (sequence.Count == 0 ? "基础水弹 · 未装配属性" : string.Join("  →  ", sequence)) +
+            (sequence.Count == 0 ? "" : "\n右键逐次开启 · 整链重载 " + player.GetComponent<GeneChainController>().reloadDuration + " 秒");
+        if (buildHint != null) buildHint.text = GeneBuildAnalysis.Describe(draft);
+        else rotation.text += "\n" + GeneBuildAnalysis.Describe(draft);
+        if (inventoryHint != null)
+        {
+            int equipped = 0; foreach (Modifier gene in draft) if (gene != null) equipped++;
+            inventoryHint.text = "已装配  " + equipped + " / " + draft.Length + "\n同一实例只能占据一格；同名的独立实例可分别装配。\n探索冷库与敌人掉落，扩展你的组合。";
+        }
         leftButton.interactable = selected > 0; rightButton.interactable = selected + 1 < draft.Length;
         removeButton.interactable = selectedGene != null;
         if (filterButtons != null) for (int i = 0; i < filterButtons.Length; i++)
@@ -243,29 +267,41 @@ public class GeneEditPanel : BasePanel
         for (int i = 0; i < slotButtons.Length; i++)
         {
             Button button = slotButtons[i];
+            Image background = button.GetComponent<Image>();
+            background.sprite = PlayerUIStyle.Rounded; background.type = Image.Type.Sliced;
+            background.color = PlayerUIStyle.Ink;
             Outline outline = button.GetComponent<Outline>();
             if (outline == null) outline = button.gameObject.AddComponent<Outline>();
-            outline.effectDistance = new Vector2(3f,-3f); outline.useGraphicAlpha = true;
+            outline.effectDistance = new Vector2(2f,-2f); outline.useGraphicAlpha = true;
             if (button.transform.Find("Slot Well") == null)
             {
                 Image well = GameplayUIFactory.Image("Slot Well", button.transform,
-                    new Vector2(.24f,.27f), new Vector2(.76f,.83f), PlayerUIStyle.Ink);
-                well.sprite = PlayerUIStyle.Circle;
+                    new Vector2(.055f,.20f), new Vector2(.285f,.80f), PlayerUIStyle.Violet);
+                well.sprite = PlayerUIStyle.Circle; well.preserveAspect = true;
                 well.transform.SetSiblingIndex(1);
             }
             if (button.transform.Find("Slot Number") == null)
-                GameplayUIFactory.Label("Slot Number", button.transform, new Vector2(.08f,.76f),
-                    new Vector2(.32f,.97f), font, 14, "", TextAnchor.MiddleCenter);
+                GameplayUIFactory.Label("Slot Number", button.transform, new Vector2(.035f,.77f),
+                    new Vector2(.20f,.98f), font, 12, "", TextAnchor.MiddleLeft);
             if (button.transform.Find("Level Mark") == null)
             {
-                Text level = GameplayUIFactory.Label("Level Mark", button.transform, new Vector2(.72f,.75f),
-                    new Vector2(.94f,.97f), font, 15, "", TextAnchor.MiddleCenter);
+                Text level = GameplayUIFactory.Label("Level Mark", button.transform, new Vector2(.81f,.78f),
+                    new Vector2(.96f,.98f), font, 12, "", TextAnchor.MiddleRight);
                 level.color = PlayerUIStyle.Gold;
             }
             Transform face = button.transform.Find("Gene Face");
             if (face == null)
-                face = GameplayUIFactory.Image("Gene Face", button.transform, new Vector2(.34f,.42f),
-                    new Vector2(.66f,.82f), PlayerUIStyle.Cream).transform;
+                face = GameplayUIFactory.Image("Gene Face", button.transform, new Vector2(.075f,.25f),
+                    new Vector2(.265f,.75f), PlayerUIStyle.Cream).transform;
+            if (button.transform.Find("Empty Glyph") == null)
+            {
+                Text plus = GameplayUIFactory.Label("Empty Glyph", button.transform, new Vector2(.055f,.20f),
+                    new Vector2(.285f,.80f), font, 26, "+", TextAnchor.MiddleCenter);
+                plus.color = new Color(.65f,.61f,.76f);
+            }
+            if (button.transform.Find("Slot State") == null)
+                GameplayUIFactory.Label("Slot State", button.transform, new Vector2(.34f,.09f),
+                    new Vector2(.95f,.36f), font, 11, "", TextAnchor.MiddleLeft);
             face.SetAsLastSibling();
             Transform label = button.transform.Find("Label");
             if (label != null) label.SetAsLastSibling();
@@ -287,6 +323,7 @@ public class GeneEditPanel : BasePanel
     public void Cancel() => Close();
     private void Close()
     {
+        GameplayUIFactory.ModalInputFrame = Time.frameCount;
         if (player != null) player.SetMenuOpen(false);
         draft = null; UIManager.Instance.HidePanel(gameObject, false);
     }

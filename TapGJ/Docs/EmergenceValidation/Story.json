@@ -1,0 +1,36 @@
+{
+  "success": true,
+  "message": "Code executed successfully.",
+  "data": {
+    "result": {
+      "running": false,
+      "succeeded": true,
+      "results": [
+        "PASS: The checkpoint source commits an evolved gene and a second independent instance",
+        "PASS: Reload reconstructs the safe checkpoint and restores full health",
+        "PASS: Reload keeps the dash unlock and every saved gene instance",
+        "PASS: Reload preserves evolution, copy counts and stable instance identities",
+        "PASS: Reload restores exact slot positions, including empty slots",
+        "PASS: Reload creates independent runtime genes instead of reusing prior scene instances",
+        "PASS: Applying a checkpoint twice does not duplicate the saved inventory",
+        "PASS: Keyboard and button submission in one frame reveal a line without skipping it",
+        "PASS: The next input advances exactly one dialogue line",
+        "PASS: Skip completes only the current conversation and closes its modal",
+        "PASS: The final record opens a real dialogue and pauses the player",
+        "PASS: Skipping the record preserves the mandatory final choice",
+        "PASS: Skip cannot silently select or dismiss an ending choice",
+        "PASS: The ending button persists completion and opens its own epilogue",
+        "PASS: The selected ending reaches its matching result screen: 水的归处",
+        "PASS: The result holds gameplay and offers another exploration or return to menu",
+        "PASS: The final record opens a real dialogue and pauses the player",
+        "PASS: Skipping the record preserves the mandatory final choice",
+        "PASS: Skip cannot silently select or dismiss an ending choice",
+        "PASS: The ending button persists completion and opens its own epilogue",
+        "PASS: The selected ending reaches its matching result screen: 最后的回声",
+        "PASS: The result holds gameplay and offers another exploration or return to menu",
+        "PASS: Both discovered endings are retained across separate explorations"
+      ]
+    },
+    "compiler": "codedom"
+  }
+}

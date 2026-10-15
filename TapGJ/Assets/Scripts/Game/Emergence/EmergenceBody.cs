@@ -22,6 +22,7 @@ public sealed class EmergenceBody : MonoBehaviour
     public int Pressure { get; private set; }
     public float LinkRadius => Wet ? 2.1f : .65f;
     private float wetUntil,poisonUntil,chargedUntil,burningUntil,nextBurn,nextGrowth,hp;
+    private int lastFireFrame=-1;
     private SpriteRenderer visual;
     private Color original;
     private Vector3 scale;
@@ -61,6 +62,9 @@ public sealed class EmergenceBody : MonoBehaviour
         else if(incoming==E_ElementType.Electric&&Has(EmergenceMaterial.Conductive))Energize();
         else if(incoming==E_ElementType.Fire)
         {
+            // A projectile's direct hit and its splash describe one ignition in this frame.
+            if(lastFireFrame==Time.frameCount)return;
+            lastFireFrame=Time.frameCount;
             bool steam=Wet,explode=Poisoned;
             if(steam){wetUntil=0f;ReleaseSteam();}
             if(explode){poisonUntil=0f;EmergenceReactions.Explode(transform.position,3.2f);}
@@ -85,6 +89,7 @@ public sealed class EmergenceBody : MonoBehaviour
         Broken=true;foreach(Collider2D collider in GetComponentsInChildren<Collider2D>())collider.enabled=false;
         if(visual!=null)visual.enabled=false;
         if(!string.IsNullOrEmpty(completionId))EmergenceProgress.Current?.Complete(completionId);
+        if(!string.IsNullOrEmpty(completionId))StorySession.Current?.RegisterTriggerComplete("structure:"+completionId);
         EmergenceReactions.Emit("fracture",transform.position,"冲击 → 结构破坏 → 新通路",1);
     }
     private void Update()

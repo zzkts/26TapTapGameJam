@@ -1,0 +1,11 @@
+{
+  "build": "Builds/WaterDrain/WaterDrain.exe",
+  "processId": 52712,
+  "responding": true,
+  "windowTitle": "Water Drain",
+  "graphics": "Direct3D 11 / NVIDIA GeForce RTX 3060",
+  "engineVersion": "6000.3.8f1",
+  "log": "Builds/WaterDrain/StartupSmoke.log",
+  "errorsOrExceptionsFound": false,
+  "scope": "Visible player startup; chapter interaction and completion verified separately through Unity MCP Play Mode."
+}
