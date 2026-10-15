@@ -60,7 +60,7 @@ public sealed class PumpLoopSystem:MonoBehaviour
             else {unstable+=dt;if(unstable>1)StableSeconds=0;}
             if(StableSeconds>=requiredStableSeconds)
             {
-                StableSeconds=requiredStableSeconds;Completed=true;
+                StableSeconds=requiredStableSeconds;Completed=true;GameAudioPresentation.PlayCue("node",.9f);
                 CampaignUI.Current?.Toast("清水持续流出 · 向右探索菌林，观察清水如何改变下游");
                 CampaignFlow.Current.player.Genes.Acquire(Resources.Load<Modifier>("SO/Genes/body_symbiosis"));
                 EmergenceReactions.Emit("ecology",pool.transform.position,"供水 + 菌群净化 + 可持续动力 → 地下循环重新运行",3);

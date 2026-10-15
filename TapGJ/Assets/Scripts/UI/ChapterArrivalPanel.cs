@@ -9,6 +9,7 @@ public sealed class ChapterArrivalPanel:MonoBehaviour
     public static void Show(string title,string detail)
     {
         if(Current!=null)Destroy(Current.gameObject);
+        GameAudioPresentation.PlayCue("chapter",.75f);
         var canvas=StoryUIFactory.FindGameplayCanvas();
         var rect=GameplayUIFactory.Rect("Chapter Arrival",canvas.transform,new Vector2(.26f,.58f),new Vector2(.74f,.77f));
         var panel=rect.gameObject.AddComponent<ChapterArrivalPanel>();Current=panel;

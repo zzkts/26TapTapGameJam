@@ -1,0 +1,45 @@
+{
+  "success": true,
+  "message": "Code executed successfully.",
+  "data": {
+    "result": {
+      "running": false,
+      "succeeded": true,
+      "stage": "complete",
+      "count": 30,
+      "results": [
+        "PASS: All 31 imported WAV cues are loaded by the real runtime audio service",
+        "PASS: An authored cue plays through the shared game-effects source",
+        "PASS: The Unity game-effects source produces non-silent DSP output",
+        "PASS: Real left-mouse attacks play water-shot variations",
+        "PASS: Actual ground contacts play separate wet-impact cues",
+        "PASS: Successful S+F absorption plays exactly one gurgling intake cue",
+        "PASS: Successful F release plays the distinct pouring cue",
+        "PASS: An empty-water attempt does not play a false success sound",
+        "PASS: A real ground jump produces its soft bubble cue",
+        "PASS: The actual extra air step has its own bubble cue",
+        "PASS: A real eight-direction dash produces a wet whoosh",
+        "PASS: Actual sowing plays its seed cue without being mistaken for weapon fire",
+        "PASS: Real seed recall plays its returning-water cue",
+        "PASS: The corrected ground-level placement still respects a nearby solid wall and stays silent on failure",
+        "PASS: The shared steam reaction routes to its matching cue",
+        "PASS: The shared conduction reaction routes to its matching cue",
+        "PASS: The shared growth reaction routes to its matching cue",
+        "PASS: The shared explosion reaction routes to its matching cue",
+        "PASS: The shared fracture reaction routes to its matching cue",
+        "PASS: Off-screen distant reactions do not flood the player's sound field",
+        "PASS: Twenty same-frame conduction events are coalesced to one cue",
+        "PASS: World sound cues are suppressed during a modal pause",
+        "PASS: UI cues remain usable while gameplay is paused",
+        "PASS: Muted sounds are handled without falling back to separate unmuted sources",
+        "PASS: The effects slider mutes cues without changing the music volume",
+        "PASS: The actual result panel requests the victory cue",
+        "PASS: Restart preserves one audio service and the imported bank",
+        "PASS: Reload does not create overlapping audio services",
+        "PASS: Reload retains exactly one enabled listener",
+        "PASS: The reaction subscription remains single after reload"
+      ]
+    },
+    "compiler": "codedom"
+  }
+}

@@ -340,6 +340,8 @@ public class Projectile : MonoBehaviour
         if (isExpired) return;
         if (elementType == E_ElementType.Fire || elementType == E_ElementType.Electric)
             ElementField.ReactFields(rb.position, .4f, elementType);
+        if (Application.isPlaying && elementType == E_ElementType.Water && contactPoint.HasValue)
+            GameAudioPresentation.PlayWorld("water_impact",contactPoint.Value,.75f);
         if (Application.isPlaying && elementType == E_ElementType.Water)
             TapGJ.WaterProjectiles.WaterVfx.SpawnLiquidImpact(contactPoint ?? rb.position,
                 contactPoint.HasValue ? impactNormal : -direction,

@@ -24,13 +24,13 @@ public sealed class PlayerReservoir:MonoBehaviour
         {
             var field=ElementField.Active.Where(f=>f!=null&&f.element==E_ElementType.Water&&Vector2.Distance(f.transform.position,origin)<3.2f&&player.Backflow.CanReach(origin,f.transform.position,f.transform)).FirstOrDefault();
             float gained=Mathf.Min(1,Capacity-Stored);
-            if(field!=null&&gained>.01f){Pollution=Pollution*Stored/(Stored+gained);Stored+=gained;Destroy(field.gameObject);Notice="水迹已吸入身体 · 可带到其它位置释放";return true;}
+            if(field!=null&&gained>.01f){Pollution=Pollution*Stored/(Stored+gained);Stored+=gained;Destroy(field.gameObject);Notice="水迹已吸入身体 · 可带到其它位置释放";GameAudioPresentation.PlayCue("absorb");return true;}
             Notice="靠近蓄水池，用 S+F 吸取；也可吸收附近水迹";return false;
         }
         float pollution;float taken=tank.Take(Mathf.Min(2,Capacity-Stored),out pollution);
         if(taken<=0){Notice="身体已装满 · F 放水后再吸取";return false;}
         Pollution=(Stored*Pollution+taken*pollution)/(Stored+taken);Stored+=taken;
-        Notice="吸入 "+taken.ToString("0.0")+" 水量 · 污染 "+(Pollution*100).ToString("0")+"%";return true;
+        Notice="吸入 "+taken.ToString("0.0")+" 水量 · 污染 "+(Pollution*100).ToString("0")+"%";GameAudioPresentation.PlayCue("absorb");return true;
     }
     public bool Release(Vector2 aim)
     {
@@ -57,7 +57,7 @@ public sealed class PlayerReservoir:MonoBehaviour
         {var eco=CampaignFlow.Current.ecosystem;var nearby=tank??WaterReservoir2D.Active.Where(t=>Vector2.Distance(t.NearestPoint(at),at)<2.8f).OrderBy(t=>Vector2.Distance(t.NearestPoint(at),at)).FirstOrDefault();EcoFungus.CreatePatch(at,eco.fungus.visual.sprite,nearby);}
         TapGJ.WaterProjectiles.WaterVfx.SpawnLiquidImpact(at,-heading,.65f,5,onSurface:wall.collider!=null);
         Notice="释放 "+delivered.ToString("0.0")+" 水量"+(Traits.Length>0?" · "+Traits:"");
-        if(Stored<.01f)Pollution=0;return true;
+        if(Stored<.01f)Pollution=0;GameAudioPresentation.PlayCue("release");return true;
     }
     private void OnDestroy(){if(player!=null&&player.Backflow!=null)player.Backflow.Pulsed-=OnPulse;}
 }

@@ -110,7 +110,7 @@ public class EnemySupportAura : MonoBehaviour
             if(fungus!=null&&Vector2.Distance(fungus.transform.position,transform.position)<=healRadius)
             {fungus.Nourish(.10f);healedTargets++;}
         if (healedTargets > 0)
-            owner.PlaySupportAnimation();
+        {owner.PlaySupportAnimation();GameAudioPresentation.PlayWorld("heal",transform.position,.7f);}
     }
 
     private void ShowBeam(EnemyAIController target)

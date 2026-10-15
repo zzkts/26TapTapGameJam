@@ -34,6 +34,7 @@ public class GeneChest : WorldInteractable
     }
     private void PlayOpeningSound()
     {
+        if(openingSound==null&&GameAudioPresentation.PlayCue("chest"))return;
         AudioClip clip = openingSound;
         bool generated = clip == null;
         if (generated)

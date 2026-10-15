@@ -27,7 +27,7 @@ public class PlayerSupply : WorldInteractable
     public override bool Interact(PlayerController player)
     {
         if (!CanUse(player)) return false;
-        if (kind == SupplyKind.Health) player.Heal(healAmount);
+        if (kind == SupplyKind.Health){player.Heal(healAmount);GameAudioPresentation.PlayCue("heal");}
         else player.UnlockDash();
         CompleteRewardState.Claim(this);
         gameObject.SetActive(false);

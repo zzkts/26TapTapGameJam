@@ -104,6 +104,7 @@ public sealed class StoryDialogPanel : BasePanel
     }
     public void ShowResult(bool coexistence,float seconds,int collectedGenes)
     {
+        GameAudioPresentation.PlayCue("victory",.9f);
         lines=null;finished=null;choice=null;dialogueBody.SetActive(false);choiceBody.SetActive(false);resultBody.SetActive(true);skip.gameObject.SetActive(false);
         endingTitle.text=coexistence?"水的归处":"最后的回声";
         endingDescription.text=coexistence?"你打开了回流阀。\n未知的生命，将与城市一同学习如何共存。":"你启动了净化装置。\n城市暂时安静，最后一滴水仍保存着地下的回声。";

@@ -29,6 +29,7 @@ public class Weapon : MonoBehaviour
         if (inventory != null) Apply(inventory.GenChain);
         BulletSnapshot shot = currentShot.Copy();
         nextAttackTime = Time.time + Mathf.Max(0.04f, shot.attackInterval);
+        if(GetComponent<PlayerController>()!=null)GameAudioPresentation.PlayWorld(shot.element==E_ElementType.Fire?"fire_shot":shot.element==E_ElementType.Poison?"poison_shot":"water_shot",position);
         ShotSpawnBudget budget = new(shot.maxSpawn);
         direction = direction.sqrMagnitude > 0.0001f ? direction.normalized : Vector2.right;
         for (int i = 0; i < shot.projectileCount && budget.Take(); i++)

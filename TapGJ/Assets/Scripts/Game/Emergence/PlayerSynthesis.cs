@@ -33,7 +33,11 @@ public sealed class PlayerSynthesis:MonoBehaviour
     {
         if(player==null||player.MenuOpen||player.IsDead||player.IsHurt||player.IsDashing||Time.time<nextSow)return false;
         if(Energy<1f){Notice="回流能量不足 · 稍候恢复，或 T 回收种子";return false;}
-        Vector2 from=player.GetComponent<Collider2D>().bounds.center;
+        Bounds bounds=player.GetComponent<Collider2D>().bounds;
+        Vector2 from=bounds.center;
+        // Keep the sweep at the upper-body anchor even in the low resting pose;
+        // a centre-based seed circle can start overlapping the ground in that pose.
+        from.y=Mathf.Max(from.y,Mathf.Max(bounds.min.y+.36f,player.transform.position.y+.1f));
         Vector2 delta=aim-from;if(delta.magnitude<.1f)delta=Vector2.right*player.FaceDir;
         float distance=Mathf.Min(3.3f,delta.magnitude);Vector2 heading=delta.normalized;
         var filter=new ContactFilter2D();filter.useTriggers=false;filter.SetLayerMask(LayerMask.GetMask("Ground","Wall","OneWayPlatform"));
@@ -49,14 +53,14 @@ public sealed class PlayerSynthesis:MonoBehaviour
         if(Seeds.Count>=2){Destroy(Seeds[0].gameObject);Seeds.RemoveAt(0);}
         ReactionSeed seed=ReactionSeed.Create(this,from+heading*distance,Selected);Seeds.Add(seed);
         Energy-=1f;nextSow=Time.time+.3f;Notice=SelectedName+"已播下 · 水火相变 / 火毒爆破 / 湿种导电";
-        player.Presentation?.Shoot(heading);return true;
+        player.Presentation?.Shoot(heading);GameAudioPresentation.PlayCue("seed");return true;
     }
     public bool Recall()
     {
         if(player==null||player.IsDead||player.MenuOpen)return false;
         Seeds.RemoveAll(s=>s==null);if(Seeds.Count==0){Notice="附近没有自己的种子";return false;}
         foreach(ReactionSeed seed in Seeds)if(seed!=null)Destroy(seed.gameObject);
-        Energy=Mathf.Min(MaxEnergy,Energy+Seeds.Count*.5f);Seeds.Clear();Notice="种子已回收 · 能量返还";return true;
+        Energy=Mathf.Min(MaxEnergy,Energy+Seeds.Count*.5f);Seeds.Clear();Notice="种子已回收 · 能量返还";GameAudioPresentation.PlayCue("recall");return true;
     }
     public bool TryAirStep()
     {

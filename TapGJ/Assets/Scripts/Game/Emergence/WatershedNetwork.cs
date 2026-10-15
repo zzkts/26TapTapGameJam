@@ -38,7 +38,7 @@ public sealed class WatershedNetwork:MonoBehaviour
         if(variety.Count==0)windowEnd=Time.time+12;
         variety.Add(reaction.kind);
         if(variety.Count<3)return;
-        variety.Clear();ResonanceBursts++;
+        variety.Clear();ResonanceBursts++;GameAudioPresentation.PlayCue("resonance",.9f);
         flow.player.GetComponent<PlayerSynthesis>().Recharge(1.5f);flow.player.Heal(1);
         CampaignUI.Current?.Toast("涌现接力 · 三种反应相遇！回流能量 +1.5，生命 +1");
         TapGJ.WaterProjectiles.WaterVfx.SpawnSplash(flow.player.transform.position,PlayerUIStyle.Mint,1.2f,Vector2.up);

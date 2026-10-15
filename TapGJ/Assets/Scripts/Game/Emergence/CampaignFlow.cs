@@ -73,7 +73,7 @@ public sealed class CampaignFlow:MonoBehaviour
     public void CompleteReactor(CampaignReactor node)
     {
         if(!Ready||node.Complete)return;
-        node.Restore(true);StorySession.Current.RegisterTriggerComplete(node.SaveId);
+        node.Restore(true);StorySession.Current.RegisterTriggerComplete(node.SaveId);GameAudioPresentation.PlayCue("node",.85f);
         Modifier reward=Resources.Load<Modifier>("SO/Genes/"+node.reward);
         if(reward!=null)player.Genes.Acquire(reward);player.Heal(1);
         int count=reactors.Count(n=>n.district==node.district&&n.Complete);
