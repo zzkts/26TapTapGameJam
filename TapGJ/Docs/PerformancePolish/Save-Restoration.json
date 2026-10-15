@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-15",
+  "authorizedByUser": true,
+  "restoredExactly": true,
+  "savedWithPlayerPrefsSave": true,
+  "canContinue": true,
+  "scene": "GameScene",
+  "checkpointX": 98,
+  "genes": 7,
+  "completed": false,
+  "originalSnapshotSha256": "8765AEED1738A9F80C840CB6510C53CC82C06E62D8B2FA8752A5F4A9303F1D80",
+  "fullSaveExported": false
+}
