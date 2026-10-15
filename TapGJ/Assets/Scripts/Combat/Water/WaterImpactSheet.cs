@@ -8,12 +8,13 @@ namespace TapGJ.WaterProjectiles
         private SpriteRenderer surface;
         private float age;
         private void Awake() { surface=GetComponent<SpriteRenderer>(); properties=new MaterialPropertyBlock(); }
+        private void OnEnable() { age=0; if(surface!=null){properties.Clear();properties.SetFloat("_Progress",0);surface.SetPropertyBlock(properties);} }
         private void Update()
         {
             age+=Time.deltaTime;
             properties.SetFloat("_Progress",Mathf.Clamp01(age/.32f));
             surface.SetPropertyBlock(properties);
-            if(age>=.32f) Destroy(gameObject);
+            // The scene-local impact pool returns this object after the shader animation finishes.
         }
     }
 }

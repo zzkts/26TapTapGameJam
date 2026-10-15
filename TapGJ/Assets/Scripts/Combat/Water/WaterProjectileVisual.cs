@@ -9,6 +9,8 @@ namespace TapGJ.WaterProjectiles
         private Vector2 lastPosition, heading;
         private float motionSpeed, born, phase;
         private bool configured;
+        private TrailRenderer trail;
+        private ParticleSystem droplets;
         public SpriteRenderer Surface { get; private set; }
 
         public void Configure(Vector2 direction, float speed)
@@ -37,8 +39,32 @@ namespace TapGJ.WaterProjectiles
                 float radius=Mathf.Max(.025f,transform.lossyScale.x*.5f);
                 WaterVfx.AddLiquidRibbon(transform,radius,Surface.sortingOrder-1,layer);
                 WaterVfx.AddLiquidDroplets(transform,radius,Surface.sortingOrder-1,layer);
+                trail=transform.Find("LiquidRibbon").GetComponent<TrailRenderer>();
+                droplets=transform.Find("LiquidDroplets").GetComponent<ParticleSystem>();
+            }
+            if (Surface != null) Surface.enabled = true;
+            var rootSprite = GetComponent<SpriteRenderer>();
+            if(rootSprite != null) rootSprite.enabled = false;
+            if (trail != null)
+            {
+                trail.Clear(); trail.emitting=true;
+                trail.widthMultiplier=Mathf.Max(.025f,transform.lossyScale.x*.5f)*.8f;
+            }
+            if (droplets != null)
+            {
+                droplets.Stop(true,ParticleSystemStopBehavior.StopEmittingAndClear);
+                var main=droplets.main;float radius=Mathf.Max(.025f,transform.lossyScale.x*.5f);
+                main.startSize=new ParticleSystem.MinMaxCurve(radius*.22f,radius*.48f);
+                droplets.Play();
             }
             Orient();
+        }
+
+        public void Suspend(bool clear)
+        {
+            if(Surface!=null)Surface.enabled=false;
+            if(trail!=null){trail.emitting=false;if(clear)trail.Clear();}
+            if(droplets!=null)droplets.Stop(true,clear?ParticleSystemStopBehavior.StopEmittingAndClear:ParticleSystemStopBehavior.StopEmitting);
         }
 
         private void LateUpdate()

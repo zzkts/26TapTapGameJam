@@ -43,6 +43,7 @@ public sealed class PumpLoopSystem:MonoBehaviour
     public EcosystemState Capture()=>new(){tanks=new[]{cistern,pool}.Select(t=>new ReservoirState{id=t.reservoirId,volume=t.Volume,pollution=t.Pollution}).ToList(),growth=fungus.Growth,stableSeconds=StableSeconds,steamSeconds=SteamSeconds,complete=Completed};
     public bool Signal(int channel)=>channel==0?Supply:channel==1?Clean:Power;
     public string Status(int channel)=>channel==0?"水量 "+pool.Volume.ToString("0.0")+" / 至少 3":channel==1?"污染 "+(pool.Pollution*100).ToString("0")+"% / 不高于 28%":PowerName;
+    private float nextReadout;
     private void Update()
     {
         if(CampaignFlow.Current==null||!CampaignFlow.Current.Ready)return;
@@ -67,7 +68,11 @@ public sealed class PumpLoopSystem:MonoBehaviour
                 StorySession.Current.SaveCheckpointState();
             }
         }
-        if(readout!=null)readout.text="主泵 · "+(Completed?"生态循环已恢复":StableSeconds.ToString("0")+" / 20 秒")+"\n供水 "+(Supply?"●":"○")+" · 净水 "+(Clean?"●":"○")+" · 动力 "+(Power?"●":"○");
+        if(readout!=null&&Time.unscaledTime>=nextReadout)
+        {
+            nextReadout=Time.unscaledTime+.15f;
+            readout.text="主泵 · "+(Completed?"生态循环已恢复":StableSeconds.ToString("0")+" / 20 秒")+"\n供水 "+(Supply?"●":"○")+" · 净水 "+(Clean?"●":"○")+" · 动力 "+(Power?"●":"○");
+        }
         if(pipe!=null)pipe.color=Color.Lerp(PlayerUIStyle.Mint,PlayerUIStyle.Violet,1-Mathf.Clamp01(PipeRate/.65f));
         if(outflow!=null){outflow.enabled=running;outflow.color=Color.Lerp(PlayerUIStyle.Mint,new Color(.64f,.87f,.32f),pool.Pollution);}
         saveTimer+=dt;if(saveTimer>=5){saveTimer=0;StorySession.Current.SaveCheckpointState();}

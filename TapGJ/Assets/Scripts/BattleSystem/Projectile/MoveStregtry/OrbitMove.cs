@@ -6,8 +6,9 @@ using UnityEngine;
 /// </summary>
 public sealed class OrbitMove : ProjectileMove
 {
-    private readonly float radius;
-    private readonly float angularSpeed;
+    private float radius;
+    private float angularSpeed;
+    public void Configure(float orbitRadius, float speed) { radius = orbitRadius; angularSpeed = speed; }
     private float rotationDirection;
 
     public OrbitMove(float radius, float angularSpeed)

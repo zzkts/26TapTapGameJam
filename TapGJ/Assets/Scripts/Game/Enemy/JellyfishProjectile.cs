@@ -22,6 +22,8 @@ public class JellyfishProjectile : Projectile
     public void Launch(EnemyAIController source, Transform victim, Vector2 position, Vector2 heading,
         LayerMask environment, float velocity, float hitDamage, float size, float lifetime = 5f)
     {
+        spent = false; launched = false;
+        hitCollider.enabled = true;
         enemyOwner = source;
         target = victim;
         groundLM = environment;
@@ -31,6 +33,14 @@ public class JellyfishProjectile : Projectile
         SetUp(position, heading, 0, velocity, hitDamage, 1f, size, lifetime);
         transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(heading.y, heading.x) * Mathf.Rad2Deg);
         launched = true;
+    }
+
+    internal override void ResetForReuse()
+    {
+        base.ResetForReuse();
+        spent = false; launched = false; enemyOwner = null; target = null;
+        if (hitCollider == null) hitCollider = GetComponent<CircleCollider2D>();
+        hitCollider.enabled = true;
     }
 
     protected override void Move()

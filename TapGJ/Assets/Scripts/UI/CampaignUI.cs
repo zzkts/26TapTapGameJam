@@ -80,6 +80,7 @@ public sealed class CampaignUI:MonoBehaviour
         modal.SetActive(false);
     }
     private Vector2 MapPoint(Vector2 p)=>new Vector2(Mathf.Lerp(.55f,.95f,Mathf.Clamp01(p.x/flow.worldWidth)),Mathf.Lerp(.20f,.68f,Mathf.Clamp01(p.y/10f)));
+    private float nextHudRefresh;
     private void Update()
     {
         if(flow==null||flow.player==null)return;
@@ -91,6 +92,8 @@ public sealed class CampaignUI:MonoBehaviour
             else if(k.tabKey.wasPressedThisFrame)OpenRules();
         }
         bool hidden=flow.player.MenuOpen;hud.alpha=hidden?0:1;
+        if(Time.unscaledTime<nextHudRefresh)return;
+        nextHudRefresh=Time.unscaledTime+.1f;
         skills.text="回流能量 "+ability.Energy.ToString("0.0")+" / 3   ·   当前 "+ability.SelectedName+"   ·   种子 "+ability.Seeds.Count(s=>s!=null)+" / 2\nQ 切换 · R 播种 · T 回收 · F 推 / S+F 吸 · Shift 八向冲刺\n空中空格：泡泡踏跃   ·   "+ability.Notice;
         var reservoir=flow.player.GetComponent<PlayerReservoir>();
         if(reservoir!=null)skills.text="身体蓄水 "+reservoir.Stored.ToString("0.0")+" / 6 · 污染 "+(reservoir.Pollution*100).ToString("0")+"% · "+(reservoir.Traits.Length>0?reservoir.Traits:"终端装配身体基因")+

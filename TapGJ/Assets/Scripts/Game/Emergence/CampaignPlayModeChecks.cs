@@ -111,7 +111,8 @@ public sealed class CampaignPlayModeChecks:MonoBehaviour
     {
         int handle=SceneManager.GetActiveScene().handle;
         Stage="core reactions and battle";
-        Teleport(new Vector2(99.2f,1));yield return Wait(.2f);Aim(new Vector2(100.8f,.5f));yield return Frames(2);yield return Press(Key.R);
+        // A long verification teleport must let the smooth-follow camera settle before converting a world aim into mouse pixels.
+        Teleport(new Vector2(99.2f,1));yield return Wait(1.2f);Aim(new Vector2(100.8f,.5f));yield return Frames(2);yield return Press(Key.R);
         var pressure=flow.reactors.First(n=>n.district==3&&n.rule==CampaignReactor.Rule.Pressure);
         yield return Until(()=>pressure.Complete,15);yield return Press(Key.T);
         var plate=flow.reactors.First(n=>n.district==3&&n.rule==CampaignReactor.Rule.Weight);

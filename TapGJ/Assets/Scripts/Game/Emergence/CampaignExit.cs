@@ -1,8 +1,12 @@
 using UnityEngine;
 public sealed class CampaignExit:WorldInteractable
 {
-    public override string Title=>CampaignFlow.Current!=null&&CampaignFlow.Current.level.CoreDefeated?"最终回流阀 · E 选择结局":"最终回流阀 · E 查看胜利目标";
-    public override string Detail=>"泵站输出清水 → 菌林与核心各接通两节点 → 击败守卫 → E 选择结局";
+    public override string Title=>"最终回流阀";
+    public override string Detail=>CampaignFlow.Current!=null&&CampaignFlow.Current.level.CoreDefeated?
+        "选择水网的未来 · 按 E 选择结局":
+        CampaignFlow.Current!=null&&CampaignFlow.Current.WatershedSolved?
+        "击败三名核心守卫后返回这里":
+        "水网尚未接通 · 按 E 查看地图与目标";
     public override bool Interact(PlayerController player)
     {
         if(!CanUse(player))return false;

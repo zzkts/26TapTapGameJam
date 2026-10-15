@@ -87,13 +87,13 @@ public static class CampaignWorldBuilder
             var exitObj=Item("最终回流阀","core_gate",new Vector2(42,0),new Vector2(1.4f,2.2f));
             flow.exit=exitObj.AddComponent<CampaignExit>();flow.exit.interactionRange=2;
             var exitCollider=exitObj.AddComponent<BoxCollider2D>();exitCollider.isTrigger=true;exitCollider.size=new Vector2(1.2f,2);exitCollider.offset=Vector2.up;
-            Label("最终回流阀 · E 选择结局",new Vector2(42,2.8f));
+            Label("最终回流阀",new Vector2(42,2.8f));
         }
         var terminal=Item("中央基因终端","gene_terminal",new Vector2(14,0),new Vector2(1.3f,1.7f));terminal.AddComponent<GeneEditStation>().interactionRange=2;
         var checkpoint=new GameObject("中央安全点");checkpoint.transform.SetParent(root);checkpoint.transform.position=new Vector2(43,1);
         var cp=checkpoint.AddComponent<StoryTrigger>();cp.beat=StoryBeat.Checkpoint;cp.triggerId="campaign-checkpoint-"+chapter;
         cp.GetComponent<BoxCollider2D>().isTrigger=true;cp.GetComponent<BoxCollider2D>().size=new Vector2(2,3);
-        Label(chapter==1?"雨后泵站 · 让脏水变成清水":chapter==2?"共生菌林 · 清水带来新的落脚点":"净化核心 · 两节点 → 守卫 → 最右端阀门",new Vector2(37,3.3f));
+        Label(chapter==1?"雨后泵站":chapter==2?"共生菌林":"净化核心",new Vector2(1,4.5f));
         List<CampaignReactor> nodes=new();
         if(chapter==1)
         {
@@ -146,13 +146,13 @@ public static class CampaignWorldBuilder
         {
             EcosystemWorldBuilder.Apply(flow);
             Platform(27.5f,1.15f,7.6f);
-            Label("下方净化池 · S+F 吸水 / F 放水",new Vector2(27.5f,4.3f));
+            Label("净化池 · S+F 吸水 / F 放水",new Vector2(27.5f,4.3f));
         }
         if(chapter==2)
         {
             forestBridge=new GameObject("清水唤醒的菌冠捷径");forestBridge.transform.SetParent(root);
             var oldRoot=root;root=forestBridge.transform;Platform(30,4.8f,12);root=oldRoot;forestBridge.SetActive(false);
-            Label("上游清水 → 母菌生长 → 菌冠捷径",new Vector2(21,9));
+            Label("清水唤醒菌冠",new Vector2(21,9));
         }
         for(int i=0;i<8;i++)
         {
@@ -178,7 +178,7 @@ public static class CampaignWorldBuilder
         var obj=new GameObject(name);obj.transform.SetParent(root);obj.transform.position=body!=null?body.transform.position:plate.transform.position;
         var node=obj.AddComponent<CampaignReactor>();node.displayName=name;node.hint=hint;node.rule=rule;node.material=body;node.plate=plate;node.reward=reward;
         node.beacon=Visual(name+"状态","core_gate",obj.transform.position+Vector3.up*2,new Vector2(.5f,.65f),6);node.beacon.color=PlayerUIStyle.Violet;
-        Label(name+" · "+hint,(Vector2)obj.transform.position+Vector2.up*2.7f);return node;
+        Label(name,(Vector2)obj.transform.position+Vector2.up*2.7f);return node;
     }
     private static EmergencePlate Plate(float x)
     {var obj=new GameObject("重量阀板");obj.transform.SetParent(root);obj.transform.position=new Vector2(x,0);var p=obj.AddComponent<EmergencePlate>();p.visual=Visual("压板","metal_deck",new Vector2(x,.08f),new Vector2(1.8f,.16f),4);return p;}
@@ -198,7 +198,7 @@ public static class CampaignWorldBuilder
     private static void Platform(float x,float top,float width)
     {var obj=new GameObject("单向支路平台");obj.transform.SetParent(root);obj.layer=LayerMask.NameToLayer("OneWayPlatform");obj.transform.position=new Vector2(x,top-.12f);var box=obj.AddComponent<BoxCollider2D>();box.size=new Vector2(width,.24f);box.usedByEffector=true;var effect=obj.AddComponent<PlatformEffector2D>();effect.useOneWay=true;effect.surfaceArc=170;obj.AddComponent<OneWayPlatform>();Visual("平台","metal_deck",new Vector2(x,top-.12f),new Vector2(width,.3f),4);Visual("岩沿托底","rock_fill",new Vector2(x,top-.44f),new Vector2(width*.88f,.5f),-2);}
     private static void Label(string text,Vector2 at)
-    {var obj=new GameObject("路标 · "+text,typeof(RectTransform),typeof(Canvas));obj.transform.SetParent(root);obj.transform.position=at;obj.transform.localScale=Vector3.one*.015f;var canvas=obj.GetComponent<Canvas>();canvas.renderMode=RenderMode.WorldSpace;canvas.sortingOrder=15;var rect=obj.GetComponent<RectTransform>();rect.sizeDelta=new Vector2(500,45);var t=GameplayUIFactory.Label("Text",obj.transform,Vector2.zero,Vector2.one,font,20,text,TextAnchor.MiddleCenter);t.color=PlayerUIStyle.Mint;t.raycastTarget=false;}
+    {var obj=new GameObject("路标 · "+text,typeof(RectTransform),typeof(Canvas));obj.transform.SetParent(root);obj.transform.position=at;PerformancePolishSetup.StyleSign(obj.GetComponent<Canvas>(),text);}
     private static void Chest(int chapter,float x,float top)
     {var obj=Item("支路冷库 "+x,"supply_crate",new Vector2(x,top),new Vector2(.9f,1));var chest=obj.AddComponent<GeneChest>();chest.offerChoice=true;var so=new SerializedObject(chest);var pool=so.FindProperty("genePool");pool.arraySize=3;var keys=new[]{"split","bounce","vortex"};for(int i=0;i<3;i++)pool.GetArrayElementAtIndex(i).objectReferenceValue=Resources.Load<Modifier>("SO/Genes/"+keys[i]);so.ApplyModifiedPropertiesWithoutUndo();obj.AddComponent<CompleteRewardState>().rewardId="campaign-chest-"+chapter+"-"+x;}
     private static EnemyAIController Enemy(int kind,float x,float y,float hp)

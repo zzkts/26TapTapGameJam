@@ -35,7 +35,7 @@ public class Weapon : MonoBehaviour
         for (int i = 0; i < shot.projectileCount && budget.Take(); i++)
         {
             float angle = shot.projectileCount <= 1 ? 0f : Mathf.Lerp(-shot.spreadAngle, shot.spreadAngle, i / (float)(shot.projectileCount - 1));
-            Projectile projectile = Instantiate(shot.projectilePrefab, position, Quaternion.identity).GetComponent<Projectile>();
+            Projectile projectile = ProjectilePool.Rent(shot.projectilePrefab, position);
             if (projectile == null) continue;
             projectile.LaunchSnapshot(position, Quaternion.Euler(0f, 0f, angle) * direction, targetLM, transform, shot, budget);
         }

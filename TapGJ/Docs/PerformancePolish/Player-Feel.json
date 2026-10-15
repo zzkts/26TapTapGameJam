@@ -1,0 +1,31 @@
+{
+  "success": true,
+  "message": "Code executed successfully.",
+  "data": {
+    "result": {
+      "Running": false,
+      "Succeeded": true,
+      "Stage": "complete",
+      "results": [
+        "PASS: The actual player settles and loads the increased coyote/buffer windows",
+        "PASS: Real D movement leaves the fixture ledge",
+        "PASS: A real jump press 180 ms after leaving a ledge still launches once",
+        "PASS: Real D movement leaves the fixture ledge",
+        "PASS: A late jump beyond the coyote window cannot become an unlimited air jump",
+        "PASS: A press before landing survives release and becomes exactly one buffered jump",
+        "PASS: A tap preserves the .75 m route jump while holding gives a slightly higher arc",
+        "PASS: Releasing Space never cuts the 7.6 m/s steam launch or applies normal falling acceleration to it",
+        "PASS: Real F input transfers physical momentum to the wet crate while the dry crate remains untouched",
+        "PASS: A genuinely moved wet crate records inertia discovery and the pulse enforces cooldown",
+        "PASS: S + F pulls the wet crate back without duplicating its first inertia discovery",
+        "PASS: A solid wall blocks the pulse's influence on a wet crate behind it",
+        "PASS: The existing water field shifts by at most .75 m, stops before the wall and leaves poison fields unchanged",
+        "PASS: Transport retains the original water field lifetime instead of refreshing it",
+        "PASS: Paused UI prevents backflow input and world changes",
+        "PASS: Hurt reaction prevents a pulse from escaping its action recovery",
+        "PASS: Death prevents pulse activation"
+      ]
+    },
+    "compiler": "codedom"
+  }
+}

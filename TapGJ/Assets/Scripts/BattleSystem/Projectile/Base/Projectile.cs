@@ -40,6 +40,16 @@ public class Projectile : MonoBehaviour
     private SpriteRenderer visual;
     private Vector2 impactNormal;
     private Vector2? contactPoint;
+    internal ProjectilePool Pool;
+    internal int PoolKey;
+    private SpriteRenderer originalVisual;
+    private Material originalMaterial;
+    private bool visualCached;
+    private TrailRenderer elementTrail;
+    private TapGJ.WaterProjectiles.WaterProjectileVisual waterVisual;
+    private readonly StraightMove straightMove = new();
+    private OrbitMove orbitMove;
+    private static Material elementMaterial;
     public BulletSnapshot Snapshot => snapshot;
     public int Generation => generation;
     public E_ElementType ElementType => elementType;
@@ -53,20 +63,73 @@ public class Projectile : MonoBehaviour
         SetUp(position, heading, targets, shot.speed, shot.damage, shot.damageMultiplier, shot.size,
             shot.lifeTime, shot.pierceCount, shot.reboundCount, shot.reboundCoefficient,
             shot.moveType, shot.orbitRadius, shot.orbitAngularSpeed);
-        visual = GetComponentInChildren<SpriteRenderer>();
+        CacheVisual();
+        visual = originalVisual;
         if (elementType == E_ElementType.Water) return;
-        if (Application.isPlaying && visual != null && GetComponentInChildren<TrailRenderer>() == null)
+        if (waterVisual != null) waterVisual.Suspend(true);
+        if (visual != null) visual.enabled = true;
+        if (Application.isPlaying && visual != null && elementTrail == null)
+        {
             TapGJ.WaterProjectiles.WaterVfx.AddRibbon(transform,
                 elementType == E_ElementType.Fire ? new Color(1f,.5f,.1f) :
                 elementType == E_ElementType.Poison ? new Color(.5f,.9f,.2f) : new Color(.2f,.8f,1f), .1f, visual.sortingOrder - 1);
-        Material material = Resources.Load<Material>("Material/Combat/ElementSprite");
-        if (visual != null && material != null)
+            elementTrail = transform.Find("WaterRibbon").GetComponent<TrailRenderer>();
+        }
+        if (elementTrail != null)
         {
-            visual.sharedMaterial = material; visualProperties = new MaterialPropertyBlock();
+            elementTrail.Clear(); elementTrail.emitting = true;
+            Color tint = elementType == E_ElementType.Fire ? new Color(1,.5f,.1f) : elementType == E_ElementType.Poison ? new Color(.5f,.9f,.2f) : Color.cyan;
+            elementTrail.startColor = new Color(tint.r,tint.g,tint.b,.75f);
+            elementTrail.endColor = new Color(tint.r,tint.g,tint.b,0);
+        }
+        if (elementMaterial == null) elementMaterial = Resources.Load<Material>("Material/Combat/ElementSprite");
+        if (visual != null && elementMaterial != null)
+        {
+            visual.sharedMaterial = elementMaterial;
+            if (visualProperties == null) visualProperties = new MaterialPropertyBlock();
+            visualProperties.Clear();
             visualProperties.SetFloat("_Mode", 1f);
             visualProperties.SetFloat("_Element", (float)elementType);
             visual.SetPropertyBlock(visualProperties);
         }
+    }
+
+    private void CacheVisual()
+    {
+        if (visualCached) return;
+        originalVisual = GetComponent<SpriteRenderer>();
+        if (originalVisual == null) originalVisual = GetComponentInChildren<SpriteRenderer>();
+        if (originalVisual != null) originalMaterial = originalVisual.sharedMaterial;
+        visualCached = true;
+    }
+    internal virtual void ResetForReuse()
+    {
+        CacheVisual();
+        snapshot = null; spawnBudget = null; generation = 0; owner = null;
+        hasSplit = false; isExpired = false; contactPoint = null;
+        damagedTargets.Clear(); projectileMove = null;
+        if (rb == null) rb = GetComponent<Rigidbody2D>();
+        rb.linearVelocity = Vector2.zero; rb.angularVelocity = 0;
+        if (projectileCollider == null) projectileCollider = GetComponent<Collider2D>();
+        projectileCollider.enabled = true;
+        if (originalVisual != null)
+        {
+            originalVisual.enabled = true; originalVisual.sharedMaterial = originalMaterial;
+            originalVisual.SetPropertyBlock(null);
+        }
+        if (waterVisual != null) waterVisual.Suspend(true);
+        if (elementTrail != null) { elementTrail.Clear(); elementTrail.emitting = false; }
+    }
+    internal void PrepareTail()
+    {
+        enabled = false;
+        projectileCollider.enabled = false;
+        rb.linearVelocity = Vector2.zero;
+        if (originalVisual != null) originalVisual.enabled = false;
+        if (waterVisual != null) waterVisual.Suspend(false);
+        if (elementTrail != null) elementTrail.emitting = false;
+        // Release owner/snapshot references while the harmless tail finishes fading.
+        owner = null; snapshot = null; spawnBudget = null;
     }
 
     internal Vector2 Position => rb.position;
@@ -116,8 +179,9 @@ public class Projectile : MonoBehaviour
         isExpired = false;
         hasSplit = false;
 
-        rb = GetComponent<Rigidbody2D>();
-        projectileCollider = GetComponent<Collider2D>();
+        if (rb == null) rb = GetComponent<Rigidbody2D>();
+        if (projectileCollider == null) projectileCollider = GetComponent<Collider2D>();
+        projectileCollider.enabled = true;
         projectileCollider.isTrigger = true;
         rb.gravityScale = 0f;
         rb.bodyType = RigidbodyType2D.Kinematic;
@@ -132,15 +196,19 @@ public class Projectile : MonoBehaviour
         hitFilter.SetLayerMask(targetLM | groundLM);
 
         transform.localScale = Vector3.one * projectileSizeMultiplier;
-        projectileMove = moveType == E_ProjectileMoveType.Orbit
-            ? new OrbitMove(orbitRadius, orbitAngularSpeed)
-            : new StraightMove();
+        if (moveType == E_ProjectileMoveType.Orbit)
+        {
+            if (orbitMove == null) orbitMove = new OrbitMove(orbitRadius, orbitAngularSpeed);
+            orbitMove.Configure(orbitRadius, orbitAngularSpeed); projectileMove = orbitMove;
+        }
+        else projectileMove = straightMove;
         projectileMove.SetUp(this);
         if (Application.isPlaying && elementType == E_ElementType.Water)
         {
-            var water = GetComponent<TapGJ.WaterProjectiles.WaterProjectileVisual>();
-            if (water == null) water = gameObject.AddComponent<TapGJ.WaterProjectiles.WaterProjectileVisual>();
-            water.Configure(direction, speed);
+            CacheVisual();
+            if (waterVisual == null) waterVisual = GetComponent<TapGJ.WaterProjectiles.WaterProjectileVisual>();
+            if (waterVisual == null) waterVisual = gameObject.AddComponent<TapGJ.WaterProjectiles.WaterProjectileVisual>();
+            waterVisual.Configure(direction, speed);
         }
         // Manual collider casts can run before the next simulation; apply the spawn scale now.
         Physics2D.SyncTransforms();
@@ -360,8 +428,8 @@ public class Projectile : MonoBehaviour
         }
         isExpired = true;
         rb.linearVelocity = Vector2.zero;
-        if (Application.isPlaying) TapGJ.WaterProjectiles.WaterVfx.ReleaseTrail(transform);
-        Destroy(gameObject);
+        if (Application.isPlaying && Pool == null) TapGJ.WaterProjectiles.WaterVfx.ReleaseTrail(transform);
+        ProjectilePool.Return(this);
     }
 
     private void Split(Vector2 position)
@@ -373,7 +441,7 @@ public class Projectile : MonoBehaviour
             float angle = snapshot.splitCount == 1 ? 0f : Mathf.Lerp(-35f, 35f, i / (float)(snapshot.splitCount - 1));
             Vector2 heading = Quaternion.Euler(0f, 0f, angle) * direction;
             Vector2 origin = position + heading * 0.03f;
-            Projectile child = Instantiate(snapshot.projectilePrefab, origin, Quaternion.identity).GetComponent<Projectile>();
+            Projectile child = ProjectilePool.Rent(snapshot.projectilePrefab, origin);
             if (child != null)
             {
                 child.LaunchSnapshot(origin, heading, targetLM, owner, snapshot, spawnBudget, generation + 1);

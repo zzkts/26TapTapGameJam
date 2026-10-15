@@ -332,7 +332,7 @@ public class EnemyAIController : MonoBehaviour, ICombatable
         {
             float angle = bulletCount == 1 ? 0f : Mathf.Lerp(-spreadAngle, spreadAngle, i / (float)(bulletCount - 1));
             Vector2 shotDirection = Quaternion.Euler(0f, 0f, angle) * direction;
-            JellyfishProjectile bullet = Instantiate(projectilePrefab, origin, Quaternion.identity);
+            JellyfishProjectile bullet = (JellyfishProjectile)ProjectilePool.Rent(projectilePrefab.gameObject, origin);
             bullet.Launch(this, playerTarget, origin, shotDirection, obstacleMask,
                 bulletSpeed, bulletDamage * damageMultiplier, bulletSize);
         }

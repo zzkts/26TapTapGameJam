@@ -1,0 +1,15 @@
+{
+  "success": true,
+  "message": "Code executed successfully.",
+  "data": {
+    "result": {
+      "ready": true,
+      "sceneChanged": true,
+      "oldPoolDestroyed": true,
+      "pools": 0,
+      "effectPools": 0,
+      "shots": 0
+    },
+    "compiler": "codedom"
+  }
+}

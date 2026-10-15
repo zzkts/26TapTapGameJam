@@ -70,7 +70,7 @@ namespace TapGJ.WaterProjectiles
             var main=particles.main; main.loop=false; main.duration=.55f;
             main.startLifetime=new ParticleSystem.MinMaxCurve(.22f,.55f);
             main.startSize=new ParticleSystem.MinMaxCurve(size*.10f,size*.28f);
-            main.gravityModifier=.75f; main.maxParticles=24; main.stopAction=ParticleSystemStopAction.Destroy;
+            main.gravityModifier=.75f; main.maxParticles=24; main.stopAction=ParticleSystemStopAction.None;
             var emission=particles.emission; emission.enabled=false;
             particles.Play();
             float force=Mathf.Clamp(speed*.16f,1.0f,3.0f);
@@ -81,15 +81,17 @@ namespace TapGJ.WaterProjectiles
                 Vector2 velocity=(normal*Mathf.Cos(fan)+tangent*Mathf.Sin(fan))*Random.Range(.6f,1.6f)*force;
                 particles.Emit(new ParticleSystem.EmitParams{position=position+normal*.025f,velocity=velocity},1);
             }
-            Object.Destroy(particles.gameObject,.8f);
+            WaterEffectPool.ReturnAfter(particles.gameObject,.8f);
             if(!onSurface) return particles;
-            var sheet=new GameObject("LiquidImpactSheet");
+            bool created;
+            var sheet=WaterEffectPool.Rent("LiquidImpactSheet",out created);
             sheet.transform.position=position+normal*(size*.55f+.015f);
             sheet.transform.rotation=Quaternion.Euler(0,0,Mathf.Atan2(normal.y,normal.x)*Mathf.Rad2Deg-90);
             sheet.transform.localScale=new Vector3(size*2.6f,size*1.6f,1);
-            var sprite=sheet.AddComponent<SpriteRenderer>(); sprite.sprite=GetLiquidQuad();
+            var sprite=created?sheet.AddComponent<SpriteRenderer>():sheet.GetComponent<SpriteRenderer>(); sprite.sprite=GetLiquidQuad();
             sprite.sharedMaterial=GetLiquidMaterial(3); sprite.sortingOrder=order;
-            sheet.AddComponent<WaterImpactSheet>();
+            if(created)sheet.AddComponent<WaterImpactSheet>();
+            WaterEffectPool.ReturnAfter(sheet,.34f);
             return particles;
         }
 
@@ -130,8 +132,17 @@ namespace TapGJ.WaterProjectiles
 
         private static ParticleSystem CreateParticles(string name, Transform parent, Color color, int sortingOrder)
         {
-            GameObject obj = new GameObject(name);
+            bool created = true;
+            GameObject obj = parent == null ? WaterEffectPool.Rent(name, out created) : new GameObject(name);
             if (parent != null) obj.transform.SetParent(parent, false);
+            if (!created)
+            {
+                var cached = obj.GetComponent<ParticleSystem>();
+                cached.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                var cachedMain = cached.main; cachedMain.startColor = color;
+                obj.GetComponent<ParticleSystemRenderer>().sortingOrder = sortingOrder;
+                return cached;
+            }
             ParticleSystem particles = obj.AddComponent<ParticleSystem>();
             particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             ParticleSystemRenderer renderer = obj.GetComponent<ParticleSystemRenderer>();
@@ -185,7 +196,7 @@ namespace TapGJ.WaterProjectiles
             main.gravityModifier = 0.45f;
             ParticleSystem.EmissionModule emission = particles.emission;
             emission.enabled = false;
-            main.stopAction = ParticleSystemStopAction.Destroy;
+            main.stopAction = ParticleSystemStopAction.None;
             particles.Play();
             // Explicit XY velocities prevent the default cone emitting down the camera's Z axis.
             for (int i = 0; i < 16; i++)
@@ -196,7 +207,7 @@ namespace TapGJ.WaterProjectiles
                 ParticleSystem.EmitParams emit = new ParticleSystem.EmitParams { velocity = velocity };
                 particles.Emit(emit, 1);
             }
-            Object.Destroy(particles.gameObject, 1.1f);
+            WaterEffectPool.ReturnAfter(particles.gameObject, 1.1f);
             return particles;
         }
 

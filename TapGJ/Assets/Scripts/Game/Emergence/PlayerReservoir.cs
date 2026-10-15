@@ -24,7 +24,7 @@ public sealed class PlayerReservoir:MonoBehaviour
         {
             var field=ElementField.Active.Where(f=>f!=null&&f.element==E_ElementType.Water&&Vector2.Distance(f.transform.position,origin)<3.2f&&player.Backflow.CanReach(origin,f.transform.position,f.transform)).FirstOrDefault();
             float gained=Mathf.Min(1,Capacity-Stored);
-            if(field!=null&&gained>.01f){Pollution=Pollution*Stored/(Stored+gained);Stored+=gained;Destroy(field.gameObject);Notice="水迹已吸入身体 · 可带到其它位置释放";GameAudioPresentation.PlayCue("absorb");return true;}
+            if(field!=null&&gained>.01f){Pollution=Pollution*Stored/(Stored+gained);Stored+=gained;field.Consume();Notice="水迹已吸入身体 · 可带到其它位置释放";GameAudioPresentation.PlayCue("absorb");return true;}
             Notice="靠近蓄水池，用 S+F 吸取；也可吸收附近水迹";return false;
         }
         float pollution;float taken=tank.Take(Mathf.Min(2,Capacity-Stored),out pollution);

@@ -136,7 +136,9 @@ public sealed class PlayerFeelPlayModeChecks : MonoBehaviour
             poison.transform.position == poisonStart,
             "The existing water field shifts by at most .75 m, stops before the wall and leaves poison fields unchanged");
         yield return Wait(.95f);
-        Check(water == null && poison != null, "Transport retains the original water field lifetime instead of refreshing it");
+        bool originalWaterGone = water == null || !water.gameObject.activeSelf ||
+            Vector2.Distance(water.transform.position, rig.transform.position) > 10f;
+        Check(originalWaterGone && poison != null && poison.gameObject.activeSelf, "Transport retains the original water field lifetime instead of refreshing it");
 
         Stage = "ability gates";
         NewRig(); yield return Wait(.25f); player.SetMenuOpen(true);
@@ -207,7 +209,7 @@ public sealed class PlayerFeelPlayModeChecks : MonoBehaviour
     {
         if (cleaned) return; cleaned = true; EmergenceReactions.Happened -= OnReaction;
         foreach (GameObject fixture in fixtures) if (fixture != null) { fixture.SetActive(false); Destroy(fixture); }
-        foreach (ElementField field in fields) if (field != null) Destroy(field.gameObject);
+        foreach (ElementField field in fields) if (field != null) field.Consume();
         if (keyboard != null && keyboard.added) InputSystem.RemoveDevice(keyboard);
         if (mouse != null && mouse.added) InputSystem.RemoveDevice(mouse);
         priorKeyboard?.MakeCurrent(); priorMouse?.MakeCurrent();

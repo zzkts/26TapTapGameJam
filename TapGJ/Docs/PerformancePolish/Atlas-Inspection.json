@@ -1,0 +1,48 @@
+{
+  "success": true,
+  "message": "Code executed successfully.",
+  "data": {
+    "result": [
+      {
+        "name": "Player",
+        "spriteCount": 16,
+        "textures": [
+          {
+            "name": "sactx-0-2048x1024-BC7-Player-d20240ef",
+            "width": 2048,
+            "height": 1024,
+            "format": "BC7",
+            "bytes": 4195238
+          }
+        ]
+      },
+      {
+        "name": "PlayerHUD",
+        "spriteCount": 4,
+        "textures": [
+          {
+            "name": "sactx-0-2048x2048-BC7-PlayerHUD-ea3f2426",
+            "width": 2048,
+            "height": 2048,
+            "format": "BC7",
+            "bytes": 8389545
+          }
+        ]
+      },
+      {
+        "name": "World",
+        "spriteCount": 10,
+        "textures": [
+          {
+            "name": "sactx-0-2048x1024-BC7-World-6a96b509",
+            "width": 2048,
+            "height": 1024,
+            "format": "BC7",
+            "bytes": 4195237
+          }
+        ]
+      }
+    ],
+    "compiler": "codedom"
+  }
+}

@@ -19,6 +19,7 @@ public sealed class EcoFungus:MonoBehaviour
     private Vector3 baseScale;
     private float wetUntil,expires;
     private bool discovered;
+    private float nextReadout;
     private void Awake(){material=GetComponent<EmergenceBody>();material.Received+=Receive;if(visual!=null)baseScale=visual.transform.localScale;expires=Time.time+22;}
     private void OnEnable()=>Active.Add(this);
     private void OnDisable()=>Active.Remove(this);
@@ -39,7 +40,11 @@ public sealed class EcoFungus:MonoBehaviour
         if(Mature&&reservoir!=null)reservoir.Purify(Time.deltaTime*.40f*Growth);
         if(bridge!=null)bridge.SetActive(BridgeGrown);
         if(visual!=null)visual.transform.localScale=baseScale*Mathf.Lerp(.65f,1.4f,Growth/1.4f);
-        if(readout!=null)readout.text="共生母菌 · 生长 "+(Growth*100).ToString("0")+"%\n"+(Clogged?"根系堵管 · 火种修剪":Mature?"正在净化 · 成熟可架桥":"水弹 / 放水 / 治疗光环促生长");
+        if(readout!=null&&Time.unscaledTime>=nextReadout)
+        {
+            nextReadout=Time.unscaledTime+.15f;
+            readout.text="共生母菌 · 生长 "+(Growth*100).ToString("0")+"%\n"+(Clogged?"根系堵管 · 火种修剪":Mature?"正在净化 · 成熟可架桥":"水弹 / 放水 / 治疗光环促生长");
+        }
         if(BridgeGrown&&!discovered){discovered=true;EmergenceReactions.Emit("ecology",transform.position,"水分 → 菌桥生长 → 净化水源 → 主泵可持续运行",1);}
     }
     public static EcoFungus CreatePatch(Vector2 position,Sprite sprite,WaterReservoir2D water)

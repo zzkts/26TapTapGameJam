@@ -1,0 +1,41 @@
+{
+  "success": true,
+  "message": "Code executed successfully.",
+  "data": {
+    "result": {
+      "projectileCache": [
+        {
+          "prefab": 55968,
+          "count": 128
+        },
+        {
+          "prefab": 60504,
+          "count": 1
+        }
+      ],
+      "effectCache": [
+        {
+          "Key": "WaterSplash",
+          "count": 48
+        },
+        {
+          "Key": "Element field",
+          "count": 48
+        },
+        {
+          "Key": "LiquidImpactSpray",
+          "count": 32
+        },
+        {
+          "Key": "LiquidImpactSheet",
+          "count": 16
+        }
+      ],
+      "projectileBound": true,
+      "effectBound": true,
+      "activeShots": 0,
+      "totalProjectiles": 129
+    },
+    "compiler": "codedom"
+  }
+}

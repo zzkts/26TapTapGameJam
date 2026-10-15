@@ -96,8 +96,12 @@ public sealed class EcosystemPlayModeChecks:MonoBehaviour
         var editor=UIManager.Instance.GetPanel<GeneEditPanel>();Check(editor.gameObject.activeInHierarchy,"The actual workbench opens for body gene assembly");
         for(int i=0;i<3;i++){editor.SelectSlot(i);editor.Equip(player.Genes.GenInventory.ToList().FindIndex(g=>g.ModifierType==E_ModifierType.BodyTrait&&Mathf.RoundToInt(g.ModifierValue)==i+1));}
         editor.Confirm();Check(body.HasTrait(1)&&body.HasTrait(2)&&body.HasTrait(3),"Confirming actual gene slots activates all three body rules");
-        yield return Wait(2);Teleport(new Vector2(17,1));body.Restore(6,0);Aim(new Vector2(17,-2));yield return Press(Key.F);yield return Wait(.08f);
-        Check(player.YVelocity>2,"The spray gene converts real downward F release into upward movement");
+        yield return Wait(2);Teleport(new Vector2(17,1));body.Restore(6,0);Aim(new Vector2(17,-2));
+        float releaseVelocity=0;
+        Action<BackflowPulseReport> recordLaunch=pulse=>{if(!pulse.pulling)releaseVelocity=player.YVelocity;};
+        player.Backflow.Pulsed+=recordLaunch;
+        yield return Press(Key.F);yield return Wait(.08f);player.Backflow.Pulsed-=recordLaunch;
+        Check(releaseVelocity>=6,"The spray gene converts real downward F release into upward movement");
         Check(EcoFungus.Active.Any(f=>f.temporary),"The symbiosis gene leaves a temporary living colony");
         Check(ElementField.Active.Any(f=>f.element==E_ElementType.Water),"Adhesive release leaves a persistent wet circuit trace");
         foreach(var f in EcoFungus.Active.ToArray())if(f.temporary)Object.Destroy(f.gameObject);
@@ -132,7 +136,7 @@ public sealed class EcosystemPlayModeChecks:MonoBehaviour
         Check(flow.chapter==2&&SceneManager.GetActiveScene().handle==handle&&!player.MenuOpen,"Entering the next district preserves the very same scene and player input");
         Check(Mathf.Abs(body.Stored-carried)<.01f&&body.HasTrait(3),"Water and equipped body rules persist while walking into the forest");
         Check(ChapterArrivalPanel.Current!=null,"The chapter arrival panel appears without a modal next button");
-        yield return Wait(5.2f);Check(ChapterArrivalPanel.Current==null&&Time.timeScale==1,"The chapter panel destroys itself automatically without pausing gameplay");
+        yield return new WaitForSecondsRealtime(5.2f);Check(ChapterArrivalPanel.Current==null&&Time.timeScale==1,"The chapter panel destroys itself automatically without pausing gameplay");
 
     }
     private IEnumerator Changed(int handle,string scene)

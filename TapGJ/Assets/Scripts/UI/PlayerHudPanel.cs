@@ -19,6 +19,8 @@ public class PlayerHudPanel : BasePanel
     private bool dashWasReady;
     private Modifier[] shownGenes;
     private int shownSlotCount = -1;
+    private string promptTitle, promptDetail;
+    private float promptWidth;
     public override void Init()
     {
         if (inventory != null) inventory.Acquired -= OnAcquired;
@@ -165,14 +167,20 @@ public class PlayerHudPanel : BasePanel
         WorldInteractable near = interaction != null ? interaction.Nearby : null;
         bool show = near != null && !player.MenuOpen && !player.IsDead;
         if (interactionCard != null) interactionCard.gameObject.SetActive(show);
-        if (interactionText != null) interactionText.text = show ? near.Title + "\n" + near.Detail : "";
         if (!show || interactionCard == null || Camera.main == null) return;
         var canvasRect = GetComponentInParent<Canvas>().transform as RectTransform;
+        float width = Mathf.Min(448, canvasRect.rect.width - 40);
+        if (interactionText != null && (promptTitle != near.Title || promptDetail != near.Detail || !Mathf.Approximately(promptWidth, width)))
+        {
+            promptTitle = near.Title; promptDetail = near.Detail; promptWidth = width;
+            InteractionPromptLayout.Apply(interactionCard, interactionText, promptTitle, promptDetail, width);
+        }
         Vector2 screen = Camera.main.WorldToScreenPoint(player.transform.position + Vector3.up * 1.05f);
         RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screen, null, out Vector2 local);
         float halfWidth = canvasRect.rect.width * .5f, halfHeight = canvasRect.rect.height * .5f;
-        interactionCard.anchoredPosition = new Vector2(Mathf.Clamp(local.x, -halfWidth + 200f, halfWidth - 200f),
-            Mathf.Clamp(local.y, -halfHeight + 170f, halfHeight - 180f));
+        float padding = interactionCard.rect.width * .5f + 20;
+        interactionCard.anchoredPosition = new Vector2(Mathf.Clamp(local.x, -halfWidth + padding, halfWidth - padding),
+            Mathf.Clamp(local.y + 28, -halfHeight + 170f, halfHeight - interactionCard.rect.height - 24));
     }
     private void OnDestroy() { if (inventory != null) inventory.Acquired -= OnAcquired; }
 }

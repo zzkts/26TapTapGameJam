@@ -19,6 +19,7 @@ public sealed class WaterReservoir2D:MonoBehaviour
     private MaterialPropertyBlock properties;
     private BoxCollider2D waterContact;
     private float nextWet;
+    private float nextReadout;
     private readonly Collider2D[] overlaps=new Collider2D[48];
     private readonly HashSet<Rigidbody2D> moved=new();
     private void Awake()
@@ -62,7 +63,11 @@ public sealed class WaterReservoir2D:MonoBehaviour
             properties.SetFloat("_Pollution",Pollution);properties.SetFloat("_Charged",material.Charged?1:0);
             water.SetPropertyBlock(properties);
         }
-        if(readout!=null)readout.text=reservoirId+" · 水量 "+Volume.ToString("0.0")+" / "+capacity+"\n污染 "+(Pollution*100).ToString("0")+"%"+(material.Charged?" · 带电":"");
+        if(readout!=null&&Time.unscaledTime>=nextReadout)
+        {
+            nextReadout=Time.unscaledTime+.15f;
+            readout.text=reservoirId+" · 水量 "+Volume.ToString("0.0")+" / "+capacity+"\n污染 "+(Pollution*100).ToString("0")+"%"+(material.Charged?" · 带电":"");
+        }
     }
     private void FixedUpdate()
     {

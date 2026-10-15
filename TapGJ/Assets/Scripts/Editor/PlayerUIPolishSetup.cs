@@ -228,7 +228,7 @@ public static class PlayerUIPolishSetup
         Text label = GameplayUIFactory.Label(name, parent, Vector2.zero, Vector2.zero, font, size, value, alignment);
         label.rectTransform.pivot = Vector2.zero; label.rectTransform.anchoredPosition = new Vector2(x, y);
         label.rectTransform.sizeDelta = new Vector2(width, height); label.color = color;
-        label.verticalOverflow = VerticalWrapMode.Overflow;
+        label.verticalOverflow = VerticalWrapMode.Truncate;
         return label;
     }
     private static Sprite PersistShape(string name, Sprite source)
