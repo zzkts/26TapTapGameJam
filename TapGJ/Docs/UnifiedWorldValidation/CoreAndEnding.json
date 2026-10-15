@@ -1,0 +1,26 @@
+{
+  "success": true,
+  "message": "Code executed successfully.",
+  "data": {
+    "result": {
+      "running": false,
+      "succeeded": true,
+      "count": 11,
+      "results": [
+        "PASS: Real full-water-network prerequisites wake the three final guardians",
+        "PASS: Downstream puzzles and guardian activation still preserve the same scene",
+        "PASS: The downstream gene terminal opens normally",
+        "PASS: Actual water projectiles defeat a final guardian",
+        "PASS: Actual water projectiles defeat a final guardian",
+        "PASS: Actual water projectiles defeat a final guardian",
+        "PASS: All three actual deaths unlock the final valve",
+        "PASS: E at the far-right valve opens the final narrative",
+        "PASS: The final narrative presents the real ending choices",
+        "PASS: The ending persists victory and completes the run without a build",
+        "PASS: The final result counts the real restored watershed instead of obsolete gate counters"
+      ],
+      "stats": "探索完成  ·  2分37秒  ·  收集 9 个基因实例\n地下水网 · 3 / 3 区域恢复 · 观察到 7 种变化"
+    },
+    "compiler": "codedom"
+  }
+}

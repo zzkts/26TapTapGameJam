@@ -51,7 +51,7 @@ public sealed class StorySession : MonoBehaviour
         RunSaveData saved=ValidationMode?null:RunProgress.EnterScene();
         if(saved!=null&&CampaignFlow.Current!=null&&!saved.campaignLayout)
         {
-            saved.checkpointX=17;saved.checkpointY=1;saved.guardianCleared=false;saved.region=0;saved.campaignLayout=true;
+            saved.checkpointX=3;saved.checkpointY=1;saved.guardianCleared=false;saved.region=0;saved.campaignLayout=true;
         }
         if(saved!=null)
         {
@@ -125,6 +125,7 @@ public sealed class StorySession : MonoBehaviour
     private void OnRegionEntered(int next)
     {
         region=Mathf.Clamp(next,0,2);
+        if(CampaignFlow.Current!=null){RefreshObjective();return;}
         if(region==1)Reach(StoryBeat.Ecology,player.transform.position);
         if(region==2)Reach(StoryBeat.CoreArea,player.transform.position);
         RefreshObjective();
@@ -214,7 +215,7 @@ public sealed class StorySession : MonoBehaviour
         if(CampaignFlow.Current!=null)
         {
             var flow=CampaignFlow.Current;
-            objective.Set(flow.ChapterName,completed?"全章通关 · 水流的归处":flow.Goal,"M 章节地图 · TAB 反应手册 · 出口在中央");return;
+            objective.Set(flow.ChapterName,completed?"全章通关 · 水流的归处":flow.Goal,"M 全地图 · TAB 反应手册 · 最右端回流阀选择结局");return;
         }
         string chapter=region==0?"第一章 · 异常回流":region==1?"第一章 · 它们的声音":"第一章 · 水落口";
         string target;

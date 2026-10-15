@@ -6,28 +6,52 @@ using UnityEngine;
 
 public sealed class EmergenceContentTests
 {
-    [TestCase("GameScene",1)]
-    [TestCase("SporeScene",2)]
-    [TestCase("CoreScene",3)]
-    public void CampaignChaptersHaveReachableNonBlockingExitsAndBranchGoals(string name,int chapter)
+    [Test]
+    public void ContinuousWorldHasThreeDistrictsOneFinalTriggerAndNoProgressionWalls()
     {
-        var scene=EditorSceneManager.OpenPreviewScene("Assets/Scene/"+name+".unity");
+        var scene=EditorSceneManager.OpenPreviewScene("Assets/Scene/GameScene.unity");
         try
         {
             var roots=scene.GetRootGameObjects();
-            CompleteLevelFlow level=roots.SelectMany(r=>r.GetComponentsInChildren<CompleteLevelFlow>(true)).Single();
-            var campaign=level.GetComponent<CampaignFlow>();Assert.That(campaign,Is.Not.Null);Assert.That(campaign.chapter,Is.EqualTo(chapter));
-            Assert.That(campaign.reactors.Length,Is.EqualTo(3));Assert.That(campaign.reactors.All(n=>!string.IsNullOrEmpty(n.hint)&&n.beacon!=null),Is.True);
-            Assert.That(campaign.exit.GetComponentsInChildren<Collider2D>().All(c=>c.isTrigger),Is.True,"Chapter exits must never be solid progression blockers");
-            Assert.That(level.GetComponentsInChildren<EmergenceGate>().Length,Is.Zero);
-            Assert.That(campaign.reactors.Max(n=>n.transform.position.y),Is.GreaterThanOrEqualTo(6));
-            Assert.That(campaign.reactors.Min(n=>n.transform.position.x),Is.LessThan(8));
-            Assert.That(campaign.reactors.Max(n=>n.transform.position.x),Is.GreaterThan(29));
-            Assert.That(campaign.exit.transform.position.x,Is.InRange(17f,23f),"The exit is a central return point");
-            Assert.That(roots.SelectMany(r=>r.GetComponentsInChildren<GeneChest>(true)).Count(c=>c.offerChoice),Is.EqualTo(2));
-            if(chapter==3)Assert.That(level.guardians.Length,Is.EqualTo(3));
+            var flow=roots.SelectMany(r=>r.GetComponentsInChildren<CampaignFlow>(true)).Single();
+            Assert.That(flow.unified,Is.True);Assert.That(flow.worldWidth,Is.EqualTo(144));
+            Assert.That(flow.player.transform.position.x,Is.EqualTo(3));Assert.That(flow.level.spawn.x,Is.EqualTo(3));
+            Assert.That(flow.reactors.Length,Is.EqualTo(9));
+            foreach(int district in new[]{1,2,3})
+            {
+                var nodes=flow.reactors.Where(n=>n.district==district).ToArray();Assert.That(nodes.Length,Is.EqualTo(3));
+                Assert.That(nodes.All(n=>!string.IsNullOrEmpty(n.hint)&&n.beacon!=null),Is.True);
+                Assert.That(nodes.All(n=>CampaignFlow.DistrictAt(n.transform.position.x)==district),Is.True);
+            }
+            Assert.That(flow.exit.transform.position.x,Is.GreaterThan(135));
+            Assert.That(flow.exit.GetComponentsInChildren<Collider2D>().All(c=>c.isTrigger),Is.True);
+            Assert.That(roots.SelectMany(r=>r.GetComponentsInChildren<EmergenceGate>(true)).Count(),Is.Zero);
+            Assert.That(flow.GetComponent<WatershedNetwork>().forestBridge,Is.Not.Null);
+            Assert.That(flow.level.guardians.Length,Is.EqualTo(3));
+            Assert.That(flow.ecosystem,Is.Not.Null);
+            Assert.That(roots.SelectMany(r=>r.GetComponentsInChildren<GeneChest>(true)).Count(c=>c.offerChoice),Is.EqualTo(6));
+            Assert.That(roots.SelectMany(r=>r.GetComponentsInChildren<EnemySupportAura>(true)).Count(),Is.GreaterThanOrEqualTo(3));
+            var dependencies=AssetDatabase.GetDependencies("Assets/Scene/GameScene.unity",true);
+            Assert.That(dependencies.Any(d=>d.EndsWith("SporeScene.unity")||d.EndsWith("CoreScene.unity")),Is.False);
         }
         finally{EditorSceneManager.ClosePreviewScene(scene);}
+    }
+    [Test]
+    public void BuildContainsOnlyMenuAndContinuousGameplay()
+    {Assert.That(EditorBuildSettings.scenes.Where(s=>s.enabled).Select(s=>s.path).ToArray(),Is.EqualTo(new[]{"Assets/Scene/BeginScene.unity","Assets/Scene/GameScene.unity"}));}
+    [TestCase("SporeScene",65f)]
+    [TestCase("CoreScene",113f)]
+    public void OlderChapterCheckpointMigratesToContinuousWorldOnce(string oldScene,float x)
+    {
+        bool had=PlayerPrefs.HasKey(RunProgress.SaveKey);string original=PlayerPrefs.GetString(RunProgress.SaveKey);
+        try
+        {
+            PlayerPrefs.SetString(RunProgress.SaveKey,"{\"version\":2,\"campaignLayout\":true,\"scene\":\""+oldScene+"\",\"checkpointX\":17,\"completedTriggers\":[\"campaign:"+oldScene+":生长节点\"]}");
+            var data=RunProgress.Read();Assert.That(data.scene,Is.EqualTo("GameScene"));Assert.That(data.checkpointX,Is.EqualTo(x));
+            Assert.That(data.completedTriggers[0],Does.StartWith("campaign:GameScene:区域"));
+            RunProgress.Write(data);Assert.That(RunProgress.Read().checkpointX,Is.EqualTo(x));
+        }
+        finally{if(had)PlayerPrefs.SetString(RunProgress.SaveKey,original);else PlayerPrefs.DeleteKey(RunProgress.SaveKey);}
     }
     [Test]
     public void BuildHintsDescribeActualEquippedCombinations()
@@ -44,9 +68,9 @@ public sealed class EmergenceContentTests
         try
         {
             PlayerPrefs.SetString(RunProgress.SaveKey,"{\"version\":1,\"scene\":\"GameScene\",\"checkpointX\":78,\"checkpointY\":1,\"genes\":[{\"geneId\":8,\"definitionName\":\"water\",\"instanceId\":\"keep-me\",\"level\":2,\"copies\":3}]}");
-            RunSaveData data=RunProgress.Read();Assert.That(data.version,Is.EqualTo(2));Assert.That(data.checkpointX,Is.EqualTo(228));
+            RunSaveData data=RunProgress.Read();Assert.That(data.version,Is.EqualTo(3));Assert.That(data.checkpointX,Is.EqualTo(3));
             Assert.That(data.genes[0].instanceId,Is.EqualTo("keep-me"));
-            RunProgress.Write(data);Assert.That(RunProgress.Read().checkpointX,Is.EqualTo(228),"Migration must not run twice");
+            RunProgress.Write(data);Assert.That(RunProgress.Read().checkpointX,Is.EqualTo(3),"Migration must not run twice");
         }
         finally{if(had)PlayerPrefs.SetString(RunProgress.SaveKey,original);else PlayerPrefs.DeleteKey(RunProgress.SaveKey);}
     }

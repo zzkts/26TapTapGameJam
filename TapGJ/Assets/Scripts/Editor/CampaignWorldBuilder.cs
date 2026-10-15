@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Object=UnityEngine.Object;
 
-/// <summary>Compact chapters with a central return point and connected vertical/side loops.</summary>
+/// <summary>Continuous watershed with connected districts and optional vertical loops.</summary>
 public static class CampaignWorldBuilder
 {
     public static bool Enabled=>true;
@@ -15,29 +15,43 @@ public static class CampaignWorldBuilder
     private static Font font;
     private static CampaignFlow flow;
     private static readonly Dictionary<string,Sprite> art=new();
-    [MenuItem("Tools/TapGJ/Rebuild Three Chapter Campaign")]
+    [MenuItem("Tools/TapGJ/Rebuild Continuous World")]
     public static void ApplyAll()
     {
         if(EditorApplication.isPlaying)throw new InvalidOperationException("Exit Play Mode first");
-        EditorSceneManager.OpenScene("Assets/Scene/GameScene.unity");Build(1);Save("Assets/Scene/GameScene.unity");
-        EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene(),"Assets/Scene/SporeScene.unity",true);
-        EditorSceneManager.OpenScene("Assets/Scene/SporeScene.unity");Build(2);Save("Assets/Scene/SporeScene.unity");
-        EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene(),"Assets/Scene/CoreScene.unity",true);
-        EditorSceneManager.OpenScene("Assets/Scene/CoreScene.unity");Build(3);Save("Assets/Scene/CoreScene.unity");
-        EditorBuildSettings.scenes=new[]{"BeginScene","GameScene","SporeScene","CoreScene"}.Select(s=>new EditorBuildSettingsScene("Assets/Scene/"+s+".unity",true)).ToArray();
+        EditorSceneManager.OpenScene("Assets/Scene/GameScene.unity");
+        Build(1);Build(2,true,48);Build(3,true,96);
+        flow.unified=true;flow.worldWidth=144;flow.chapter=1;
+        flow.level.spawn=new Vector2(3,1);flow.level.checkpoints=new[]{new Vector2(3,1),new Vector2(43,1),new Vector2(91,1),new Vector2(137,1)};
+        flow.level.firstRegionEnd=48;flow.level.secondRegionEnd=96;
+        flow.player.transform.position=new Vector3(3,1,0);
+        var follow=Camera.main.GetComponent<PlayerCameraFollow>();follow.horizontalLimits=new Vector2(9.5f,134.5f);
+        Camera.main.transform.position=new Vector3(9.5f,2.2f,-10);
+        flow.GetComponent<EmergenceProgress>().endX=144;
+        var link=flow.gameObject.AddComponent<WatershedNetwork>();link.flow=flow;
+        link.forest=flow.reactors.First(n=>n.district==2&&n.rule==CampaignReactor.Rule.Growth).material;link.forestBridge=forestBridge;
+        EditorUtility.SetDirty(flow);EditorUtility.SetDirty(flow.level);Save("Assets/Scene/GameScene.unity");
+        EditorBuildSettings.scenes=new[]{"BeginScene","GameScene"}.Select(n=>new EditorBuildSettingsScene("Assets/Scene/"+n+".unity",true)).ToArray();
         EditorSceneManager.OpenScene("Assets/Scene/BeginScene.unity");CompleteGameMenuBuilder.Apply();
         EditorSceneManager.OpenScene("Assets/Scene/GameScene.unity");AssetDatabase.SaveAssets();
     }
+    public static void ApplyFirstChapter()=>ApplyAll();
+    private static GameObject forestBridge;
     private static void Save(string path)
     {EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene(),path);}
-    private static void Build(int chapter)
+    private static void Build(int chapter,bool append=false,float offset=0)
     {
         font=AssetDatabase.LoadAssetAtPath<Font>("Assets/ArtRes/Fonts/PlayerUI/NotoSansCJKsc-Medium.otf");
         art.Clear();foreach(string key in new[]{"CavernBackdrop","rock_fill","rock_top_moss","metal_deck","pipe_horizontal","pipe_elbow","crystal","mushroom","gene_terminal","supply_crate","core_gate"})
             art[key]=AssetDatabase.LoadAssetAtPath<Sprite>("Assets/ArtRes/WorldPolished/"+key+".png");
-        var scene=UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+        var story=Object.FindFirstObjectByType<StorySession>();
         var player=Object.FindFirstObjectByType<PlayerController>(FindObjectsInactive.Include);
-        var camera=Camera.main;var story=Object.FindFirstObjectByType<StorySession>();
+        var camera=Camera.main;
+        if(!append)
+        {
+        var scene=UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+
+
         player.transform.SetParent(null);camera.transform.SetParent(null);
         foreach(var obj in scene.GetRootGameObjects())
         {
@@ -45,7 +59,7 @@ public static class CampaignWorldBuilder
                 obj.GetComponentsInChildren<Canvas>(true).Any(c=>c.renderMode!=RenderMode.WorldSpace);
             if(!keep)Object.DestroyImmediate(obj);
         }
-        root=new GameObject("Campaign Chapter "+chapter).transform;
+        root=new GameObject("01 雨后泵站 · 地下水网").transform;
         flow=root.gameObject.AddComponent<CampaignFlow>();flow.chapter=chapter;flow.player=player;
         flow.level=root.gameObject.AddComponent<CompleteLevelFlow>();flow.level.player=player;flow.level.spawn=new Vector2(17,1);
         flow.level.firstRegionEnd=1000;flow.level.secondRegionEnd=1001;flow.level.checkpoints=new[]{new Vector2(17,1)};flow.level.guardianEntryX=1000;
@@ -57,24 +71,29 @@ public static class CampaignWorldBuilder
         camera.transform.position=new Vector3(18,3.2f,-10);camera.orthographicSize=5.4f;
         var follow=camera.GetComponent<PlayerCameraFollow>();follow.target=player.transform;follow.horizontalLimits=new Vector2(9.5f,30.5f);
         var light=new GameObject("Chapter Light").AddComponent<Light>();light.transform.SetParent(root);light.type=LightType.Directional;light.intensity=.8f;
+        }
+        else root=new GameObject(chapter==2?"02 共生菌林":"03 净化核心").transform;
         Color tint=chapter==1?new Color(.85f,.86f,1f):chapter==2?new Color(.66f,1f,.73f):new Color(.70f,.75f,1f);
         for(int i=0;i<3;i++)Visual("环境幕布 "+i,"CavernBackdrop",new Vector2(i*20+0,7),new Vector2(20.1f,24),-40).color=tint;
-        Ground(0,40);Wall(-.5f);Wall(40.5f);
+        if(chapter==1){Ground(0,24);Ground(31,48);}else Ground(0,48);if(chapter==1)Wall(-.5f);if(chapter==3)Wall(48.5f);
         for(int i=0;i<12;i++)
         {
             float x=1.5f+i*3.3f;
             Visual("环境群落 "+i,chapter==2||i%3==0?"mushroom":"crystal",new Vector2(x,.9f),new Vector2(1.3f,1.8f),-7).color=tint;
             if(i%4==0)Visual("管网 "+i,"pipe_horizontal",new Vector2(x,10.5f),new Vector2(9,.5f),-6).color=tint;
         }
-        var exitObj=Item("中央章节出口","core_gate",new Vector2(20,0),new Vector2(1.4f,2.2f));
-        flow.exit=exitObj.AddComponent<CampaignExit>();flow.exit.interactionRange=2;
-        var exitCollider=exitObj.AddComponent<BoxCollider2D>();exitCollider.isTrigger=true;exitCollider.size=new Vector2(1.2f,2);exitCollider.offset=Vector2.up;
-        Label("中央出口 · E",new Vector2(20,2.6f));
+        if(chapter==3)
+        {
+            var exitObj=Item("最终回流阀","core_gate",new Vector2(42,0),new Vector2(1.4f,2.2f));
+            flow.exit=exitObj.AddComponent<CampaignExit>();flow.exit.interactionRange=2;
+            var exitCollider=exitObj.AddComponent<BoxCollider2D>();exitCollider.isTrigger=true;exitCollider.size=new Vector2(1.2f,2);exitCollider.offset=Vector2.up;
+            Label("最终回流阀 · E 选择结局",new Vector2(42,2.8f));
+        }
         var terminal=Item("中央基因终端","gene_terminal",new Vector2(14,0),new Vector2(1.3f,1.7f));terminal.AddComponent<GeneEditStation>().interactionRange=2;
-        var checkpoint=new GameObject("中央安全点");checkpoint.transform.SetParent(root);checkpoint.transform.position=new Vector2(17,1);
+        var checkpoint=new GameObject("中央安全点");checkpoint.transform.SetParent(root);checkpoint.transform.position=new Vector2(43,1);
         var cp=checkpoint.AddComponent<StoryTrigger>();cp.beat=StoryBeat.Checkpoint;cp.triggerId="campaign-checkpoint-"+chapter;
         cp.GetComponent<BoxCollider2D>().isTrigger=true;cp.GetComponent<BoxCollider2D>().size=new Vector2(2,3);
-        Label("Q 切换 / R 播种 · M 地图与目标",new Vector2(17,3.1f));
+        Label(chapter==1?"雨后泵站 · 让脏水变成清水":chapter==2?"共生菌林 · 清水带来新的落脚点":"净化核心 · 两节点 → 守卫 → 最右端阀门",new Vector2(37,3.3f));
         List<CampaignReactor> nodes=new();
         if(chapter==1)
         {
@@ -116,12 +135,34 @@ public static class CampaignWorldBuilder
             a.name="核心守卫 · 菌壳";b.name="核心守卫 · 传导";c.name="核心守卫 · 火流";
             flow.level.guardians=new[]{a,b,c};foreach(var g in flow.level.guardians)g.gameObject.SetActive(false);
         }
-        flow.reactors=nodes.ToArray();
+        foreach(var node in nodes){node.district=chapter;node.name="区域"+chapter+" · "+node.name;}
+        flow.reactors=append?flow.reactors.Concat(nodes).ToArray():nodes.ToArray();
         if(chapter>1)Platform(34,3,2);
         Chest(chapter,34,chapter==1?0:3);Chest(chapter,19,chapter==1?6:chapter==2?7:8);
         var supply=Item("中央恢复补给","supply_crate",new Vector2(22.8f,0),new Vector2(.8f,.8f));supply.AddComponent<PlayerSupply>().healAmount=6;
         supply.AddComponent<CompleteRewardState>().rewardId="campaign-health-"+chapter;
         GeneEditorLayoutPolish.Rebuild(Object.FindFirstObjectByType<GeneEditPanel>(FindObjectsInactive.Include));
+        if(chapter==1)
+        {
+            EcosystemWorldBuilder.Apply(flow);
+            Platform(27.5f,1.15f,7.6f);
+            Label("下方净化池 · S+F 吸水 / F 放水",new Vector2(27.5f,4.3f));
+        }
+        if(chapter==2)
+        {
+            forestBridge=new GameObject("清水唤醒的菌冠捷径");forestBridge.transform.SetParent(root);
+            var oldRoot=root;root=forestBridge.transform;Platform(30,4.8f,12);root=oldRoot;forestBridge.SetActive(false);
+            Label("上游清水 → 母菌生长 → 菌冠捷径",new Vector2(21,9));
+        }
+        for(int i=0;i<8;i++)
+        {
+            float x=3+i*6;
+            Visual("后景管线支座","pipe_elbow",new Vector2(x,7.8f),new Vector2(.65f,2.2f),-9).color=tint;
+            Visual("后景地层","rock_fill",new Vector2(x,9.7f),new Vector2(5.6f,1.4f+(i%3)*.45f),-12).color=tint*.8f;
+        }
+        Visual("区域连续输水管","pipe_horizontal",new Vector2(24,5.7f),new Vector2(48,.22f),-11).color=PlayerUIStyle.Mint;
+        for(int i=0;i<3;i++)Visual("沿路群落","mushroom",new Vector2(40.5f+i*2.4f,.65f),new Vector2(1,1.3f),-7).color=tint;
+        if(append)root.position=new Vector3(offset,0,0);
         EditorUtility.SetDirty(story);EditorUtility.SetDirty(flow);EditorUtility.SetDirty(flow.level);Physics2D.SyncTransforms();
     }
     private static CampaignReactor Circuit(float x,float y,string name)
@@ -155,7 +196,7 @@ public static class CampaignWorldBuilder
     {var obj=new GameObject("场景边界");obj.transform.SetParent(root);obj.layer=LayerMask.NameToLayer("Wall");obj.transform.position=new Vector2(x,6);obj.AddComponent<BoxCollider2D>().size=new Vector2(1,18);for(int i=0;i<5;i++)Visual("洞壁边缘","rock_fill",new Vector2(x,-1+i*4),new Vector2(1.1f,4.1f),2);}
     private static void Stair(float x,float top)=>Platform(x,top,3.2f);
     private static void Platform(float x,float top,float width)
-    {var obj=new GameObject("单向支路平台");obj.transform.SetParent(root);obj.layer=LayerMask.NameToLayer("OneWayPlatform");obj.transform.position=new Vector2(x,top-.12f);var box=obj.AddComponent<BoxCollider2D>();box.size=new Vector2(width,.24f);box.usedByEffector=true;var effect=obj.AddComponent<PlatformEffector2D>();effect.useOneWay=true;effect.surfaceArc=170;obj.AddComponent<OneWayPlatform>();Visual("平台","metal_deck",new Vector2(x,top-.12f),new Vector2(width,.3f),4);}
+    {var obj=new GameObject("单向支路平台");obj.transform.SetParent(root);obj.layer=LayerMask.NameToLayer("OneWayPlatform");obj.transform.position=new Vector2(x,top-.12f);var box=obj.AddComponent<BoxCollider2D>();box.size=new Vector2(width,.24f);box.usedByEffector=true;var effect=obj.AddComponent<PlatformEffector2D>();effect.useOneWay=true;effect.surfaceArc=170;obj.AddComponent<OneWayPlatform>();Visual("平台","metal_deck",new Vector2(x,top-.12f),new Vector2(width,.3f),4);Visual("岩沿托底","rock_fill",new Vector2(x,top-.44f),new Vector2(width*.88f,.5f),-2);}
     private static void Label(string text,Vector2 at)
     {var obj=new GameObject("路标 · "+text,typeof(RectTransform),typeof(Canvas));obj.transform.SetParent(root);obj.transform.position=at;obj.transform.localScale=Vector3.one*.015f;var canvas=obj.GetComponent<Canvas>();canvas.renderMode=RenderMode.WorldSpace;canvas.sortingOrder=15;var rect=obj.GetComponent<RectTransform>();rect.sizeDelta=new Vector2(500,45);var t=GameplayUIFactory.Label("Text",obj.transform,Vector2.zero,Vector2.one,font,20,text,TextAnchor.MiddleCenter);t.color=PlayerUIStyle.Mint;t.raycastTarget=false;}
     private static void Chest(int chapter,float x,float top)

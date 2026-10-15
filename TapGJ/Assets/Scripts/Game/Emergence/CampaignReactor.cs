@@ -7,13 +7,18 @@ public sealed class CampaignReactor:MonoBehaviour
     public EmergenceBody material;
     public EmergencePlate plate;
     public SpriteRenderer beacon;
-    public bool Complete { get; private set; }
-    public string StateText=>Complete?"● 已接通":rule==Rule.Pressure?"蓄水 "+material.Pressure+" / 3":rule==Rule.Weight?(plate.Pressed?"阀板已压下":"阀板尚未受压"):rule==Rule.Growth?"母菌等待水分":rule==Rule.Conduction?"接收器等待电流":"菌壳尚未击破";
+    public PumpLoopSystem ecosystem;
+    public int channel=-1;
+    public int district=1;
+    private bool complete;
+    public bool Complete=>ecosystem!=null?ecosystem.Signal(channel):complete;
+    public string StateText=>ecosystem!=null?ecosystem.Status(channel):Complete?"● 已接通":rule==Rule.Pressure?"蓄水 "+material.Pressure+" / 3":rule==Rule.Weight?(plate.Pressed?"阀板已压下":"阀板尚未受压"):rule==Rule.Growth?"母菌等待水分":rule==Rule.Conduction?"接收器等待电流":"菌壳尚未击破";
     public string SaveId=>"campaign:"+gameObject.scene.name+":"+gameObject.name;
     private float weighted;
-    public void Restore(bool done){Complete=done;if(beacon!=null)beacon.color=done?PlayerUIStyle.Mint:PlayerUIStyle.Violet;if(done&&rule==Rule.Fracture&&material!=null)material.RestoreBroken();}
+    public void Restore(bool done){if(ecosystem!=null)return;complete=done;if(beacon!=null)beacon.color=done?PlayerUIStyle.Mint:PlayerUIStyle.Violet;if(done&&rule==Rule.Fracture&&material!=null)material.RestoreBroken();if(done&&rule==Rule.Growth&&material!=null)material.RestoreBloomed();}
     private void Update()
     {
+        if(ecosystem!=null){if(beacon!=null)beacon.color=Complete?PlayerUIStyle.Mint:PlayerUIStyle.Violet;return;}
         if(Complete||CampaignFlow.Current==null||!CampaignFlow.Current.Ready)return;
         if(plate!=null)weighted=plate.Pressed?weighted+Time.deltaTime:0;
         bool done=rule==Rule.Weight?weighted>=.5f:material!=null&&(rule==Rule.Pressure?material.Pressure>=3||material.SteamCount>0:

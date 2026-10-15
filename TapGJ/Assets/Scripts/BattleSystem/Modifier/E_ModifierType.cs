@@ -18,4 +18,5 @@ public enum E_ModifierType
     Element = 12,
     ProjectileMove = 13,
     Split = 14,
+    BodyTrait = 15,
 }

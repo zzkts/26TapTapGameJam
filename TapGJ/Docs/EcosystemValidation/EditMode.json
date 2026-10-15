@@ -1,0 +1,46 @@
+{
+  "result": {
+    "success": true,
+    "message": "Test job status retrieved.",
+    "error": null,
+    "data": {
+      "job_id": "8e6f02e1557f4293abf9c5d11d0ca14a",
+      "status": "succeeded",
+      "mode": "EditMode",
+      "started_unix_ms": 1792032000943,
+      "finished_unix_ms": 1792032009146,
+      "last_update_unix_ms": 1792032009146,
+      "progress": {
+        "completed": 102,
+        "total": 102,
+        "current_test_full_name": null,
+        "current_test_started_unix_ms": null,
+        "last_finished_test_full_name": "SpritePivotMathTests.ToTexturePositionConvertsNormalizedPivotToPixels",
+        "last_finished_unix_ms": 1792032008838,
+        "stuck_suspected": false,
+        "editor_is_focused": false,
+        "run_in_background": true,
+        "focus_nudge_attempts": null,
+        "focus_nudge_limit": null,
+        "focus_nudge_status": null,
+        "blocked_reason": null,
+        "failures_so_far": [],
+        "failures_capped": false
+      },
+      "error": null,
+      "result": {
+        "mode": "EditMode",
+        "summary": {
+          "total": 102,
+          "passed": 102,
+          "failed": 0,
+          "skipped": 0,
+          "durationSeconds": 3.0310092,
+          "resultState": "Passed"
+        },
+        "results": []
+      }
+    },
+    "hint": null
+  }
+}

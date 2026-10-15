@@ -108,6 +108,7 @@ public sealed class PlayerBackflowPulse : MonoBehaviour
     }
     private bool ClearLine(Vector2 from, Vector2 to, Transform target)
     { Vector2 delta = to - from; return ClearDistance(from, delta.normalized, delta.magnitude, target) >= delta.magnitude - .01f; }
+    public bool CanReach(Vector2 from,Vector2 to,Transform target)=>ClearLine(from,to,target);
     private float ClearDistance(Vector2 origin, Vector2 direction, float distance, Transform target)
     {
         if (distance <= 0f) return 0f;

@@ -237,6 +237,10 @@ public class Projectile : MonoBehaviour
                 impactNormal = hit.normal;
                 contactPoint = hit.point;
                 HandleCollision(hit.collider);
+                // Soft, non-solid vegetation receives the element without acting as a hidden wall.
+                // The same drop can irrigate a row of plants before reaching a real target.
+                if (hit.collider.isTrigger && material.Has(EmergenceMaterial.Organic) &&
+                    !material.Has(EmergenceMaterial.Fragile)) continue;
                 if (pierceCount > 0) { pierceCount--; continue; }
                 Explode(); return;
             }

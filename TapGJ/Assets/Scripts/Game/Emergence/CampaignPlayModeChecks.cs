@@ -23,13 +23,18 @@ public sealed class CampaignPlayModeChecks:MonoBehaviour
     private PlayerController player;
     private PlayerSynthesis ability;
     private CampaignFlow flow;
-    private bool hadSave,hadEndings,cleaned;
+    private bool hadSave,hadEndings,cleaned,finalSection;
     private string priorSave;
     private int priorEndings;
     public static void Run()
     {
         if(!Application.isPlaying||CampaignFlow.Current==null)throw new InvalidOperationException("Enter chapter one Play Mode first");
         var obj=new GameObject("Campaign Verification");DontDestroyOnLoad(obj);obj.AddComponent<CampaignPlayModeChecks>().Begin();
+    }
+    public static void RunFinalSection()
+    {
+        var obj=new GameObject("Final Watershed Verification");DontDestroyOnLoad(obj);
+        var check=obj.AddComponent<CampaignPlayModeChecks>();check.finalSection=true;check.Begin();
     }
     private void Begin()
     {
@@ -51,7 +56,7 @@ public sealed class CampaignPlayModeChecks:MonoBehaviour
     }
     private IEnumerator Execute()
     {
-        var stack=new Stack<IEnumerator>();stack.Push(Cases());
+        var stack=new Stack<IEnumerator>();stack.Push(finalSection?FinalCases():Cases());
         while(stack.Count>0)
         {
             object wait;
@@ -63,115 +68,75 @@ public sealed class CampaignPlayModeChecks:MonoBehaviour
     }
     private IEnumerator Cases()
     {
-        Stage="chapter one and clear navigation";
-        Check(flow.chapter==1&&flow.Powered==0&&flow.reactors.Length==3,"Chapter one begins with three independent branch goals");
-        Check(flow.exit.GetComponentsInChildren<Collider2D>().All(c=>c.isTrigger)&&flow.GetComponentsInChildren<EmergenceGate>().Length==0,"Progression objects cannot form a solid full-height roadblock");
-        Check(player.DashUnlocked&&ability!=null&&player.CoyoteTime>=.22f,"The actual hero begins with dash, synthesis and the enlarged movement grace window");
-        Check(StorySession.Current.objective.target.text.Contains("任意两座"),"The real HUD tells the player exactly how to finish this chapter");
-        yield return Press(Key.M);Check(CampaignUI.Current.MapOpen&&player.MenuOpen&&Time.timeScale==0,"M opens the actual goal map and pauses gameplay");
-        yield return Press(Key.Escape);Check(!player.MenuOpen&&Time.timeScale==1,"Escape resumes from the map without opening another menu");
-        Teleport(new Vector2(17,1));yield return Wait(.2f);Keys(Key.D);yield return Wait(1.8f);Keys();
-        Check(player.transform.position.x>21.5f&&!flow.ChapterSolved,"Real D input crosses the still-unsolved central exit without being blocked");
-        Teleport(new Vector2(17,1));yield return Wait(.25f);Aim(new Vector2(17,5));yield return Frames(2);yield return Press(Key.LeftShift);
-        Check(player.IsDashing&&player.YVelocity>7,"Real Shift input dashes upward toward the aim point rather than forcing a horizontal dash");
-        yield return Wait(1.2f);
-
-        Stage="hero air step and seed momentum";
-        Teleport(new Vector2(17,1));yield return Wait(.25f);yield return Press(Key.Space);yield return Wait(.18f);
-        int steps=ability.AirSteps;yield return Press(Key.Space);
-        Check(ability.AirSteps==steps+1&&player.YVelocity>3,"A second real Space press produces the bubble air step");
-        yield return Press(Key.Space);Check(ability.AirSteps==steps+1,"A third airborne press cannot become an unlimited air jump");
-        yield return Wait(1.4f);
-        Teleport(new Vector2(7,1));yield return Wait(.25f);Aim(new Vector2(6.2f,.5f));yield return Frames(2);yield return Press(Key.R);
-        Check(ability.Seeds.Count(s=>s!=null)==1&&ability.Seeds[0].Body.Wet,"Real R input creates the player's own wet conductive material");
-        yield return Until(()=>flow.reactors[0].Complete,7);
-        Check(flow.reactors[0].Complete&&flow.Powered==1,"The deployed water seed's real fields fill and complete the pressure reactor");
-        ReactionSeed first=ability.Seeds.First(s=>s!=null);float before=first.transform.position.x;
-        Aim(first.transform.position);yield return Frames(2);yield return Press(Key.F);yield return Wait(.15f);
-        Check(Mathf.Abs(first.transform.position.x-before)>.04f,"F applies real momentum to an owned wet seed through the shared material rule");
-        yield return Press(Key.T);Check(ability.Seeds.Count==0,"T recalls owned materials and clears the live seed list");
-
-        Stage="weight alternatives and chapter exit";
-        float plateX=flow.reactors[1].plate.transform.position.x;
-        Teleport(new Vector2(plateX-1.8f,1));yield return Wait(.25f);
-        Check(!flow.reactors[1].plate.Pressed,"The exposed pressure plate is initially free of the player's mass");
-        Aim(new Vector2(plateX,.42f));yield return Frames(2);yield return Press(Key.R);
-        Check(ability.Seeds.Any(s=>s!=null),"Sowing from underneath a one-way catwalk follows its pass-through rule");
-        yield return Until(()=>flow.reactors[1].Complete,7);
-        Check(flow.reactors[1].plate.Pressed&&flow.ChapterSolved,"A deployed seed's real rigidbody mass supplies a second, independent route solution");
-        yield return Press(Key.T);Teleport(new Vector2(plateX,1));yield return Wait(.3f);
-        Check(flow.reactors[1].plate.Pressed,"The same exposed plate also accepts the actual player's body");
-        Check(flow.Goal.Contains("中央出口"),"The objective changes from solving nodes to returning to the central exit");
-        Stage="real vertical branch and portable circuit";
-        Teleport(new Vector2(11.2f,1));yield return Wait(.3f);
-        yield return JumpTo(Key.D,.7f,1);yield return JumpTo(Key.D,.45f,2);yield return JumpTo(Key.D,.8f,3);
-        yield return JumpTo(Key.D,.8f,4);yield return JumpTo(Key.A,.6f,5);yield return JumpTo(Key.None,.7f,6);
-        Aim(new Vector2(17.2f,6.42f));yield return Frames(2);yield return Press(Key.R);
-        yield return Until(()=>flow.reactors[2].Complete,8);
-        Check(flow.Powered==3&&flow.reactors[2].material.Charged,"A player-sown water material completes the optional upper electrical circuit");
-        Check(EmergenceProgress.Current.Discoveries.ContainsKey("conduction"),"The portable circuit produces an actual multi-node conduction discovery");
-        yield return Press(Key.T);
-        string ids=string.Join("|",player.Genes.GenInventory.Select(g=>g.InstanceId));
-        Teleport(new Vector2(20,1));yield return Wait(.3f);yield return Press(Key.E);
-        Check(player.MenuOpen&&CampaignUI.Current.advanceButton.gameObject.activeInHierarchy,"Real E opens an explicit chapter-complete screen");
-        int handle=SceneManager.GetActiveScene().handle;CampaignUI.Current.advanceButton.onClick.Invoke();yield return ChapterReady(handle,"SporeScene");
-        Check(flow.chapter==2&&flow.Powered==0,"The chapter-complete button enters a separate second environment with fresh local goals");
-        Check(string.Join("|",player.Genes.GenInventory.Select(g=>g.InstanceId))==ids,"Chapter transition preserves the exact acquired gene instances");
-        Check(RunProgress.Read().scene=="SporeScene"&&RunProgress.Read().campaignLayout,"The checkpoint names the actual next chapter scene");
-
-        Stage="player-authored biological cascade";
-        Teleport(new Vector2(6,1));yield return Wait(.25f);Aim(new Vector2(5.2f,.5f));yield return Frames(2);yield return Press(Key.R);
-        yield return Until(()=>flow.reactors[0].Complete,6);
-        Check(flow.reactors[0].material.Bloomed,"A player-deployed water seed grows the actual mother colony in chapter two");
-        yield return Press(Key.T);Teleport(new Vector2(30,1));yield return Wait(.25f);
-        yield return Press(Key.Q);yield return Press(Key.Q);Check(ability.Selected==E_ElementType.Poison,"Two real Q presses select the poison seed");
-        Aim(new Vector2(31.7f,.5f));yield return Frames(2);yield return Press(Key.R);yield return Wait(.45f);
-        yield return Press(Key.Q);yield return Press(Key.Q);Check(ability.Selected==E_ElementType.Fire,"The same cyclic selection reaches the fire seed");
-        Aim(new Vector2(30.8f,.5f));yield return Frames(2);yield return Press(Key.R);
-        yield return Until(()=>flow.reactors[1].Complete,7);
-        Check(flow.reactors[1].material.Broken&&flow.Powered==2,"The player's own fire and poison materials create a real cascade that breaks the colony shell");
-        Check(EmergenceProgress.Current.Discoveries.ContainsKey("explosion"),"The self-authored reaction records its discovery in the shared handbook");
-
-        Stage="death retry in the second chapter";
-        StorySession.Current.SetValidationMode(false);StorySession.Current.SaveCheckpointState();
-        player.SetInvincible(false);player.TakeDamage(100);yield return new WaitForSecondsRealtime(.85f);
-        var menu=Object.FindFirstObjectByType<RunMenuPanel>(FindObjectsInactive.Include);
-        Check(player.IsDead&&menu.gameObject.activeInHierarchy,"Death opens the real retry menu inside chapter two");
-        handle=SceneManager.GetActiveScene().handle;menu.retryButton.onClick.Invoke();yield return ChapterReady(handle,"SporeScene");
-        Check(flow.chapter==2&&flow.Powered==2&&player.Hp==player.MaxHp,"Actual Retry restores the same chapter, completed objectives and full health");
-        Check(flow.reactors[1].material.Broken,"A shattered shell stays shattered after a real death scene reload");
-        Teleport(new Vector2(20,1));yield return Wait(.25f);yield return Press(Key.E);
-        handle=SceneManager.GetActiveScene().handle;CampaignUI.Current.advanceButton.onClick.Invoke();yield return ChapterReady(handle,"CoreScene");
-        Check(flow.chapter==3&&flow.Powered==0&&!flow.level.BattleStarted,"The second exit enters the final chapter before its encounter is activated");
-        Check(flow.Goal.Contains("唤醒守卫"),"The final HUD describes the node-to-battle prerequisite");
-
-        Stage="core circuit and final victory";
-        Teleport(new Vector2(6,1));yield return Wait(.2f);Aim(new Vector2(5.2f,.5f));yield return Frames(2);yield return Press(Key.R);
-        yield return Until(()=>flow.reactors[0].Complete,7);yield return Press(Key.T);
-        plateX=flow.reactors[1].plate.transform.position.x;Teleport(new Vector2(plateX,1));yield return Wait(.8f);
-        Check(flow.ChapterSolved&&flow.level.BattleStarted&&flow.level.guardians.All(g=>g.gameObject.activeInHierarchy),"Two real reactor solutions wake all three assigned core guardians");
-        Teleport(new Vector2(14,1));yield return Wait(.2f);yield return Press(Key.E);
-        GeneEditPanel editor=UIManager.Instance.GetPanel<GeneEditPanel>();
-        Check(editor.gameObject.activeInHierarchy,"The central terminal still opens the actual gene workbench in chapter three");
-        for(int i=0;i<Mathf.Min(6,player.Genes.GenInventory.Count);i++){editor.SelectSlot(i);editor.Equip(i);}editor.Confirm();
+        int handle=SceneManager.GetActiveScene().handle;
+        Stage="continuous traversal";Check(player.transform.position.x<4,"A fresh run starts at the left edge");
+        float deadline=Time.time+65,nextJump=0,lastX=player.transform.position.x,nextProbe=Time.time+4;
+        while(player.transform.position.x<140)
+        {
+            if(Time.time>deadline)throw new Exception("Traversal timeout at "+player.transform.position);
+            if(player.IsGrounded()&&Time.time>=nextJump){Keys(Key.D,Key.Space);nextJump=Time.time+1.2f;}else Keys(Key.D);
+            if(Time.time>=nextProbe){Check(player.transform.position.x>lastX+.5f,"Actual movement clears the corridor near x="+lastX.ToString("0"));lastX=player.transform.position.x;nextProbe=Time.time+4;}
+            yield return Wait(.06f);
+        }
+        Keys();Check(SceneManager.GetActiveScene().handle==handle,"The whole left-to-right route uses one scene with no chapter reload");
+        Teleport(new Vector2(3,1));yield return Wait(.2f);
+        Stage="living water and player body rules";
+        var ecoTest=new GameObject("Living Watershed Verification").AddComponent<EcosystemPlayModeChecks>();ecoTest.Begin();
+        while(EcosystemPlayModeChecks.Running)yield return null;
+        Results.AddRange(EcosystemPlayModeChecks.Results);Check(EcosystemPlayModeChecks.Succeeded,"Live water, filtration, both power routes, body genes and save reload pass");Destroy(ecoTest.gameObject);
+        Bind();keyboard.MakeCurrent();mouse.MakeCurrent();handle=SceneManager.GetActiveScene().handle;
+        Stage="death and checkpoint retry";StorySession.Current.SetValidationMode(false);StorySession.Current.SaveCheckpoint(new Vector2(50,1));
+        player.SetInvincible(false);player.TakeDamage(999);yield return new WaitForSecondsRealtime(1);
+        var retry=Object.FindFirstObjectByType<RunMenuPanel>(FindObjectsInactive.Include);
+        Check(player.IsDead&&retry!=null&&retry.gameObject.activeInHierarchy,"Actual fatal damage opens the actual retry interface");
+        retry.retryButton.onClick.Invoke();yield return ChapterReady(handle,"GameScene");handle=SceneManager.GetActiveScene().handle;
+        Check(!player.IsDead&&Mathf.Abs(player.transform.position.x-50)<.3f&&flow.ecosystem.Completed,"Retry returns to the same-map forest checkpoint and preserves the upstream ecosystem");
+        var network=flow.GetComponent<WatershedNetwork>();
+        Stage="upstream changes downstream";yield return Until(()=>network.forest.Bloomed,10);
+        Check(network.forestBridge.activeSelf,"Upstream clean water irrigates a real downstream organism and grows a real shortcut");
+        var shell=flow.reactors.First(n=>n.district==2&&n.rule==CampaignReactor.Rule.Fracture);
+        Teleport(new Vector2(77,1));yield return Wait(.2f);
+        float fireUntil=Time.time+14;
+        while(!shell.Complete&&Time.time<fireUntil){Aim(new Vector2(80,.8f),true);yield return Wait(.08f);}
+        Aim(Vector2.right);Check(shell.Complete&&flow.DistrictSolved(2),"Real shots break the optional shell; biology plus fracture connects the forest");
+        Stage="reaction relay reward";Teleport(new Vector2(63,1));yield return Wait(.1f);ability.Recall();float before=ability.Energy;
+        var a=new GameObject("QA wet boiler");a.transform.position=new Vector2(63,1);var boil=a.AddComponent<EmergenceBody>();boil.material=EmergenceMaterial.Boiler;
+        var b=new GameObject("QA living material");b.transform.position=new Vector2(65,1);var living=b.AddComponent<EmergenceBody>();living.material=EmergenceMaterial.Organic;
+        int bursts=network.ResonanceBursts;boil.Receive(E_ElementType.Water);boil.Receive(E_ElementType.Fire);living.Receive(E_ElementType.Water);
+        var fragile=new GameObject("QA fragile material");fragile.transform.position=new Vector2(64,1);var breakable=fragile.AddComponent<EmergenceBody>();breakable.material=EmergenceMaterial.Fragile;breakable.Damage(20);
+        Check(network.ResonanceBursts>bursts,"Three actual distinct material reactions trigger the player's resonance reward");Destroy(a);Destroy(b);Destroy(fragile);
+        yield return FinalCases();
+    }
+    private IEnumerator FinalCases()
+    {
+        int handle=SceneManager.GetActiveScene().handle;
+        Stage="core reactions and battle";
+        Teleport(new Vector2(99.2f,1));yield return Wait(.2f);Aim(new Vector2(100.8f,.5f));yield return Frames(2);yield return Press(Key.R);
+        var pressure=flow.reactors.First(n=>n.district==3&&n.rule==CampaignReactor.Rule.Pressure);
+        yield return Until(()=>pressure.Complete,15);yield return Press(Key.T);
+        var plate=flow.reactors.First(n=>n.district==3&&n.rule==CampaignReactor.Rule.Weight);
+        Teleport(new Vector2(plate.plate.transform.position.x,1));yield return Wait(.8f);
+        Check(flow.WatershedSolved&&flow.level.BattleStarted,"Real full-water-network prerequisites wake the three final guardians");
+        Check(SceneManager.GetActiveScene().handle==handle,"Downstream puzzles and guardian activation still preserve the same scene");
+        // Use the actual gene workbench and weapon inputs for the final encounter.
+        Teleport(new Vector2(110,1));yield return Wait(.2f);yield return Press(Key.E);
+        var editor=UIManager.Instance.GetPanel<GeneEditPanel>();Check(editor.gameObject.activeInHierarchy,"The downstream gene terminal opens normally");
+        var combat=player.Genes.GenInventory.Where(g=>g.ModifierType!=E_ModifierType.BodyTrait).Take(6).ToArray();
+        for(int i=0;i<combat.Length;i++){editor.SelectSlot(i);editor.Equip(player.Genes.GenInventory.ToList().IndexOf(combat[i]));}editor.Confirm();
         foreach(var guardian in flow.level.guardians)
         {
             Teleport(new Vector2(guardian.transform.position.x-3,guardian.transform.position.y+1));yield return Wait(.15f);
-            float deadline=Time.realtimeSinceStartup+25;
-            while(guardian!=null&&!guardian.IsDead&&Time.realtimeSinceStartup<deadline)
-            {Aim(guardian.GetComponent<Collider2D>().bounds.center,true);yield return Wait(.08f);}
-            Aim(player.transform.position+Vector3.right*3,false);
-            Check(guardian==null||guardian.IsDead,"Real left-mouse projectiles defeat the activated core guardian");
+            float until=Time.time+30;
+            while(guardian!=null&&!guardian.IsDead&&Time.time<until){Aim(guardian.GetComponent<Collider2D>().bounds.center,true);yield return Wait(.08f);}
+            Aim(player.transform.position+Vector3.right*3);Check(guardian==null||guardian.IsDead,"Actual water projectiles defeat a final guardian");
         }
-        yield return Wait(.2f);
-        Check(flow.level.CoreDefeated&&StorySession.Current.GuardianCleared,"The encounter's actual death events satisfy the final win prerequisite");
-        Check(flow.Goal.Contains("选择"),"The completed encounter explicitly directs the player back to the final decision");
-        StorySession.Current.SetValidationMode(false);Teleport(new Vector2(20,1));yield return Wait(.2f);yield return Press(Key.E);
-        var dialogue=StorySession.Current.dialogue;Check(dialogue.IsDialogue,"E at the cleared central valve opens the final narrative");
-        dialogue.skip.onClick.Invoke();yield return Frames(2);Check(dialogue.IsChoosing,"Completing the narrative presents the actual final choice buttons");
+        yield return Wait(.2f);Check(flow.level.CoreDefeated&&StorySession.Current.GuardianCleared,"All three actual deaths unlock the final valve");
+        StorySession.Current.SetValidationMode(false);Teleport(new Vector2(138,1));yield return Wait(.2f);yield return Press(Key.E);
+        var dialogue=StorySession.Current.dialogue;Check(dialogue.IsDialogue,"E at the far-right valve opens the final narrative");
+        dialogue.skip.onClick.Invoke();yield return Frames(2);Check(dialogue.IsChoosing,"The final narrative presents the real ending choices");
         dialogue.coexist.onClick.Invoke();yield return Frames(2);dialogue.skip.onClick.Invoke();yield return Frames(2);
-        Check(dialogue.IsResult&&RunProgress.Read().completed&&!RunProgress.CanContinue,"The choice reaches a persisted victory result and disables Continue for that finished run");
-        Check(dialogue.endingTitle.text=="水的归处","The full three-chapter route reaches its correct ending title");
+        Check(dialogue.IsResult&&RunProgress.Read().completed&&!RunProgress.CanContinue,"The ending persists victory and completes the run without a build");
+        Check(dialogue.endingStats.text.Contains("3 / 3 区域恢复"),"The final result counts the real restored watershed instead of obsolete gate counters");
         Stage="complete";
     }
     private IEnumerator ChapterReady(int old,string scene)

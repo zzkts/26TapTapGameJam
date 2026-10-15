@@ -1,39 +1,74 @@
-using System.Collections;
 using System.Linq;
 using UnityEngine;
 
-/// <summary>Three compact hub-and-branch chapters, with explicit chapter exits and final victory.</summary>
+/// <summary>A single watershed: district changes never reload the world or discard reactions.</summary>
 public sealed class CampaignFlow:MonoBehaviour
 {
     public static CampaignFlow Current { get; private set; }
     public int chapter=1;
+    public bool unified;
+    public float worldWidth=144;
     public CampaignReactor[] reactors;
     public CampaignExit exit;
     public CompleteLevelFlow level;
     public PlayerController player;
+    public PumpLoopSystem ecosystem;
     public bool Ready { get; private set; }
-    public int Powered=>reactors.Count(r=>r.Complete);
-    public bool ChapterSolved=>Powered>=2;
-    public string ChapterName=>chapter==1?"第一章 · 雨后泵站":chapter==2?"第二章 · 共生菌林":"第三章 · 净化核心";
-    public string Goal=>chapter<3?(ChapterSolved?"目标完成 · 回到中央出口，E 进入下一章":"用反应接通任意两座节点 · "+Powered+" / 2"):
-        level.CoreDefeated?"胜利条件已达成 · 回中央阀门，E 选择水流的归处":level.BattleStarted?"击败三名核心守卫 · 剩余 "+level.guardians.Count(g=>g!=null&&!g.IsDead):"接通任意两座核心节点，唤醒守卫 · "+Powered+" / 2";
+    public CampaignReactor[] DistrictNodes=>reactors.Where(n=>n.district==chapter).ToArray();
+    public int Powered=>DistrictNodes.Count(r=>r.Complete);
+    public bool DistrictSolved(int district)=>district==1?ecosystem!=null&&ecosystem.Completed:reactors.Count(n=>n.district==district&&n.Complete)>=2;
+    public bool ChapterSolved=>DistrictSolved(chapter);
+    public bool WatershedSolved=>DistrictSolved(1)&&DistrictSolved(2)&&DistrictSolved(3);
+    public string ChapterName=>Name(chapter);
+    public static string Name(int n)=>n==1?"第一章 · 雨后泵站":n==2?"第二章 · 共生菌林":"第三章 · 净化核心";
+    public string Goal=>chapter==1?(ChapterSolved?"清水已送往下游 · 向右进入共生菌林":ecosystem.Goal):chapter==2?(ChapterSolved?"菌林回流已接通 · 向右前往净化核心":"浇醒母菌 / 连锁破壳 / 湿种导电，任选两项 · "+Powered+" / 2"):
+        !WatershedSolved?"水网进度：泵站 "+(DistrictSolved(1)?"●":"○")+" 菌林 "+(DistrictSolved(2)?"●":"○")+" 核心 "+(DistrictSolved(3)?"●":"○")+" · M 定位未完成目标":
+        level.CoreDefeated?"胜利条件已达成 · 最右侧回流阀按 E 选择结局":level.BattleStarted?"击败三名核心守卫 · 剩余 "+level.guardians.Count(g=>g!=null&&!g.IsDead):"水网已恢复 · 前往核心守卫";
+    public CampaignReactor NavigationTarget
+    {
+        get
+        {
+            int district=chapter;
+            if(chapter==3&&!WatershedSolved)district=!DistrictSolved(1)?1:!DistrictSolved(2)?2:3;
+            if(DistrictSolved(district))return null;
+            return reactors.Where(n=>n.district==district&&!n.Complete).OrderBy(n=>Vector2.Distance(n.transform.position,player.transform.position)).FirstOrDefault()??(district==1?reactors.First(n=>n.district==1&&n.channel==2):null);
+        }
+    }
+    public bool NavigatingGuardians=>chapter==3&&WatershedSolved&&level.BattleStarted&&!level.CoreDefeated;
+    public Vector2 NavigationPosition=>NavigationTarget!=null?(Vector2)NavigationTarget.transform.position:chapter<3?new Vector2(chapter*48+2,1):NavigatingGuardians?(Vector2)level.guardians.Where(g=>g!=null&&!g.IsDead).OrderBy(g=>Vector2.Distance(g.transform.position,player.transform.position)).Select(g=>g.transform.position).DefaultIfEmpty(exit.transform.position).First():(Vector2)exit.transform.position;
     private void Awake(){Current=this;}
     public void Begin(RunSaveData saved)
     {
         if(player==null)player=StorySession.Current.player;
         if(player.GetComponent<PlayerSynthesis>()==null)player.gameObject.AddComponent<PlayerSynthesis>();
+        var reservoir=player.GetComponent<PlayerReservoir>();if(reservoir==null)reservoir=player.gameObject.AddComponent<PlayerReservoir>();
+        if(saved!=null)reservoir.Restore(saved.carriedWater,saved.carriedPollution);
         player.UnlockDash();
         if(player.Genes.GenInventory.Count==0)
             foreach(string gene in new[]{"water","ember","sewage"})player.Genes.Acquire(Resources.Load<Modifier>("SO/Genes/"+gene));
         foreach(var node in reactors)node.Restore(StorySession.Current.WasTriggerCompleted(node.SaveId));
-        Ready=true;CampaignUI.Ensure(this);
-        string entered="campaign:entered:"+chapter;
-        if(!StorySession.Current.WasTriggerCompleted(entered))
-        {
-            StorySession.Current.RegisterTriggerComplete(entered);
-            StorySession.Current.Tell(Introduction());
-        }
-        if(chapter==3&&ChapterSolved&&!level.CoreDefeated)level.BeginGuardianBattle();
+        ecosystem.Restore(saved?.ecosystem);
+        foreach(string key in new[]{"body_cling","body_jet","body_symbiosis"})
+            if(!player.Genes.GenInventory.Any(g=>g!=null&&g.Definition.name==key))player.Genes.Acquire(Resources.Load<Modifier>("SO/Genes/"+key));
+        chapter=DistrictAt(player.transform.position.x);Ready=true;CampaignUI.Ensure(this);Announce();
+    }
+    public static int DistrictAt(float x)=>x<48?1:x<96?2:3;
+    private void Update()
+    {
+        if(!Ready||player==null||player.IsDead)return;
+        int next=DistrictAt(player.transform.position.x);
+        if(next!=chapter){chapter=next;Announce();}
+        if(chapter==3&&WatershedSolved&&!level.CoreDefeated&&!level.BattleStarted)
+        {level.BeginGuardianBattle();CampaignUI.Current?.Toast("整条水网已连通 · 三名守卫苏醒 · 击败后到最右端按 E");}
+    }
+    private void Announce()
+    {
+        CampaignUI.Current?.SelectDistrict();
+        string key="watershed:arrival:"+chapter;
+        ChapterArrivalPanel.Show(ChapterName,chapter==1?"从最左侧出发 · 供水 + 净化 + 动力，输出清水 20 秒":"第 "+chapter+" 区域已到达 · "+(chapter==2?"任选两项反应接通菌林，清水会唤醒菌冠捷径":"接通任意两座核心节点，恢复水网后击败守卫"));
+        if(StorySession.Current.WasTriggerCompleted(key))return;
+        StorySession.Current.RegisterTriggerComplete(key);
+        if(chapter>1)StorySession.Current.SaveCheckpoint(new Vector2((chapter-1)*48+2,1));
     }
     public void CompleteReactor(CampaignReactor node)
     {
@@ -41,23 +76,12 @@ public sealed class CampaignFlow:MonoBehaviour
         node.Restore(true);StorySession.Current.RegisterTriggerComplete(node.SaveId);
         Modifier reward=Resources.Load<Modifier>("SO/Genes/"+node.reward);
         if(reward!=null)player.Genes.Acquire(reward);player.Heal(1);
-        CampaignUI.Current?.Toast(node.displayName+"已接通 · "+Powered+" / 3"+(ChapterSolved?(chapter==3?" · 守卫已唤醒，击败后回阀门":" · 中央出口可用"):" · 接通两座即可前进"));
-        if(chapter==3&&ChapterSolved&&!level.BattleStarted)level.BeginGuardianBattle();
+        int count=reactors.Count(n=>n.district==node.district&&n.Complete);
+        CampaignUI.Current?.Toast(node.displayName+"已接通 · "+count+" / 2"+(count>=2?" · 向右继续探索":" · 再接通任意一项"));
         StorySession.Current.SaveCheckpointState();
     }
-    public void Advance()
-    {
-        if(chapter>=3||!ChapterSolved)return;
-        RunSaveData data=StorySession.Current.Capture();data.scene=chapter==1?"SporeScene":"CoreScene";
-        data.checkpointX=17;data.checkpointY=1;data.guardianCleared=false;data.region=0;
-        RunProgress.Write(data);player.SetMenuOpen(false);RunProgress.ContinueRun();
-    }
-    public StoryLine[] Introduction()
-    {
-        if(chapter==1)return new[]{new StoryLine("雨后的泵站","水路断成了几段。这里没有唯一的开关：你可以给泵站加热，也可以让重量和水团接入回路。"),new StoryLine("本章胜利条件","左侧蓄压罐、右侧重量阀、高处导电节点，任选两个接通。然后回到中央发光出口，按 E 进入菌林。按 M 查看地图与各节点方法。"),new StoryLine("地漏的新能力","Q 切换水 / 火 / 孢子种；R 播种，T 回收；F 推流，S+F 吸回湿润种子与箱体。空中再按空格可踏跃一次，落地恢复。",true)};
-        if(chapter==2)return new[]{new StoryLine("共生菌林","水让菌落醒来，菌落又把变化传给邻居。你带来的小水团，可以成为这条连锁的一部分。"),new StoryLine("本章胜利条件","让左侧菌落生长、右侧连锁击破隔板，或接通高处导体，任选两项。完成后回中央出口进入核心；支路顺序由你决定。"),new StoryLine("组合试验","孢子种 + 火种可以爆破；水种 + 火种可以产生蒸汽登高。治疗怪会救助同伴，优先打断它，或用连锁同时清场。")};
-        return new[]{new StoryLine("净化核心","核心在等待两个回流节点重新接通。你学到的反应，将决定这里的水路如何重组。"),new StoryLine("最终胜利条件","先接通任意两座节点，再击败出现的三名守卫。最后回到中央阀门按 E，选择一个结局，才完成整个游戏。"),new StoryLine("地漏","不是谁给了我一把钥匙。是这些相遇，让原本走不通的地方有了新的路。",true)};
-    }
+    // Kept for old UI callers: travel is always continuous within GameScene.
+    public void Advance(){CampaignUI.Current?.Close();CampaignUI.Current?.Toast("无需切换场景 · 沿主路向右前进即可进入下一区域");}
+    public StoryLine[] Introduction()=>new[]{new StoryLine("地下水网","把同一份水用于供水、菌群、蒸汽和导电。改变一个地方，观察变化如何传到下游。")};
     private void OnDestroy(){if(Current==this)Current=null;}
 }
-

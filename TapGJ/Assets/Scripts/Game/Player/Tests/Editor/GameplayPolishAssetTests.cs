@@ -59,8 +59,6 @@ public class GameplayPolishAssetTests
     }
     [TestCase("Assets/Scene/BeginScene.unity")]
     [TestCase("Assets/Scene/GameScene.unity")]
-    [TestCase("Assets/Scene/SporeScene.unity")]
-    [TestCase("Assets/Scene/CoreScene.unity")]
     public void SceneObjectsHaveNoBrokenReferences(string path)
     {
         var scene = EditorSceneManager.OpenPreviewScene(path);

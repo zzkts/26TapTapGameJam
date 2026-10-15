@@ -14,14 +14,15 @@ public sealed class EmergenceBody : MonoBehaviour
     public EmergenceGate chargedGate;
     public string completionId;
     public TextMesh status;
-    public bool Wet => wetUntil>Time.time;
+    public bool Wet => wetUntil>Time.time||(GetComponent<WaterReservoir2D>() is WaterReservoir2D tank&&tank.Volume>.05f);
     public bool Poisoned => poisonUntil>Time.time;
     public bool Charged => chargedUntil>Time.time;
     public bool Broken { get; private set; }
     public bool Bloomed { get; private set; }
     public int Pressure { get; private set; }
     public int SteamCount { get; private set; }
-    public float LinkRadius => Wet ? 2.1f : .65f;
+    public event Action<E_ElementType> Received;
+    public float LinkRadius => Wet ? (GetComponent<WaterReservoir2D>() is WaterReservoir2D tank?Mathf.Max(2.1f,tank.width*.55f):2.1f) : .65f;
     private float wetUntil,poisonUntil,chargedUntil,burningUntil,nextBurn,nextGrowth,hp;
     private int lastFireFrame=-1;
     private SpriteRenderer visual;
@@ -48,11 +49,12 @@ public sealed class EmergenceBody : MonoBehaviour
     public void Receive(E_ElementType incoming)
     {
         if(Broken)return;
+        Received?.Invoke(incoming);
         if(incoming==E_ElementType.Water)
         {
             wetUntil=Time.time+wetDuration;burningUntil=0f;
             if(Has(EmergenceMaterial.Boiler))Pressure=Mathf.Min(3,Pressure+1);
-            if(Has(EmergenceMaterial.Organic)&&Time.time>=nextGrowth)
+            if(Has(EmergenceMaterial.Organic)&&GetComponent<EcoFungus>()==null&&Time.time>=nextGrowth)
             {
                 Bloomed=true;poisonUntil=Time.time+12f;nextGrowth=Time.time+growthCooldown;
                 ElementField.Create(E_ElementType.Poison,transform.position+Vector3.up*.3f,new Vector2(5.5f,1.1f),7f,LayerMask.GetMask("Enemy","Player"));
@@ -72,6 +74,7 @@ public sealed class EmergenceBody : MonoBehaviour
             if(!steam&&!explode&&Has(EmergenceMaterial.Flammable))burningUntil=Time.time+4f;
         }
     }
+    public void RestoreBloomed(){Bloomed=true;}
     public void Energize()
     {
         chargedUntil=Time.time+2.8f;
@@ -108,7 +111,7 @@ public sealed class EmergenceBody : MonoBehaviour
         {
             Color tint=Charged?new Color(1f,.91f,.45f):Poisoned?new Color(.55f,1f,.42f):Wet?new Color(.42f,.94f,1f):burningUntil>Time.time?new Color(1f,.5f,.25f):Color.white;
             visual.color=original*tint;
-            if(Has(EmergenceMaterial.Organic))visual.transform.localScale=scale*(Bloomed&&Poisoned?1.18f:1f);
+            if(Has(EmergenceMaterial.Organic)&&GetComponent<EcoFungus>()==null)visual.transform.localScale=scale*(Bloomed&&Poisoned?1.18f:1f);
         }
     }
     public void RestoreBroken()

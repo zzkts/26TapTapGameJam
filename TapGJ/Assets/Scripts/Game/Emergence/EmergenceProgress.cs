@@ -23,7 +23,7 @@ public sealed class EmergenceProgress:MonoBehaviour
         while(StorySession.Current==null||!StorySession.Current.Ready)yield return null;
         foreach(string key in new[]{"duct","spores","factory","gate-wire","gate-core","gate-factory"})
             if(StorySession.Current.WasTriggerCompleted("emergence:"+key))Completed.Add(key);
-        foreach(string kind in new[]{"conduction","steam","lift","growth","explosion","fracture","inertia"})
+        foreach(string kind in new[]{"conduction","steam","lift","growth","explosion","fracture","inertia","ecology"})
             if(StorySession.Current.WasTriggerCompleted("discovery:"+kind))Discoveries[kind]=Description(kind);
         foreach(EmergenceGate gate in GetComponentsInChildren<EmergenceGate>(true))
             if(IsComplete(gate.persistentId))gate.OpenPermanently();
@@ -59,6 +59,7 @@ public sealed class EmergenceProgress:MonoBehaviour
         "explosion"=>"连锁：火焰遇毒雾会爆炸，相邻菌落能将反应传递下去。",
         "fracture"=>"破坏：爆炸、燃烧和持续冲击可以破坏脆弱结构。",
         "inertia"=>"惯性：水球推动箱子；旋涡、人物和敌人也能改变机关上的重量。",
+        "ecology"=>"生态：供水推动菌群生长，菌群净化和架桥，水位与动力共同恢复地下循环。",
         _=>"新的变化正在发生。"
     };
     private void ApplyVariation()

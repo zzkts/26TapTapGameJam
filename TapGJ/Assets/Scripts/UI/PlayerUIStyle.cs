@@ -53,10 +53,18 @@ public static class PlayerUIStyle
     public static Sprite GeneIcon(Modifier gene)
     {
         int key = gene == null ? -1 : gene.IsAttribute ? 100 + (int)gene.Element + (gene.IsVortex ? 20 : 0) : (int)gene.ModifierType;
+        if(gene!=null&&gene.ModifierType==E_ModifierType.BodyTrait)key=300+Mathf.RoundToInt(gene.ModifierValue);
         if (icons.TryGetValue(key, out Sprite cached) && cached != null) return cached;
         Painter p = new Painter(96);
         Vector2 center = new Vector2(48f, 48f);
-        if (gene != null && gene.IsAttribute)
+        if(gene!=null&&gene.ModifierType==E_ModifierType.BodyTrait)
+        {
+            int trait=Mathf.RoundToInt(gene.ModifierValue);
+            if(trait==1){p.Line(new Vector2(72,14),new Vector2(72,82),6);p.Disc(new Vector2(44,39),18);p.Polygon(new Vector2(26,40),new Vector2(47,76),new Vector2(63,39));}
+            else if(trait==2){p.Disc(new Vector2(48,65),17);p.Arrow(new Vector2(48,49),new Vector2(48,14),7);p.Line(new Vector2(23,32),new Vector2(31,17),5);p.Line(new Vector2(73,32),new Vector2(65,17),5);}
+            else{p.Polygon(new Vector2(22,23),new Vector2(22,48),new Vector2(46,75),new Vector2(77,80),new Vector2(73,46),new Vector2(48,24));p.Line(new Vector2(21,17),new Vector2(68,69),5);}
+        }
+        else if (gene != null && gene.IsAttribute)
         {
             if (gene.IsVortex)
             {

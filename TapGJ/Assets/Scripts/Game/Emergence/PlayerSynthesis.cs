@@ -26,6 +26,7 @@ public sealed class PlayerSynthesis:MonoBehaviour
         if(k.rKey.wasPressedThisFrame)Sow(player.AimPosition);
         if(k.tKey.wasPressedThisFrame)Recall();
     }
+    public void Recharge(float amount){Energy=Mathf.Min(MaxEnergy,Energy+Mathf.Max(0,amount));}
     public void Cycle()
     {Selected=Selected==E_ElementType.Water?E_ElementType.Fire:Selected==E_ElementType.Fire?E_ElementType.Poison:E_ElementType.Water;Notice="已选择 "+SelectedName+" · R 投放到瞄准位置";}
     public bool Sow(Vector2 aim)

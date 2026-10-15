@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -221,6 +222,11 @@ public class PlayerController : MonoBehaviour, ICombatable
     public bool TryJump()
     {
         if (IsDead || MenuOpen || IsDashing || IsHurt || Time.time < ignoreGroundUntil) return false;
+        if(WaterReservoir2D.Active.Any(t=>t!=null&&t.Contains(bodyCollider.bounds.center)))
+        {
+            rb.linearVelocity=new Vector2(rb.linearVelocity.x,5f);ignoreGroundUntil=Time.time+.12f;
+            inputJump=true;environmentLaunch=false;Presentation?.Jump();return true;
+        }
         if (!IsGrounded() && Time.time > groundedUntil)
         {
             PlayerSynthesis synthesis=GetComponent<PlayerSynthesis>();

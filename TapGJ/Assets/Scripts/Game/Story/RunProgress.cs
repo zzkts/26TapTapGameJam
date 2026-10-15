@@ -14,9 +14,11 @@ public sealed class SavedGene
 [Serializable]
 public sealed class RunSaveData
 {
-    public int version = 2;
+    public int version = 3;
     public bool experimentMode;
     public bool campaignLayout;
+    public EcosystemState ecosystem;
+    public float carriedWater=2,carriedPollution;
     public int runSeed;
     public string scene = "GameScene";
     public float checkpointX = 3f, checkpointY = 1f, elapsedSeconds;
@@ -73,11 +75,29 @@ public static class RunProgress
         try
         {
             RunSaveData data = JsonUtility.FromJson<RunSaveData>(PlayerPrefs.GetString(SaveKey));
-            if (data == null || (data.version != 1 && data.version != 2) || (data.scene != "GameScene"&&data.scene!="SporeScene"&&data.scene!="CoreScene") ||
+            if (data == null || (data.version < 1 || data.version > 3) || (data.scene != "GameScene"&&data.scene!="SporeScene"&&data.scene!="CoreScene") ||
                 float.IsNaN(data.checkpointX) || float.IsInfinity(data.checkpointX) ||
                 float.IsNaN(data.checkpointY) || float.IsInfinity(data.checkpointY) ||
                 float.IsNaN(data.elapsedSeconds) || float.IsInfinity(data.elapsedSeconds)) return null;
-            if(data.version==1){if(data.checkpointX>=78f)data.checkpointX+=150f;data.version=2;}
+            if(data.version<3)
+            {
+                if(data.campaignLayout)
+                {
+                    int district=data.scene=="SporeScene"?2:data.scene=="CoreScene"?3:1;
+                    data.checkpointX=Mathf.Clamp(data.checkpointX,1,43)+(district-1)*48;
+                    if(data.completedTriggers!=null)
+                        for(int i=0;i<data.completedTriggers.Count;i++)
+                        {
+                            string id=data.completedTriggers[i];
+                            foreach(var pair in new[]{new[]{"GameScene","1"},new[]{"SporeScene","2"},new[]{"CoreScene","3"}})
+                                if(id.StartsWith("campaign:"+pair[0]+":"))id=id.Replace("campaign:"+pair[0]+":","campaign:GameScene:区域"+pair[1]+" · ");
+                            data.completedTriggers[i]=id;
+                        }
+                }
+                else data.checkpointX=3;
+                data.scene="GameScene";data.version=3;
+            }
+            data.checkpointX=Mathf.Clamp(data.checkpointX,1,142);
             data.genes ??= new List<SavedGene>(); data.equipped ??= Array.Empty<int>();
             data.completedTriggers ??= new List<string>();
             data.elapsedSeconds = Mathf.Max(0f, data.elapsedSeconds);
@@ -113,6 +133,9 @@ public static class RunProgress
             scene = SceneManager.GetActiveScene().name
         };
         if (completedTriggers != null) data.completedTriggers.AddRange(completedTriggers);
+        if(CampaignFlow.Current?.ecosystem!=null)data.ecosystem=CampaignFlow.Current.ecosystem.Capture();
+        var reservoir=player!=null?player.GetComponent<PlayerReservoir>():null;
+        if(reservoir!=null){data.carriedWater=reservoir.Stored;data.carriedPollution=reservoir.Pollution;}
         GeneInventory inventory = player != null ? player.Genes : null;
         if (inventory == null) return data;
         foreach (Modifier gene in inventory.GenInventory)
