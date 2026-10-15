@@ -23,4 +23,4 @@ MonoBehaviour:
   reboundCount: 0
   reboundCoefficient: 1
   spreadAngle: 12
-  projectilePrefab: {fileID: 4114492273762899842, guid: 80cffaa92ce6d1b45ac7a8d61a25000c, type: 3}
+  projectilePrefab: {fileID: 4114492273762899842, guid: 4281c5f8fdd860149947ce7aa2b4f13b, type: 3}

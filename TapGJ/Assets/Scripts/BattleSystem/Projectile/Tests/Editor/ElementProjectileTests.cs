@@ -188,6 +188,14 @@ public class ElementProjectileTests
             Is.EqualTo((int)expected));
     }
 
+    [Test]
+    public void DefaultWaterWeaponActuallyStartsWithWater()
+    {
+        WeaponData weapon=Resources.Load<WeaponData>("SO/Weapon/DefaultWaterBallWeaponData");
+        Assert.That(weapon.projectilePrefab,Is.SameAs(Resources.Load<GameObject>("Prefab/Projectile/WaterProjectile")));
+        Assert.That(new BulletSnapshot(weapon).element,Is.EqualTo(E_ElementType.Water));
+    }
+
     [TestCase("Steam", typeof(SteamReaction))]
     [TestCase("PoisonCloud", typeof(PoisonCloudReaction))]
     [TestCase("Explosion", typeof(ExplosionReaction))]

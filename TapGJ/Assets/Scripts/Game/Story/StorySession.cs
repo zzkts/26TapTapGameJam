@@ -49,6 +49,10 @@ public sealed class StorySession : MonoBehaviour
         if(storyCanvas!=null)objective=storyCanvas.GetComponentInChildren<StoryObjectivePanel>(true);
         restoring=true;
         RunSaveData saved=ValidationMode?null:RunProgress.EnterScene();
+        if(saved!=null&&CampaignFlow.Current!=null&&!saved.campaignLayout)
+        {
+            saved.checkpointX=17;saved.checkpointY=1;saved.guardianCleared=false;saved.region=0;saved.campaignLayout=true;
+        }
         if(saved!=null)
         {
             flags=saved.storyFlags;elapsed=saved.elapsedSeconds;
@@ -71,7 +75,8 @@ public sealed class StorySession : MonoBehaviour
         restoring=false;Ready=true;
         if(player.Genes!=null){player.Genes.Acquired+=OnGeneAcquired;player.Genes.Changed+=OnInventoryChanged;}
         if(level!=null){level.CoreCleared+=NotifyGuardiansDefeated;level.ExitReached+=ShowCoreChoice;level.RegionEntered+=OnRegionEntered;}
-        if(saved==null)Reach(StoryBeat.Entrance,player.transform.position);
+        if(CampaignFlow.Current!=null)CampaignFlow.Current.Begin(saved);
+        else if(saved==null)Reach(StoryBeat.Entrance,player.transform.position);
         else if(region>0)OnRegionEntered(region);
         RefreshObjective();
     }
@@ -80,7 +85,7 @@ public sealed class StorySession : MonoBehaviour
     {
         if(!Ready||player==null)return;
         if(!completed&&!player.IsDead&&!player.MenuOpen)elapsed+=Time.deltaTime;
-        if(player.DashUnlocked&&!Has(StoryBeat.Dash))Reach(StoryBeat.Dash,player.transform.position);
+        if(CampaignFlow.Current==null&&player.DashUnlocked&&!Has(StoryBeat.Dash))Reach(StoryBeat.Dash,player.transform.position);
         if(pending.Count>0&&!IsModal&&!player.MenuOpen&&!player.IsDead)PlayNext();
         objectiveTimer-=Time.unscaledDeltaTime;
         if(objectiveTimer<=0f){objectiveTimer=.25f;RefreshObjective();}
@@ -111,7 +116,7 @@ public sealed class StorySession : MonoBehaviour
     }
     private void OnGeneAcquired(Modifier gene)
     {
-        if(restoring||gene==null||!gene.IsAttribute)return;
+        if(CampaignFlow.Current!=null||restoring||gene==null||!gene.IsAttribute)return;
         StoryBeat beat=gene.Element==E_ElementType.Fire?StoryBeat.SampleFire:
             gene.Element==E_ElementType.Poison?StoryBeat.SamplePoison:StoryBeat.SampleWater;
         Reach(beat,player.transform.position);
@@ -166,6 +171,7 @@ public sealed class StorySession : MonoBehaviour
         pending.Enqueue(new DialogueRequest{lines=lines,complete=complete});
         if(!IsModal&&!player.MenuOpen)PlayNext();
     }
+    public void Tell(StoryLine[] lines)=>Enqueue(lines,SaveCheckpointState);
     private void PlayNext()
     {
         if(pending.Count==0||IsModal||player.IsDead)return;
@@ -205,6 +211,11 @@ public sealed class StorySession : MonoBehaviour
     {
         if(objective==null)return;
         objective.gameObject.SetActive(!IsModal);
+        if(CampaignFlow.Current!=null)
+        {
+            var flow=CampaignFlow.Current;
+            objective.Set(flow.ChapterName,completed?"全章通关 · 水流的归处":flow.Goal,"M 章节地图 · TAB 反应手册 · 出口在中央");return;
+        }
         string chapter=region==0?"第一章 · 异常回流":region==1?"第一章 · 它们的声音":"第一章 · 水落口";
         string target;
         if(completed)target="探索完成 · 水流仍在继续";

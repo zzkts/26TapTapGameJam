@@ -48,8 +48,8 @@ public class PlayerController : MonoBehaviour, ICombatable
     public GeneInventory Genes => geneInventory;
     public PlayerPresentation Presentation { get; private set; }
     public PlayerBackflowPulse Backflow { get; private set; }
-    public float CoyoteTime => playerData != null ? playerData.coyoteTime : .14f;
-    public float JumpBufferTime => playerData != null ? playerData.jumpBuffer : .16f;
+    public float CoyoteTime => playerData != null ? playerData.coyoteTime : .22f;
+    public float JumpBufferTime => playerData != null ? playerData.jumpBuffer : .22f;
     public bool IsShooting => shotVisualUntil > Time.time;
     public IReadOnlyList<BuffInstance> BuffList => buffs.BuffList;
     public event Action HealthChanged;
@@ -221,7 +221,14 @@ public class PlayerController : MonoBehaviour, ICombatable
     public bool TryJump()
     {
         if (IsDead || MenuOpen || IsDashing || IsHurt || Time.time < ignoreGroundUntil) return false;
-        if (!IsGrounded() && Time.time > groundedUntil) return false;
+        if (!IsGrounded() && Time.time > groundedUntil)
+        {
+            PlayerSynthesis synthesis=GetComponent<PlayerSynthesis>();
+            if(synthesis==null||!synthesis.TryAirStep())return false;
+            bufferedUntil=float.NegativeInfinity;groundedUntil=float.NegativeInfinity;
+            ignoreGroundUntil=Time.time+.12f;inputJump=true;environmentLaunch=false;
+            Presentation?.Jump();return true;
+        }
         groundedUntil = float.NegativeInfinity; ignoreGroundUntil = Time.time + 0.08f;
         bufferedUntil = float.NegativeInfinity; inputJump = true; environmentLaunch = false;
         rb.linearVelocity = new Vector2(rb.linearVelocityX, jumpVelocity);
@@ -270,7 +277,13 @@ public class PlayerController : MonoBehaviour, ICombatable
     public void BeginDash()
     {
         rb.gravityScale = 0f;
-        rb.linearVelocity = Vector2.right * FaceDir * moveSpeed * rollSpeedMultiplier;
+        Vector2 direction=Vector2.right*FaceDir;
+        if(GetComponent<PlayerSynthesis>()!=null)
+        {
+            Vector2 aim=AimPosition-(Vector2)bodyCollider.bounds.center;
+            if(aim.sqrMagnitude>.01f)direction=aim.normalized;
+        }
+        rb.linearVelocity = direction * (GetComponent<PlayerSynthesis>()!=null?8.5f:moveSpeed*rollSpeedMultiplier);
         Presentation?.Dash();
         UpdateFeedback();
     }
@@ -372,9 +385,13 @@ public class PlayerController : MonoBehaviour, ICombatable
         ContactFilter2D filter = new() { useTriggers = false }; filter.SetLayerMask(checkGroundLM);
         int count = bodyCollider.Cast(Vector2.down, filter, groundHits, checkGroundDis);
         for (int i = 0; i < count; i++)
+        {
+            if(groundHits[i].collider!=null&&groundHits[i].collider.GetComponent<OneWayPlatform>()!=null&&
+                groundHits[i].collider.bounds.max.y>bodyCollider.bounds.min.y+.12f)continue;
             if (groundHits[i].normal.y > 0.4f && groundHits[i].collider != bodyCollider &&
                 groundHits[i].collider.GetComponentInParent<EnemyAIController>() == null &&
                 !Physics2D.GetIgnoreCollision(bodyCollider, groundHits[i].collider)) return groundHits[i];
+        }
         return default;
     }
     private void OnDisable()

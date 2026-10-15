@@ -6,24 +6,26 @@ using UnityEngine;
 
 public sealed class EmergenceContentTests
 {
-    [Test]
-    public void ExpandedChapterHasMultipleRoutesChoicesAndPersistentCircuit()
+    [TestCase("GameScene",1)]
+    [TestCase("SporeScene",2)]
+    [TestCase("CoreScene",3)]
+    public void CampaignChaptersHaveReachableNonBlockingExitsAndBranchGoals(string name,int chapter)
     {
-        var scene=EditorSceneManager.OpenPreviewScene("Assets/Scene/GameScene.unity");
+        var scene=EditorSceneManager.OpenPreviewScene("Assets/Scene/"+name+".unity");
         try
         {
             var roots=scene.GetRootGameObjects();
             CompleteLevelFlow level=roots.SelectMany(r=>r.GetComponentsInChildren<CompleteLevelFlow>(true)).Single();
-            EmergenceProgress progress=level.GetComponent<EmergenceProgress>();
-            Assert.That(progress,Is.Not.Null);Assert.That(progress.coreGate.barrier,Is.Not.Null);
-            Assert.That(level.guardianEntryX,Is.GreaterThan(230));Assert.That(level.checkpoints.Length,Is.EqualTo(6));
-            Assert.That(roots.SelectMany(r=>r.GetComponentsInChildren<GeneChest>(true)).Count(c=>c.offerChoice),Is.EqualTo(7));
-            var bodies=level.GetComponentsInChildren<EmergenceBody>(true);
-            Assert.That(bodies.Count(b=>b.Has(EmergenceMaterial.Conductive)),Is.EqualTo(5));
-            Assert.That(bodies.Count(b=>b.Has(EmergenceMaterial.Organic)),Is.EqualTo(4));
-            Assert.That(bodies.Count(b=>b.Has(EmergenceMaterial.Movable)),Is.EqualTo(2));
-            Assert.That(level.GetComponentsInChildren<EmergenceConsole>().Where(c=>c.completionId=="duct").Count(),Is.EqualTo(1));
-            Assert.That(bodies.Any(b=>b.completionId=="duct"&&b.chargedGate!=null),Is.True);
+            var campaign=level.GetComponent<CampaignFlow>();Assert.That(campaign,Is.Not.Null);Assert.That(campaign.chapter,Is.EqualTo(chapter));
+            Assert.That(campaign.reactors.Length,Is.EqualTo(3));Assert.That(campaign.reactors.All(n=>!string.IsNullOrEmpty(n.hint)&&n.beacon!=null),Is.True);
+            Assert.That(campaign.exit.GetComponentsInChildren<Collider2D>().All(c=>c.isTrigger),Is.True,"Chapter exits must never be solid progression blockers");
+            Assert.That(level.GetComponentsInChildren<EmergenceGate>().Length,Is.Zero);
+            Assert.That(campaign.reactors.Max(n=>n.transform.position.y),Is.GreaterThanOrEqualTo(6));
+            Assert.That(campaign.reactors.Min(n=>n.transform.position.x),Is.LessThan(8));
+            Assert.That(campaign.reactors.Max(n=>n.transform.position.x),Is.GreaterThan(29));
+            Assert.That(campaign.exit.transform.position.x,Is.InRange(17f,23f),"The exit is a central return point");
+            Assert.That(roots.SelectMany(r=>r.GetComponentsInChildren<GeneChest>(true)).Count(c=>c.offerChoice),Is.EqualTo(2));
+            if(chapter==3)Assert.That(level.guardians.Length,Is.EqualTo(3));
         }
         finally{EditorSceneManager.ClosePreviewScene(scene);}
     }

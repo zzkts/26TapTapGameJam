@@ -38,6 +38,8 @@ public class Projectile : MonoBehaviour
     private bool hasSplit;
     private MaterialPropertyBlock visualProperties;
     private SpriteRenderer visual;
+    private Vector2 impactNormal;
+    private Vector2? contactPoint;
     public BulletSnapshot Snapshot => snapshot;
     public int Generation => generation;
     public E_ElementType ElementType => elementType;
@@ -52,6 +54,7 @@ public class Projectile : MonoBehaviour
             shot.lifeTime, shot.pierceCount, shot.reboundCount, shot.reboundCoefficient,
             shot.moveType, shot.orbitRadius, shot.orbitAngularSpeed);
         visual = GetComponentInChildren<SpriteRenderer>();
+        if (elementType == E_ElementType.Water) return;
         if (Application.isPlaying && visual != null && GetComponentInChildren<TrailRenderer>() == null)
             TapGJ.WaterProjectiles.WaterVfx.AddRibbon(transform,
                 elementType == E_ElementType.Fire ? new Color(1f,.5f,.1f) :
@@ -99,6 +102,8 @@ public class Projectile : MonoBehaviour
     {
         transform.position = pos;
         direction = dir.normalized;
+        impactNormal = -direction;
+        contactPoint = null;
         this.speed = speed;
         this.damage = damage;
         this.damageMultiplier = damageMultiplier;
@@ -131,6 +136,12 @@ public class Projectile : MonoBehaviour
             ? new OrbitMove(orbitRadius, orbitAngularSpeed)
             : new StraightMove();
         projectileMove.SetUp(this);
+        if (Application.isPlaying && elementType == E_ElementType.Water)
+        {
+            var water = GetComponent<TapGJ.WaterProjectiles.WaterProjectileVisual>();
+            if (water == null) water = gameObject.AddComponent<TapGJ.WaterProjectiles.WaterProjectileVisual>();
+            water.Configure(direction, speed);
+        }
         // Manual collider casts can run before the next simulation; apply the spawn scale now.
         Physics2D.SyncTransforms();
     }
@@ -199,6 +210,7 @@ public class Projectile : MonoBehaviour
 
     protected void MoveWithPhysics(Vector2 movement)
     {
+        contactPoint = null;
         float moveDistance = movement.magnitude;
         if (moveDistance <= 0f)
             return;
@@ -222,6 +234,8 @@ public class Projectile : MonoBehaviour
             {
                 if (!damagedTargets.Add(material.GetInstanceID())) continue;
                 rb.position = start + moveDirection * hit.distance;
+                impactNormal = hit.normal;
+                contactPoint = hit.point;
                 HandleCollision(hit.collider);
                 if (pierceCount > 0) { pierceCount--; continue; }
                 Explode(); return;
@@ -230,12 +244,18 @@ public class Projectile : MonoBehaviour
             if ((groundLM.value & layer) != 0 && actor == null && !hit.collider.isTrigger)
             {
                 rb.position = start + moveDirection * hit.distance;
+                impactNormal = hit.normal;
+                contactPoint = hit.point;
 
                 if (reboundCount > 0)
                 {
                     direction = Vector2.Reflect(moveDirection, hit.normal).normalized;
+                    // Leave the cast contact skin before casting the reflected trajectory next tick.
+                    rb.position += hit.normal * .01f;
                     speed *= reboundCoefficient;
                     reboundCount--;
+                    impactNormal = -direction;
+                    contactPoint = null;
                     return;
                 }
 
@@ -254,6 +274,8 @@ public class Projectile : MonoBehaviour
                 continue;
 
             rb.position = start + moveDirection * hit.distance;
+            impactNormal = hit.normal;
+            contactPoint = hit.point;
             HandleCollision(hit.collider);
             if (isExpired)
                 return;
@@ -269,6 +291,7 @@ public class Projectile : MonoBehaviour
         }
 
         rb.position = start + moveDirection * moveDistance;
+        contactPoint = null;
     }
 
     private void SortHitsByDistance(int hitCount)
@@ -313,7 +336,11 @@ public class Projectile : MonoBehaviour
         if (isExpired) return;
         if (elementType == E_ElementType.Fire || elementType == E_ElementType.Electric)
             ElementField.ReactFields(rb.position, .4f, elementType);
-        if (Application.isPlaying)
+        if (Application.isPlaying && elementType == E_ElementType.Water)
+            TapGJ.WaterProjectiles.WaterVfx.SpawnLiquidImpact(contactPoint ?? rb.position,
+                contactPoint.HasValue ? impactNormal : -direction,
+                projectileSizeMultiplier, speed, onSurface: contactPoint.HasValue);
+        else if (Application.isPlaying)
             TapGJ.WaterProjectiles.WaterVfx.SpawnSplash(rb.position,
                 elementType == E_ElementType.Fire ? new Color(1f, 0.45f, 0.1f) :
                 elementType == E_ElementType.Poison ? new Color(0.5f, 0.9f, 0.2f) : Color.cyan, 0.3f, -direction);
@@ -327,6 +354,7 @@ public class Projectile : MonoBehaviour
         }
         isExpired = true;
         rb.linearVelocity = Vector2.zero;
+        if (Application.isPlaying) TapGJ.WaterProjectiles.WaterVfx.ReleaseTrail(transform);
         Destroy(gameObject);
     }
 

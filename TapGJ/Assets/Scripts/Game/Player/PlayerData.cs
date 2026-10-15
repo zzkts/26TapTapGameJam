@@ -11,8 +11,8 @@ public class PlayerData : ScriptableObject
     public float rollCooldown = 2f;
     public float rollSpeedMultiplier = 1.5f;
     public float rollDuration = 0.2f;
-    [Min(0f)] public float coyoteTime = 0.14f;
-    [Min(0f)] public float jumpBuffer = 0.16f;
+    [Min(0f)] public float coyoteTime = 0.22f;
+    [Min(0f)] public float jumpBuffer = 0.22f;
     [Range(.5f, 1f)] public float heldJumpGravity = .85f;
     [Range(1f, 2f)] public float fallingGravity = 1.2f;
     [Header("Backflow Pulse")]

@@ -26,6 +26,7 @@ public static class CompleteGameWorldBuilder
     [MenuItem("Tools/TapGJ/Build Complete Game World")]
     public static void Apply()
     {
+        if(CampaignWorldBuilder.Enabled){CampaignWorldBuilder.ApplyAll();return;}
         if (EditorApplication.isPlaying) throw new InvalidOperationException("Exit Play Mode before rebuilding the world.");
         Scene scene = SceneManager.GetActiveScene();
         if (scene.name != "GameScene") throw new InvalidOperationException("Open GameScene first.");

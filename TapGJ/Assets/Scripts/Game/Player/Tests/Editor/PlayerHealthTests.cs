@@ -10,7 +10,7 @@ public class PlayerHealthTests
         Assert.That(data.dashUnlocked, Is.False);
         Assert.That(data.rollDuration, Is.EqualTo(0.2f));
         Assert.That(data.invulnerabilityTime, Is.EqualTo(0.8f));
-        Assert.That(data.coyoteTime, Is.EqualTo(0.14f));
+        Assert.That(data.coyoteTime, Is.EqualTo(0.22f));
         Object.DestroyImmediate(data);
     }
     [Test]

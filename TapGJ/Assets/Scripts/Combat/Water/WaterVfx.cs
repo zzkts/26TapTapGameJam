@@ -8,6 +8,90 @@ namespace TapGJ.WaterProjectiles
         private static Sprite dropletSprite;
         private static Material particleMaterial;
         private static Material spriteMaterial;
+        private static Sprite liquidQuad;
+        private static readonly Material[] liquidMaterials=new Material[4];
+
+        public static Sprite GetLiquidQuad()
+        {
+            if(liquidQuad==null)
+            {
+                Texture2D texture=Texture2D.whiteTexture;
+                liquidQuad=Sprite.Create(texture,new Rect(0,0,texture.width,texture.height),Vector2.one*.5f,
+                    texture.width,0,SpriteMeshType.FullRect);
+                liquidQuad.name="Liquid shader quad";
+            }
+            return liquidQuad;
+        }
+
+        public static Material GetLiquidMaterial(int kind)
+        {
+            if(liquidMaterials[kind]==null)
+                liquidMaterials[kind]=Resources.Load<Material>("WaterProjectiles/"+new[]{"LiquidDrop","LiquidRibbon","LiquidSpray","LiquidImpact"}[kind]);
+            return liquidMaterials[kind];
+        }
+
+        public static void AddLiquidRibbon(Transform parent,float radius,int order,int layer)
+        {
+            var obj=new GameObject("LiquidRibbon"); obj.layer=parent.gameObject.layer;
+            obj.transform.SetParent(parent,false);
+            TrailRenderer trail=obj.AddComponent<TrailRenderer>();
+            trail.sharedMaterial=GetLiquidMaterial(1);
+            trail.time=.11f; trail.minVertexDistance=.015f;
+            trail.widthCurve=new AnimationCurve(new Keyframe(0,1),new Keyframe(.28f,.55f),new Keyframe(1,0));
+            trail.widthMultiplier=radius*.8f;
+            trail.numCapVertices=4; trail.numCornerVertices=4;
+            trail.textureMode=LineTextureMode.Stretch;
+            trail.sortingOrder=order; trail.sortingLayerID=layer;
+            trail.startColor=new Color(1,1,1,.75f); trail.endColor=new Color(1,1,1,0);
+        }
+
+        public static void AddLiquidDroplets(Transform parent,float radius,int order,int layer)
+        {
+            ParticleSystem particles=CreateParticles("LiquidDroplets",parent,Color.white,order);
+            particles.gameObject.layer=parent.gameObject.layer;
+            var renderer=particles.GetComponent<ParticleSystemRenderer>();
+            renderer.sharedMaterial=GetLiquidMaterial(2); renderer.sortingLayerID=layer;
+            var main=particles.main; main.loop=true;
+            main.startLifetime=new ParticleSystem.MinMaxCurve(.14f,.3f);
+            main.startSize=new ParticleSystem.MinMaxCurve(radius*.22f,radius*.48f);
+            main.gravityModifier=.28f; main.maxParticles=32;
+            var emission=particles.emission; emission.rateOverTime=0; emission.rateOverDistance=12;
+            particles.Play();
+        }
+
+        public static ParticleSystem SpawnLiquidImpact(Vector2 position,Vector2 normal,float shotSize,float speed,int order=20,bool onSurface=true)
+        {
+            normal=normal.sqrMagnitude>.001f?normal.normalized:Vector2.up;
+            Vector2 tangent=new Vector2(-normal.y,normal.x);
+            float size=Mathf.Clamp(shotSize,.2f,1.6f);
+            ParticleSystem particles=CreateParticles("LiquidImpactSpray",null,Color.white,order);
+            particles.transform.position=position;
+            particles.GetComponent<ParticleSystemRenderer>().sharedMaterial=GetLiquidMaterial(2);
+            var main=particles.main; main.loop=false; main.duration=.55f;
+            main.startLifetime=new ParticleSystem.MinMaxCurve(.22f,.55f);
+            main.startSize=new ParticleSystem.MinMaxCurve(size*.10f,size*.28f);
+            main.gravityModifier=.75f; main.maxParticles=24; main.stopAction=ParticleSystemStopAction.Destroy;
+            var emission=particles.emission; emission.enabled=false;
+            particles.Play();
+            float force=Mathf.Clamp(speed*.16f,1.0f,3.0f);
+            int count=Mathf.Clamp(Mathf.RoundToInt(10+size*8),10,23);
+            for(int i=0;i<count;i++)
+            {
+                float fan=Mathf.Lerp(-1.25f,1.25f,i/(float)(count-1));
+                Vector2 velocity=(normal*Mathf.Cos(fan)+tangent*Mathf.Sin(fan))*Random.Range(.6f,1.6f)*force;
+                particles.Emit(new ParticleSystem.EmitParams{position=position+normal*.025f,velocity=velocity},1);
+            }
+            Object.Destroy(particles.gameObject,.8f);
+            if(!onSurface) return particles;
+            var sheet=new GameObject("LiquidImpactSheet");
+            sheet.transform.position=position+normal*(size*.55f+.015f);
+            sheet.transform.rotation=Quaternion.Euler(0,0,Mathf.Atan2(normal.y,normal.x)*Mathf.Rad2Deg-90);
+            sheet.transform.localScale=new Vector3(size*2.6f,size*1.6f,1);
+            var sprite=sheet.AddComponent<SpriteRenderer>(); sprite.sprite=GetLiquidQuad();
+            sprite.sharedMaterial=GetLiquidMaterial(3); sprite.sortingOrder=order;
+            sheet.AddComponent<WaterImpactSheet>();
+            return particles;
+        }
 
         public static Sprite GetDropletSprite()
         {

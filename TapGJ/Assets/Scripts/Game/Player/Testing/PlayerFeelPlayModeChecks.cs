@@ -79,10 +79,10 @@ public sealed class PlayerFeelPlayModeChecks : MonoBehaviour
         NewRig(4f); yield return Wait(.25f);
         Check(player.IsGrounded() && player.CoyoteTime >= .14f && player.JumpBufferTime >= .16f,
             "The actual player settles and loads the increased coyote/buffer windows");
-        yield return LeaveLedge(); yield return Wait(.08f); Keys(Key.Space); yield return Frames(2); Keys();
+        yield return LeaveLedge(); yield return Wait(.18f); Keys(Key.Space); yield return Frames(2); Keys();
         Check(player.YVelocity > 2f && player.Presentation.JumpCount == 1,
-            "A real jump press 80 ms after leaving a ledge still launches once");
-        NewRig(4f); yield return Wait(.25f); yield return LeaveLedge(); yield return Wait(.24f);
+            "A real jump press 180 ms after leaving a ledge still launches once");
+        NewRig(4f); yield return Wait(.25f); yield return LeaveLedge(); yield return Wait(.34f);
         Keys(Key.Space); yield return Frames(2); Keys();
         Check(player.YVelocity < 0f && player.Presentation.JumpCount == 0,
             "A late jump beyond the coyote window cannot become an unlimited air jump");

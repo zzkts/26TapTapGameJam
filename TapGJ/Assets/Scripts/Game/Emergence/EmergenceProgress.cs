@@ -30,7 +30,7 @@ public sealed class EmergenceProgress:MonoBehaviour
         foreach(EmergenceBody body in GetComponentsInChildren<EmergenceBody>(true))
             if(body.Has(EmergenceMaterial.Fragile)&&StorySession.Current.WasTriggerCompleted("structure:"+body.completionId))body.RestoreBroken();
         if(CompletionCount>=2||StorySession.Current.GuardianCleared)coreGate?.OpenPermanently();
-        EmergenceUI.Ensure(this);
+        if(CampaignFlow.Current==null)EmergenceUI.Ensure(this);
         if(RunProgress.ExperimentMode)ApplyVariation();
     }
     public void Complete(string key)
@@ -78,7 +78,7 @@ public sealed class EmergenceProgress:MonoBehaviour
         GameObject prefab=Resources.Load<GameObject>(path);
         if(prefab!=null)for(int i=0;i<3;i++)
         {
-            GameObject enemy=Instantiate(prefab,new Vector3(112f+i*50f,variation==0?2.3f:.5f,0),Quaternion.identity,transform);enemy.name="试验变体遭遇 "+i;
+            GameObject enemy=Instantiate(prefab,new Vector3(CampaignFlow.Current!=null?10f+i*10f:112f+i*50f,variation==0?2.3f:.5f,0),Quaternion.identity,transform);enemy.name="试验变体遭遇 "+i;
             enemy.AddComponent<EmergenceTrialEnemy>().Configure(variation);
         }
         LastTrace="回流试验 #"+RunProgress.RunSeed+" · "+TrialName(variation);

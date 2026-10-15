@@ -16,6 +16,7 @@ public sealed class RunSaveData
 {
     public int version = 2;
     public bool experimentMode;
+    public bool campaignLayout;
     public int runSeed;
     public string scene = "GameScene";
     public float checkpointX = 3f, checkpointY = 1f, elapsedSeconds;
@@ -72,7 +73,7 @@ public static class RunProgress
         try
         {
             RunSaveData data = JsonUtility.FromJson<RunSaveData>(PlayerPrefs.GetString(SaveKey));
-            if (data == null || (data.version != 1 && data.version != 2) || data.scene != "GameScene" ||
+            if (data == null || (data.version != 1 && data.version != 2) || (data.scene != "GameScene"&&data.scene!="SporeScene"&&data.scene!="CoreScene") ||
                 float.IsNaN(data.checkpointX) || float.IsInfinity(data.checkpointX) ||
                 float.IsNaN(data.checkpointY) || float.IsInfinity(data.checkpointY) ||
                 float.IsNaN(data.elapsedSeconds) || float.IsInfinity(data.elapsedSeconds)) return null;
@@ -106,6 +107,7 @@ public static class RunProgress
         {
             checkpointX = checkpoint.x, checkpointY = checkpoint.y, storyFlags = storyFlags,
             experimentMode=ExperimentMode,runSeed=RunSeed,
+            campaignLayout=CampaignFlow.Current!=null,
             region = region, guardianCleared = guardianCleared, elapsedSeconds = elapsedSeconds,
             dashUnlocked = player != null && player.DashUnlocked,
             scene = SceneManager.GetActiveScene().name

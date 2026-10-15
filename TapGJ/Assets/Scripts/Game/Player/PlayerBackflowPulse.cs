@@ -118,6 +118,7 @@ public sealed class PlayerBackflowPulse : MonoBehaviour
             Collider2D hit = blockers[i].collider;
             if (hit == null || hit.transform.IsChildOf(transform) || hit.transform.IsChildOf(target) ||
                 hit.GetComponentInParent<EnemyAIController>() != null) continue;
+            if(hit.GetComponent<OneWayPlatform>()!=null&&origin.y<hit.bounds.max.y)continue;
             EmergenceBody material = hit.GetComponentInParent<EmergenceBody>();
             if (material != null && material.Has(EmergenceMaterial.Movable)) continue;
             allowed = Mathf.Min(allowed, Mathf.Max(0f, blockers[i].distance - .06f));

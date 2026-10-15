@@ -20,6 +20,7 @@ public sealed class EmergenceBody : MonoBehaviour
     public bool Broken { get; private set; }
     public bool Bloomed { get; private set; }
     public int Pressure { get; private set; }
+    public int SteamCount { get; private set; }
     public float LinkRadius => Wet ? 2.1f : .65f;
     private float wetUntil,poisonUntil,chargedUntil,burningUntil,nextBurn,nextGrowth,hp;
     private int lastFireFrame=-1;
@@ -79,7 +80,7 @@ public sealed class EmergenceBody : MonoBehaviour
     }
     public bool ReleaseSteam()
     {
-        Pressure=0;EmergenceSteamJet.Spawn(transform.position+Vector3.up*.55f,3.5f);
+        Pressure=0;SteamCount++;EmergenceSteamJet.Spawn(transform.position+Vector3.up*.55f,3.5f);
         EmergenceReactions.Emit("steam",transform.position,"水分 + 热量 → 蒸汽推力",1);return true;
     }
     public void Damage(float amount)
