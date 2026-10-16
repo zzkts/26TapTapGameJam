@@ -29,6 +29,13 @@ public class ModifierSystem
     {
         BulletSnapshot result = new(src);
 
+        // Attribute genes and empty slots do not contribute to the split gene's build scaling.
+        // Split is itself a modification gene and participates in this count.
+        int modificationCount = 0;
+        foreach (Modifier gene in modifiers)
+            if (gene != null && !gene.IsAttribute && gene.ModifierType != E_ModifierType.None)
+                modificationCount++;
+
         for (int i = 0; i < modifiers.Count; i++)
         {
             Modifier modifier = modifiers[i];
@@ -70,7 +77,9 @@ public class ModifierSystem
                 case E_ModifierType.Element:
                     break;
                 case E_ModifierType.Split:
-                    result.splitCount += Mathf.RoundToInt(modifier.ModifierValue);
+                    // One extra launch bullet makes a base shot two; each equipped modification
+                    // then contributes +1 (normal) or +2 (evolved). Never enable impact splitting.
+                    result.projectileCount += 1 + modificationCount * Mathf.RoundToInt(modifier.ModifierValue);
                     break;
                 case E_ModifierType.ProjectileMove:
                     ApplyMove(result, modifier.ModifierValue);

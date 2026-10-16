@@ -65,6 +65,7 @@ public sealed class GeneSpecPlayModeChecks:MonoBehaviour
         player=StorySession.Current.player;flow=CampaignFlow.Current;
         StorySession.Current.SetValidationMode(true);player.SetInvincible(true);
         Check(RunProgress.IsolatedValidation,"Save access is isolated before StorySession starts");
+        yield return SplitGeneLaunchCases();
         Check(player.Genes.GenInventory.Count==0,"A new run starts without free elements or body traits");
         string[] retired={"PlayerReservoir","PlayerSynthesis","PlayerBackflowPulse","WaterReservoir2D","EcoFungus","PumpLoopSystem","CampaignReactor","EmergenceProgress","EmergenceGate","WatershedNetwork"};
         Check(!Object.FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include,FindObjectsSortMode.None).Any(c=>c!=null&&retired.Contains(c.GetType().Name)),"No removed gameplay component survives in the scene");
@@ -156,5 +157,48 @@ public sealed class GeneSpecPlayModeChecks:MonoBehaviour
     }
     private void Teleport(Vector2 at)
     {player.transform.position=at;var body=player.GetComponent<Rigidbody2D>();body.position=at;body.linearVelocity=Vector2.zero;Physics2D.SyncTransforms();}
+
+    private IEnumerator SplitGeneLaunchCases()
+    {
+        // Exercise the actual Weapon launch loop, swept impact and expiry using the equipped gene.
+        // The fixture is outside the authored map; no user inventory or save data is modified.
+        for(int variant=0;variant<3;variant++)
+        {
+            var fixture=new GameObject("Split launch regression");fixture.SetActive(false);
+            fixture.transform.position=new Vector2(1000+variant*10,10);
+            var weapon=fixture.AddComponent<Weapon>();
+            var data=Object.Instantiate(Resources.Load<WeaponData>("SO/Weapon/DefaultWaterBallWeaponData"));
+            data.projectileLifetime=.25f;
+            var serialized=new UnityEditor.SerializedObject(weapon);
+            serialized.FindProperty("baseData").objectReferenceValue=data;
+            serialized.FindProperty("targetLM").intValue=LayerMask.GetMask("Enemy");
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            var split=Object.Instantiate(Resources.Load<Modifier>("SO/Genes/split"));split.Level=variant==2?2:1;
+            var attribute=variant==1?Resources.Load<Modifier>("SO/Genes/ember"):variant==2?Resources.Load<Modifier>("SO/Genes/water"):null;
+            fixture.SetActive(true);
+            var snapshot=ModifierSystem.Instance.Apply(data,new[]{split,attribute},attribute);
+            typeof(Weapon).GetField("currentShot",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).SetValue(weapon,snapshot);
+            int expected=variant==2?4:3;
+            weapon.Attack(fixture.transform.position,Vector2.right);
+            var shots=Object.FindObjectsByType<Projectile>(FindObjectsSortMode.None).Where(p=>p.Owner==fixture.transform&&p.enabled).ToArray();
+            Check(shots.Length==expected,"Split variant "+variant+" creates "+expected+" bullets immediately on firing");
+            Check(shots.All(p=>p.Generation==0&&p.Snapshot.splitCount==0&&p.Snapshot.element==snapshot.element),"Launch bullets inherit the active element and never arm impact splitting");
+            Check(shots.Select(p=>p.GetComponent<Rigidbody2D>().GetInstanceID()).Distinct().Count()==expected,"Launch bullets are independent projectile instances");
+            var target=new GameObject("Split impact regression target");target.layer=LayerMask.NameToLayer("Enemy");
+            target.transform.position=fixture.transform.position+Vector3.right;
+            target.AddComponent<BoxCollider2D>().size=new Vector2(.2f,3);
+            var actor=target.AddComponent<PoolVerificationActor>();Physics2D.SyncTransforms();
+            foreach(var shot in shots)shot.Step(.35f);
+            Check(actor.hits==expected,"Every initial split bullet can hit the target once");
+            Check(!Object.FindObjectsByType<Projectile>(FindObjectsSortMode.None).Any(p=>p.Owner==fixture.transform&&p.enabled),"Hitting an enemy creates no secondary split bullets");
+            Object.Destroy(target);
+            yield return new WaitForSeconds(.22f);
+            weapon.Attack(fixture.transform.position,Vector2.right);
+            Check(Object.FindObjectsByType<Projectile>(FindObjectsSortMode.None).Count(p=>p.Owner==fixture.transform&&p.enabled)==expected,"The next shot again splits at launch");
+            yield return new WaitForSeconds(.4f);
+            Check(!Object.FindObjectsByType<Projectile>(FindObjectsSortMode.None).Any(p=>p.Owner==fixture.transform&&p.enabled),"Lifetime expiry creates no secondary split bullets");
+            Object.Destroy(fixture);Object.Destroy(split);Object.Destroy(data);
+        }
+    }
 }
 #endif

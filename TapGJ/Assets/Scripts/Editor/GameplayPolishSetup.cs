@@ -169,7 +169,7 @@ public static class GameplayPolishSetup
             if (gene.name == "water") { Set(gene,"geneName","扩散"); Set(gene,"desc","命中时使半径 3 米内的敌人湿润。"); Set(gene,"evolvedDescription","命中时使半径 5 米内的敌人湿润。"); }
             if (gene.name == "ember") { Set(gene,"geneName","火种"); Set(gene,"desc","命中时引燃半径 3 米内的敌人。"); Set(gene,"evolvedDescription","命中时引燃半径 5 米内的敌人。"); }
             if (gene.name == "sewage") { Set(gene,"geneName","污水"); Set(gene,"desc","毒弹消失后生成毒雾，遇火爆炸。"); }
-            if (gene.name == "split") { Set(gene,"modifierType",(int)E_ModifierType.Split); Set(gene,"modifierValue",2f); Set(gene,"evolvedValue",3f); Set(gene,"desc","子弹命中或消失时分裂为 2 枚子弹，最多一代。"); Set(gene,"evolvedDescription","子弹命中或消失时分裂为 3 枚子弹，最多一代。"); }
+            if (gene.name == "split") { Set(gene,"modifierType",(int)E_ModifierType.Split); Set(gene,"modifierValue",1f); Set(gene,"evolvedValue",2f); Set(gene,"desc","发射时同时射出基础 2 发；每装配一个改造基因（含自身）额外 +1 发。命中或消失时不再分裂。"); Set(gene,"evolvedDescription","发射时同时射出基础 2 发；每装配一个改造基因（含自身）额外 +2 发。命中或消失时不再分裂。"); }
         }
         const string vortexPath = "Assets/Resources/SO/Genes/vortex.asset";
         Modifier vortex = AssetDatabase.LoadAssetAtPath<Modifier>(vortexPath);

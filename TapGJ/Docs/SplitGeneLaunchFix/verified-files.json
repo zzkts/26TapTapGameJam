@@ -1,0 +1,7 @@
+{
+  "Assets/Resources/SO/Genes/split.asset": "3d337d993cacac5aae24e952160f12c7361eac89f841aabe5164e07851d13578",
+  "Assets/Scripts/BattleSystem/Modifier/ModifierSystem.cs": "5502bc73de22ca911cffb3e2321e5a0a56dd9b9ef91cb4cc3b72df248641b38f",
+  "Assets/Scripts/Editor/GameplayPolishSetup.cs": "046393b31fb050c1fffb851dd318752a83eec0619958965ecb3fa11a48342d50",
+  "Assets/Scripts/BattleSystem/Projectile/Tests/Editor/SplitGeneLaunchTests.cs": "a1527bec99c8c2b1b5555df662ed0282bdf547d354986cdc7d7853727a7622de",
+  "Assets/Scripts/Game/Player/Testing/GeneSpecPlayModeChecks.cs": "24e3fb8ed224d53ef7d3b95cf88174fd37406a01d4dc0001b95e4e2dfcd15175"
+}
