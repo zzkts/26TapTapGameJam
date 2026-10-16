@@ -215,7 +215,7 @@ public sealed class StorySession : MonoBehaviour
         if(CampaignFlow.Current!=null)
         {
             var flow=CampaignFlow.Current;
-            objective.Set(flow.ChapterName,completed?"全章通关 · 水流的归处":flow.Goal,"M 全地图 · TAB 反应手册 · 最右端回流阀选择结局");return;
+            objective.Set(flow.ChapterName,completed?"全章通关 · 水流的归处":flow.Goal,"E 拾取 / 终端 · 左键射击 · 右键依次附魔");return;
         }
         string chapter=region==0?"第一章 · 异常回流":region==1?"第一章 · 它们的声音":"第一章 · 水落口";
         string target;
@@ -228,13 +228,6 @@ public sealed class StorySession : MonoBehaviour
         else if(!Has(StoryBeat.Dash))target="寻找回流模块 · 解锁冲刺";
         else if(!Has(StoryBeat.ExperimentRecord))target="进入生态区 · 阅读实验记录";
         else target="前往净化核心 · 使用终端构筑";
-        EmergenceProgress emergence=EmergenceProgress.Current;
-        if(emergence!=null&&emergence.InExperimentDistrict&&!GuardianCleared)
-        {
-            chapter="涌现 · "+emergence.DistrictName;
-            target=emergence.CompletionCount>=2?"回流锁已解开 · 前往净化核心":
-                "解开任意两条通路 · "+emergence.CompletionCount+" / 2";
-        }
         string progress=Time.unscaledTime<checkpointNoticeUntil?"检查点已记录 · 生命已恢复":
             "水 "+(Has(StoryBeat.SampleWater)?"●":"○")+"   火 "+(Has(StoryBeat.SampleFire)?"●":"○")+"   毒 "+(Has(StoryBeat.SamplePoison)?"●":"○")+"   冲刺 "+(player!=null&&player.DashUnlocked?"●":"○");
         objective.Set(chapter,target,progress);

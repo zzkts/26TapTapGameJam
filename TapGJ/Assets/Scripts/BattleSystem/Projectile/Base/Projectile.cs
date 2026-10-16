@@ -224,12 +224,6 @@ public class Projectile : MonoBehaviour
 
     protected void DealDamage(Collider2D collision, float amount)
     {
-        EmergenceBody material = collision.GetComponentInParent<EmergenceBody>();
-        if (material != null)
-        {
-            material.ReceiveShot(amount, elementType, direction, speed * projectileSizeMultiplier * .32f);
-            return;
-        }
         IActor actor = collision.GetComponentInParent<IActor>();
         if (actor is ICombatable combatable)
             combatable.TakeDamage(new DamageInfo(amount, elementType,
@@ -296,22 +290,6 @@ public class Projectile : MonoBehaviour
                 (owner != null && hit.collider.transform.IsChildOf(owner))) continue;
             int layer = 1 << hit.collider.gameObject.layer;
             IActor actor = hit.collider.GetComponentInParent<IActor>();
-
-            EmergenceBody material = hit.collider.GetComponentInParent<EmergenceBody>();
-            if (material != null && !material.Broken)
-            {
-                if (!damagedTargets.Add(material.GetInstanceID())) continue;
-                rb.position = start + moveDirection * hit.distance;
-                impactNormal = hit.normal;
-                contactPoint = hit.point;
-                HandleCollision(hit.collider);
-                // Soft, non-solid vegetation receives the element without acting as a hidden wall.
-                // The same drop can irrigate a row of plants before reaching a real target.
-                if (hit.collider.isTrigger && material.Has(EmergenceMaterial.Organic) &&
-                    !material.Has(EmergenceMaterial.Fragile)) continue;
-                if (pierceCount > 0) { pierceCount--; continue; }
-                Explode(); return;
-            }
 
             if ((groundLM.value & layer) != 0 && actor == null && !hit.collider.isTrigger)
             {

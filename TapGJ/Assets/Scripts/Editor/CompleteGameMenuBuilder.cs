@@ -40,13 +40,12 @@ public static class CompleteGameMenuBuilder
         title.fontStyle = FontStyle.Bold;
         title.gameObject.AddComponent<Shadow>().effectDistance = new Vector2(3,-4);
         Label("Game Subtitle",menu.transform,.135f,.65f,.55f,.7f,27,"WATER DRAIN",PlayerUIStyle.Mint);
-        Label("Chapter",menu.transform,.135f,.585f,.55f,.64f,27,"涌现 · 一滴水唤醒地下生态",PlayerUIStyle.Cream);
+        Label("Chapter",menu.transform,.135f,.585f,.55f,.64f,27,"涌现 · 收集基因，重组力量",PlayerUIStyle.Cream);
         menu.btnBegin = Button("Start Game",menu.transform,.13f,.46f,.53f,.535f,"开始故事",PlayerUIStyle.Mint,27);
         menu.btnContinue = Button("Continue Game",menu.transform,.13f,.365f,.53f,.435f,"继续探索",new Color(.51f,.41f,.69f),22);
-        menu.btnTrial = Button("Backflow Trial",menu.transform,.13f,.275f,.53f,.345f,"回流试验 · 不同规则再来一局",new Color(.34f,.64f,.65f),21);
         menu.btnSetting = Button("Settings Button",menu.transform,.13f,.18f,.32f,.25f,"设置",PlayerUIStyle.Cream,22);
         menu.btnQuit = Button("Quit Button",menu.transform,.34f,.18f,.53f,.25f,"退出游戏",new Color(.51f,.41f,.69f),22);
-        Label("Control Hint",menu.transform,.135f,.115f,.55f,.17f,14,"S+F 吸水 · F 放水 · Q / R 播种 · E 交互\n空格跳跃 / 空中踏跃 · Shift 冲刺 · M 水网目标",new Color(.77f,.77f,.85f));
+        Label("Control Hint",menu.transform,.135f,.115f,.55f,.17f,14,"A / D 移动 · 空格跳跃 · Shift 冲刺\nE 拾取 / 终端 · 左键射击 · 右键依序附魔",new Color(.77f,.77f,.85f));
         Label("Jam Credit",menu.transform,.135f,.05f,.7f,.09f,13,"TapTap GameJam 2026  /  探索 · 重组 · 回流",new Color(.74f,.7f,.83f));
         BeginScenePresentation presentation = menuObj.AddComponent<BeginScenePresentation>();
         presentation.hero = Art("Drain Hero",menu.transform,new Vector2(.655f,.145f),new Vector2(.93f,.7f),null,Color.white);

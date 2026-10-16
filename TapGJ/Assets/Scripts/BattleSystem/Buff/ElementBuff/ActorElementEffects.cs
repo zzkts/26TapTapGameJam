@@ -58,19 +58,12 @@ public class ActorElementEffects : MonoBehaviour
         {
             HashSet<ActorElementEffects> visited = new();
             HashSet<ElementField> fields = new();
-            HashSet<EmergenceBody> materials = new();
             Queue<Vector3> queue = new();
             queue.Enqueue(new Vector3(origin.x, origin.y, initialRadius));
             while (queue.Count > 0)
             {
                 Vector3 node = queue.Dequeue();
-                foreach (EmergenceBody body in new List<EmergenceBody>(EmergenceBody.Active))
-                {
-                    if (body == null || body.Broken || !body.Has(EmergenceMaterial.Conductive) ||
-                        materials.Contains(body) || Vector2.Distance(node, body.transform.position) > node.z) continue;
-                    materials.Add(body); body.Energize();
-                    queue.Enqueue(new Vector3(body.transform.position.x, body.transform.position.y, body.LinkRadius));
-                }
+
                 foreach (ActorElementEffects target in new List<ActorElementEffects>(Active))
                 {
                     if (target == null || target.actor == null || target.actor.IsDead || visited.Contains(target) ||
@@ -89,8 +82,8 @@ public class ActorElementEffects : MonoBehaviour
                     queue.Enqueue(new Vector3(field.transform.position.x, field.transform.position.y, field.Radius + 0.9f));
                 }
             }
-            if (materials.Count > 0)
-                EmergenceReactions.Emit("conduction", origin, "电源 → 水渍 / 导体 → 机械回路", materials.Count);
+            if (visited.Count + fields.Count > 0)
+                EmergenceReactions.Emit("conduction", origin, "电源 → 水渍 / 湿润敌人 → 传导", visited.Count + fields.Count);
         }
         finally { conducting = false; }
     }

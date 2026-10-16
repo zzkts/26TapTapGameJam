@@ -8,27 +8,16 @@ using Object = UnityEngine.Object;
 
 public sealed class RunProgressTests
 {
-    private bool hadSave,hadEndings;
-    private string previousSave;
-    private int previousEndings;
-
     [SetUp]
     public void PreserveUserProgress()
     {
-        hadSave=PlayerPrefs.HasKey(RunProgress.SaveKey);
-        previousSave=PlayerPrefs.GetString(RunProgress.SaveKey);
-        hadEndings=PlayerPrefs.HasKey(RunProgress.EndingKey);
-        previousEndings=PlayerPrefs.GetInt(RunProgress.EndingKey);
-        PlayerPrefs.DeleteKey(RunProgress.SaveKey);
-        PlayerPrefs.DeleteKey(RunProgress.EndingKey);
+        RunProgress.BeginIsolatedValidation();
     }
 
     [TearDown]
     public void RestoreUserProgress()
     {
-        if(hadSave)PlayerPrefs.SetString(RunProgress.SaveKey,previousSave);else PlayerPrefs.DeleteKey(RunProgress.SaveKey);
-        if(hadEndings)PlayerPrefs.SetInt(RunProgress.EndingKey,previousEndings);else PlayerPrefs.DeleteKey(RunProgress.EndingKey);
-        PlayerPrefs.Save();
+        RunProgress.EndIsolatedValidation();
     }
 
     [Test]
@@ -77,8 +66,7 @@ public sealed class RunProgressTests
     [TestCase("{\"version\":1,\"scene\":\"BeginScene\"}")]
     public void InvalidOrUnsupportedSaveDoesNotEnableContinue(string json)
     {
-        PlayerPrefs.SetString(RunProgress.SaveKey,json);
-        Assert.That(RunProgress.Read(),Is.Null);
+        Assert.That(RunProgress.ParseSnapshot(json),Is.Null);
         Assert.That(RunProgress.CanContinue,Is.False);
     }
 

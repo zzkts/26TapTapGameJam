@@ -1,0 +1,330 @@
+[
+  {
+    "path": "Assets/Scripts/Game/Emergence/PlayerReservoir.cs",
+    "sha256": "9f1fe4f8662ef63b2b23131b80eb6f2c737e0e9f9d33b5a49a38a5555aebddb2"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/PlayerReservoir.cs.meta",
+    "sha256": "6863394ea06b1f7377ee33fc7b8f876d005120673e39e2540bc1fb09d56fcd40"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/PlayerSynthesis.cs",
+    "sha256": "2b75e8a2ac12b71cf63c6ac7bb8481b23833eaecdd7d30a0c56684b839937411"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/PlayerSynthesis.cs.meta",
+    "sha256": "2fed54ed9d543ac60a9e37e5a29615c65f8b23587ad1c6ecb01fd3a53f9beaab"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/WaterReservoir2D.cs",
+    "sha256": "a1cd4e9f67fe41c8489d2fc02a9a7e0b69cf9f566b3801e5e20a3ae7bf5847fa"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/WaterReservoir2D.cs.meta",
+    "sha256": "aa4196b272e396aa69bcebdc4478cbd8ca6a88783a632894ce4a7da5b1ecd3a1"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/EcoFungus.cs",
+    "sha256": "9928cd4ab54011e2b8f55ff30ce6c65e0cc48398129262cb9d42694e67e1cb25"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/EcoFungus.cs.meta",
+    "sha256": "4afebb174200877c08b7f7d0bcc3347d111da701389fcfbdffdfdc581392c2f5"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/PumpLoopSystem.cs",
+    "sha256": "b7145686fd945fdbe4ca69030a7de6927c99e282459e0c38e2988ee3669dd349"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/PumpLoopSystem.cs.meta",
+    "sha256": "2c56b31d7f4b2496a5d66d38f7b01a73e7b7104e4a7d53892e2aa13e3df38685"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/WatershedNetwork.cs",
+    "sha256": "38db9fa24d46aadc8b0a078a38ed24059981a61511bec941946d77c22a45b9d7"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/WatershedNetwork.cs.meta",
+    "sha256": "ff800ab29ba5d071f390b233f28c1cfafcf2fd1eb4fe3e0a401ae4a9e4d2e02b"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/EmergenceProgress.cs",
+    "sha256": "c2ff4565791483a984effd9e2fa171ab8f8a4e5a57801b40a3fe903ffb8afdd5"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/EmergenceProgress.cs.meta",
+    "sha256": "1d1319596cfa53f6222877eb70e8e73f0544d37817fabadda6ca8571963ee96c"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/EmergenceUI.cs",
+    "sha256": "402612209b47ab1888693fe74a5791dd5038df6b8dbdd4b20e16852f0fed0263"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/EmergenceUI.cs.meta",
+    "sha256": "71477545b135e2d42ac16ca62de9ec8da190b1d1ac9210c84af5f75129d051db"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/EmergenceTrialEnemy.cs",
+    "sha256": "36c13ec20d9be27b5781eaf16e57e03b11ee26f64b0fba18e12d4c88b4c9037b"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/EmergenceTrialEnemy.cs.meta",
+    "sha256": "313770f31b7851589aa37f49c2e286b2858e4ca921c9bceedc46fc0d9f58f816"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/EmergenceConsole.cs",
+    "sha256": "9860693e1fadbfb341dc57a1a304f8f2a50da0997d604065a9cbc93782ddf651"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/EmergenceConsole.cs.meta",
+    "sha256": "9590248bdf74f3189df738323414e7a5cfd53631743bf5f5db3a726a12a423c1"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/EmergencePlate.cs",
+    "sha256": "6d1c9337a74065e2767b42b21c0e7fff0c5b23d7df7588796c2c6f1cf12c94d7"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/EmergencePlate.cs.meta",
+    "sha256": "793d58e854a4e71edae358d7a2ce0c0ee1352fdf3acbe927b3e91a8da784956a"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/EmergenceGate.cs",
+    "sha256": "96880810a879640425c0deda5f8c8fbe0e2c62f10e677b23b7bd1848dc5b29af"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/EmergenceGate.cs.meta",
+    "sha256": "326fa05614ca962835ebdd33dcd09eb26c7d1aff95834d4e3224cf5aea5f23bc"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/CampaignReactor.cs",
+    "sha256": "f0e6396c73fd386261410371f9784b219d677dafe1f9ebfcb413ef5f06267f3b"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/CampaignReactor.cs.meta",
+    "sha256": "c7012baa755313ef231b14973b158d1ae824e8ee2e5acace3fcdcb41bea07e44"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/EmergenceBody.cs",
+    "sha256": "8ea5b4ef38a72f34b0fde7267da2cd601d46c16bddf83eaa0920a0da1c882436"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/EmergenceBody.cs.meta",
+    "sha256": "9235e27fd4d2998eea68773d205156a423ccb8a61f8962a350bf1cb435b849ff"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/EmergenceSteamJet.cs",
+    "sha256": "7e52a9e4e92b5bfa3dd093d28b01987b2c6e03f5acf07d78e71cd2da35d6d185"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/EmergenceSteamJet.cs.meta",
+    "sha256": "dab764b4555ada9787cc55d2977d4e0da545654c593c3e0afb84b368029e4bc5"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/EmergencePlayModeChecks.cs",
+    "sha256": "329f140a5a34166df9be44689114dc2c0f511b58753a5f29812b3e01ab1a4d99"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/EmergencePlayModeChecks.cs.meta",
+    "sha256": "5f1b002e3fa53b1ba89c235512a033490c3dd23253d1b368babf0cf494017bec"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/EcosystemPlayModeChecks.cs",
+    "sha256": "8646118c53ef09e2295fc757eaf8693e573b2730c4fd65b42090f3f2691b2ba1"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/EcosystemPlayModeChecks.cs.meta",
+    "sha256": "5b251023b0fa93c64d6bed312530a15764acde11384c815759b7065bedc37126"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/CampaignPlayModeChecks.cs",
+    "sha256": "7debfb76fd884750f9bdd336c48d07dedadb85b494bf6e93d69da46697c8d3f0"
+  },
+  {
+    "path": "Assets/Scripts/Game/Emergence/CampaignPlayModeChecks.cs.meta",
+    "sha256": "b025fc00d284c1dfe063735c436fa2c1b9d0d1d7b23daef21b40ea9ee58ff2ca"
+  },
+  {
+    "path": "Assets/Scripts/Game/Player/PlayerBackflowPulse.cs",
+    "sha256": "8eb98755354cb604e1f39d38f17d10a9109db814e22dc944d38cde53e60430d0"
+  },
+  {
+    "path": "Assets/Scripts/Game/Player/PlayerBackflowPulse.cs.meta",
+    "sha256": "38cc6a38d7a8e4c0a86b6da09e9d869f84bc0b6e837948081896a7eac851aa66"
+  },
+  {
+    "path": "Assets/Scripts/UI/GeneDraftPanel.cs",
+    "sha256": "3df07cd81089c2f5a49f1bb3886a7c31f9617775c2155cb2c1d596930d99bdf0"
+  },
+  {
+    "path": "Assets/Scripts/UI/GeneDraftPanel.cs.meta",
+    "sha256": "65e92474895c4db68e4aa4773e92bb7bc429563e0524a9a98fc0764f7e626f39"
+  },
+  {
+    "path": "Assets/Scripts/Editor/EmergenceWorldBuilder.cs",
+    "sha256": "5ae5dedaa058194d678082829b31da85476ed88872e37d5528ec117fa30eac5c"
+  },
+  {
+    "path": "Assets/Scripts/Editor/EmergenceWorldBuilder.cs.meta",
+    "sha256": "a59e41a9f96ba12d206af318064a144aa9507ceb479e45368ed2d159fd518c41"
+  },
+  {
+    "path": "Assets/Scripts/Editor/EcosystemWorldBuilder.cs",
+    "sha256": "1fa771e313ee11ecbb2a31fe9500980d70b28a0c5ead6c04672d75ebd7842c99"
+  },
+  {
+    "path": "Assets/Scripts/Editor/EcosystemWorldBuilder.cs.meta",
+    "sha256": "00c18e1d6c47283bc3f38c0c01d5eaccbc1f2b80cf9138cb8360a07700d62a9b"
+  },
+  {
+    "path": "Assets/Scripts/Game/Story/Tests/Editor/EcosystemTests.cs",
+    "sha256": "ebc61db064433dfe0d286256ebe8420b286d8c58c59926a2a078d1415d999008"
+  },
+  {
+    "path": "Assets/Scripts/Game/Story/Tests/Editor/EcosystemTests.cs.meta",
+    "sha256": "929756c49792ecfa0a222bae292cf4fd6a2eacc331c5d823bbe79f2da6f6b237"
+  },
+  {
+    "path": "Assets/Scripts/Game/Story/Tests/Editor/EmergenceContentTests.cs",
+    "sha256": "765b1abd9c6737e8b94af895cf7fef3222445f5978b00a4a74c53f81d082743a"
+  },
+  {
+    "path": "Assets/Scripts/Game/Story/Tests/Editor/EmergenceContentTests.cs.meta",
+    "sha256": "505551e5d8d5631e5191dd118aedc05a1138856fe42195a442e2920d843be82e"
+  },
+  {
+    "path": "Assets/Scripts/Game/World/AudioPlayModeChecks.cs",
+    "sha256": "eae63540d117b52d5af54b43bfdb32d83f86d568878e21d66b77d8b5a5cc48d3"
+  },
+  {
+    "path": "Assets/Scripts/Game/World/AudioPlayModeChecks.cs.meta",
+    "sha256": "e84b71533dc26098382f5b24a12c28313bd73021db580900f2eba80edcd346a2"
+  },
+  {
+    "path": "Assets/Scripts/Game/World/CompleteWorldRunthrough.cs",
+    "sha256": "188aa32c2f26fb695d50fccbbc234f0c97dd86f5431677f1e7c8d671cd5df823"
+  },
+  {
+    "path": "Assets/Scripts/Game/World/CompleteWorldRunthrough.cs.meta",
+    "sha256": "ef500aaea152dae722d59f880cbb9528a5e1c0a7a3e5d55dd7a4f608fe18bad9"
+  },
+  {
+    "path": "Assets/Scripts/Game/Player/Testing/PlayerFeelPlayModeChecks.cs",
+    "sha256": "27ee0e3c2e8dbc43c63038fb4fa38aa9e977075e4107cdc4899e6af581539a07"
+  },
+  {
+    "path": "Assets/Scripts/Game/Player/Testing/PlayerFeelPlayModeChecks.cs.meta",
+    "sha256": "38d7a89a58aa3c9b4f1ada936887ca2a27ac85687c2186a5d75f57c46758fcd7"
+  },
+  {
+    "path": "Assets/Resources/SO/Genes/body_cling.asset",
+    "sha256": "8992138ad2b24424536959599f8290ab4dddb3829000d5156d5cef2af2faeb1b"
+  },
+  {
+    "path": "Assets/Resources/SO/Genes/body_cling.asset.meta",
+    "sha256": "8b659b7e6ab8eca1ac85be8e826cc632f19601d82ac8940dd3940736c67d2af8"
+  },
+  {
+    "path": "Assets/Resources/SO/Genes/body_jet.asset",
+    "sha256": "23fa8d458117922a90092130e1dbae61b5ecd4817f5f59ad57616ad35980d2cb"
+  },
+  {
+    "path": "Assets/Resources/SO/Genes/body_jet.asset.meta",
+    "sha256": "361bdc5159ed8940b89861398ea8379a6e5d0af8c6ca9ea6cdc314542cc28f40"
+  },
+  {
+    "path": "Assets/Resources/SO/Genes/body_symbiosis.asset",
+    "sha256": "c9c9a4a215404389979b857af7aba353105a80a5432ff58c5e4ff32ec6dc95c3"
+  },
+  {
+    "path": "Assets/Resources/SO/Genes/body_symbiosis.asset.meta",
+    "sha256": "27d0a003a20ce5ece82965270e198b0195503dea0331b68bfdeb8c3454a8e492"
+  },
+  {
+    "path": "Assets/Resources/Audio/WaterDrain/absorb.wav",
+    "sha256": "a175f88507601b94055215f6863faeced7d702bf21ae07b1943e10e32ba95316"
+  },
+  {
+    "path": "Assets/Resources/Audio/WaterDrain/absorb.wav.meta",
+    "sha256": "4e018895e2ec084a443c84e22b4b6e619ad9bc06003e7b662b8b65b59dd875a5"
+  },
+  {
+    "path": "Assets/Resources/Audio/WaterDrain/release.wav",
+    "sha256": "1777b04da548615053a1f05ce726483368fc54cfd0cf13af3d463604487ed981"
+  },
+  {
+    "path": "Assets/Resources/Audio/WaterDrain/release.wav.meta",
+    "sha256": "86d8e67b2ee5bc0561fbd39893e28a4423b075c6389f5fcecc4f38ec44b64823"
+  },
+  {
+    "path": "Assets/Resources/Audio/WaterDrain/air_step.wav",
+    "sha256": "adc742d8611838717f9435dead5683e4d85a55025084b9378a242d7a0b4f674c"
+  },
+  {
+    "path": "Assets/Resources/Audio/WaterDrain/air_step.wav.meta",
+    "sha256": "5e7f4ad67f34c78996c451c93f14ed5ff8ce2b0ab0f17fa5bbbb2841687733f0"
+  },
+  {
+    "path": "Assets/Resources/Audio/WaterDrain/seed.wav",
+    "sha256": "59bc7ab14b12f12e14101fb5eeed756073cf3629115f47be7bdc15775cc99652"
+  },
+  {
+    "path": "Assets/Resources/Audio/WaterDrain/seed.wav.meta",
+    "sha256": "bb44b4143858e6006e7dce41d546f4d9ed0de1563aaa50c5106b44e20f0b9c8a"
+  },
+  {
+    "path": "Assets/Resources/Audio/WaterDrain/recall.wav",
+    "sha256": "7c037ae16edbf96fb3b424c4590bd2ca3caffaeba40e700f2266a663b4f8a80b"
+  },
+  {
+    "path": "Assets/Resources/Audio/WaterDrain/recall.wav.meta",
+    "sha256": "6a01e25901f72283c03c68a879dca92d5cb30dc7d57572d0f569cae6122586d5"
+  },
+  {
+    "path": "Assets/Resources/Audio/WaterDrain/resonance.wav",
+    "sha256": "693e79560217ccf31b4477e14abf17bc79427b1b9b04b56e198108bb046fa0c4"
+  },
+  {
+    "path": "Assets/Resources/Audio/WaterDrain/resonance.wav.meta",
+    "sha256": "e392590aecbf5658b16948d287b8b2fc8bde4f58ab2ab08a2a3c6996afbe4378"
+  },
+  {
+    "path": "Assets/Resources/Audio/WaterDrain/node.wav",
+    "sha256": "a16538065a60f270cb4e720c2bfce10169bbdf0140e8342d38cd37b6f5beb049"
+  },
+  {
+    "path": "Assets/Resources/Audio/WaterDrain/node.wav.meta",
+    "sha256": "1a2a5e4cae2178a0147ff29cd12a1c00bc754983aa7548817d58a385e5a1b46a"
+  },
+  {
+    "path": "Assets/Resources/Audio/WaterDrain/growth.wav",
+    "sha256": "f260b491de2f49188e37f2fe16c0ec6fb8526c5d0f6c59ee52d072ff955bb656"
+  },
+  {
+    "path": "Assets/Resources/Audio/WaterDrain/growth.wav.meta",
+    "sha256": "cf848b77d895bb39eba70493924809f2b0c20021f274dc4c66ee24f17eae219d"
+  },
+  {
+    "path": "Assets/Resources/Audio/WaterDrain/fracture.wav",
+    "sha256": "ec8130f60c3a295f474cbaf33afc1cef39d8cae2d0fdad548eb2f04df4767cfe"
+  },
+  {
+    "path": "Assets/Resources/Audio/WaterDrain/fracture.wav.meta",
+    "sha256": "ac4b9524bb2f1920e31980ad415ace6bb54712168fe54615f9ddc44edf3232d1"
+  },
+  {
+    "path": "Assets/Scripts/Editor/CampaignWorldBuilder.cs",
+    "sha256": "b0f8600125534e93ada2029ca4d0f690e894a3e97d7a9e31ac18b3278f989ca7"
+  },
+  {
+    "path": "Assets/Scripts/Editor/CampaignWorldBuilder.cs.meta",
+    "sha256": "6f896c2aff3a0e653b41999db9e2ceb2c3fd3034aa09db6198a39207adcd5b4e"
+  },
+  {
+    "path": "Assets/Scripts/Editor/CompleteGameWorldBuilder.cs",
+    "sha256": "221e69b088c14641f894a95071feebf19ee951422c4718605031984b638ba8bd"
+  },
+  {
+    "path": "Assets/Scripts/Editor/CompleteGameWorldBuilder.cs.meta",
+    "sha256": "2f7e445f3d43a727cc5180af29ec1aaed90bb88f5b6b8e4c824afa9d049c5ed5"
+  }
+]

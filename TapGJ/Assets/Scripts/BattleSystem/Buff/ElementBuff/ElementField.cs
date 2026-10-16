@@ -68,7 +68,6 @@ public class ElementField : MonoBehaviour
                 actor.AddBuff(element);
             }
         }
-        EmergenceReactions.ApplyAround(transform.position, Radius, element);
     }
     private void FixedUpdate()
     {
@@ -76,14 +75,7 @@ public class ElementField : MonoBehaviour
     }
     public static void Pull(Vector2 origin, Vector2 area, LayerMask targets, float step)
     {
-        foreach (EmergenceBody material in EmergenceBody.Active)
-        {
-            if (material == null || !material.Has(EmergenceMaterial.Movable)) continue;
-            Vector2 delta = (Vector2)material.transform.position - origin;
-            if (Mathf.Abs(delta.x) > area.x * .5f || Mathf.Abs(delta.y) > area.y * .5f) continue;
-            Rigidbody2D movable = material.GetComponent<Rigidbody2D>();
-            if (movable != null) movable.MovePosition(Vector2.MoveTowards(movable.position, origin, step));
-        }
+
         pullBodies.Clear();
         int count = QueryBox(origin, area, targets, ref pullOverlaps);
         for (int i = 0; i < count; i++)
@@ -130,7 +122,6 @@ public class ElementField : MonoBehaviour
     }
     public static void ReactFields(Vector2 origin, float radius, E_ElementType incoming)
     {
-        EmergenceReactions.ApplyAround(origin, radius, incoming);
         foreach (ElementField field in new List<ElementField>(Active))
         {
             if (field == null || Vector2.Distance(field.transform.position, origin) > radius + field.Radius) continue;

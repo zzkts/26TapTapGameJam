@@ -14,8 +14,7 @@ public class SteamReaction : MonoBehaviour, IElementReaction
 
     public void SetUp(ElementEffectInfo info)
     {
-        EmergenceSteamJet.Spawn(info.position,1.4f);
-        EmergenceReactions.Emit("steam",info.position,"湿润 + 热量 → 可利用的蒸汽推力",1);
+        EmergenceReactions.Emit("steam",info.position,"湿润 + 火焰 → 蒸汽反应",1);
         transform.localScale = new Vector3(size.x, size.y, 1f);
         visual = GetComponent<SpriteRenderer>();
         Material material = Resources.Load<Material>("Material/Combat/ElementSprite");

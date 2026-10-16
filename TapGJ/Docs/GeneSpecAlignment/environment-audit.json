@@ -1,0 +1,16 @@
+{
+  "GameScene": {
+    "spriteRenderersBefore": 354,
+    "spriteRenderersAfter": 345,
+    "collidersBefore": 87,
+    "collidersAfter": 71
+  },
+  "BeginScene": {
+    "spriteRenderersBefore": 0,
+    "spriteRenderersAfter": 0,
+    "collidersBefore": 0,
+    "collidersAfter": 0
+  },
+  "worldArtChanges": [],
+  "archivedFiles": 82
+}

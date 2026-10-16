@@ -15,11 +15,6 @@ public class PlayerData : ScriptableObject
     [Min(0f)] public float jumpBuffer = 0.22f;
     [Range(.5f, 1f)] public float heldJumpGravity = .85f;
     [Range(1f, 2f)] public float fallingGravity = 1.2f;
-    [Header("Backflow Pulse")]
-    [Min(.1f)] public float pulseCooldown = 2f;
-    [Min(.5f)] public float pulseRadius = 3.2f;
-    [Min(0f)] public float pulseImpulse = 2.8f;
-    [Range(0f, .75f)] public float pulseFieldShift = .75f;
     [Min(0f)] public float invulnerabilityTime = 0.8f;
     [Min(0f)] public float hurtTime = 0.22f;
     [Min(0f)] public float hitStopTime = 0.1f;

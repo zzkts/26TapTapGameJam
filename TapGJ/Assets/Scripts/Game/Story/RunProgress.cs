@@ -15,11 +15,7 @@ public sealed class SavedGene
 public sealed class RunSaveData
 {
     public int version = 3;
-    public bool experimentMode;
     public bool campaignLayout;
-    public EcosystemState ecosystem;
-    public float carriedWater=2,carriedPollution;
-    public int runSeed;
     public string scene = "GameScene";
     public float checkpointX = 3f, checkpointY = 1f, elapsedSeconds;
     public int storyFlags, region;
@@ -36,18 +32,22 @@ public static class RunProgress
     public const string SaveKey = "TapGJ.ChapterCheckpoint.v1";
     public const string EndingKey = "TapGJ.DiscoveredEndings.v1";
     private static bool resumeRequested, sessionStarted;
-    public static bool ExperimentMode { get; private set; }
-    public static int RunSeed { get; private set; }
+    public static bool IsolatedValidation { get; private set; }
+    private static string validationSave;
+    private static int validationEndings;
+    public static void BeginIsolatedValidation(){IsolatedValidation=true;validationSave=null;validationEndings=0;resumeRequested=false;sessionStarted=false;}
+    public static void EndIsolatedValidation(){IsolatedValidation=false;validationSave=null;resumeRequested=false;sessionStarted=false;}
     public static bool CanContinue => Read() is RunSaveData data && !data.completed;
-    public static int DiscoveredEndings => PlayerPrefs.GetInt(EndingKey, 0);
+    public static int DiscoveredEndings => IsolatedValidation ? validationEndings : PlayerPrefs.GetInt(EndingKey, 0);
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void ResetSession() { resumeRequested = false; sessionStarted = false; ExperimentMode=false;RunSeed=0; }
+    private static void ResetSession() { resumeRequested = false; sessionStarted = false; }
 
     public static void BeginNewRun()
     {
-        ExperimentMode=false;RunSeed=0;
-        PlayerPrefs.DeleteKey(SaveKey); PlayerPrefs.Save();
+
+        if(IsolatedValidation)validationSave=null;
+        else {PlayerPrefs.DeleteKey(SaveKey); PlayerPrefs.Save();}
         resumeRequested = false; sessionStarted = false;
         Time.timeScale = 1f; SceneManager.LoadSceneAsync("GameScene");
     }
@@ -56,7 +56,6 @@ public static class RunProgress
     {
         RunSaveData data = Read();
         if (data == null || data.completed) return false;
-        ExperimentMode=data.experimentMode;RunSeed=data.runSeed;
         resumeRequested = true; Time.timeScale = 1f;
         SceneManager.LoadSceneAsync(data.scene); return true;
     }
@@ -65,16 +64,21 @@ public static class RunProgress
     {
         RunSaveData data = resumeRequested || sessionStarted ? Read() : null;
         resumeRequested = false; sessionStarted = true;
-        if(data!=null){ExperimentMode=data.experimentMode;RunSeed=data.runSeed;}
         return data != null && !data.completed && data.scene == SceneManager.GetActiveScene().name ? data : null;
     }
 
     public static RunSaveData Read()
     {
-        if (!PlayerPrefs.HasKey(SaveKey)) return null;
+        if (IsolatedValidation ? validationSave==null : !PlayerPrefs.HasKey(SaveKey)) return null;
+        return ParseSnapshot(IsolatedValidation?validationSave:PlayerPrefs.GetString(SaveKey));
+    }
+
+    public static RunSaveData ParseSnapshot(string json)
+    {
+        if(string.IsNullOrWhiteSpace(json))return null;
         try
         {
-            RunSaveData data = JsonUtility.FromJson<RunSaveData>(PlayerPrefs.GetString(SaveKey));
+            RunSaveData data = JsonUtility.FromJson<RunSaveData>(json);
             if (data == null || (data.version < 1 || data.version > 3) || (data.scene != "GameScene"&&data.scene!="SporeScene"&&data.scene!="CoreScene") ||
                 float.IsNaN(data.checkpointX) || float.IsInfinity(data.checkpointX) ||
                 float.IsNaN(data.checkpointY) || float.IsInfinity(data.checkpointY) ||
@@ -107,16 +111,10 @@ public static class RunProgress
         catch (ArgumentException) { return null; }
     }
 
-    public static void BeginExperimentRun()=>BeginExperimentSeed(UnityEngine.Random.Range(1,100000));
-    public static void BeginExperimentSeed(int seed)
-    {
-        PlayerPrefs.DeleteKey(SaveKey);PlayerPrefs.Save();
-        ExperimentMode=true;RunSeed=Mathf.Max(1,seed);resumeRequested=false;sessionStarted=false;
-        Time.timeScale=1f;SceneManager.LoadSceneAsync("GameScene");
-    }
     public static void Write(RunSaveData data)
     {
         if (data == null) return;
+        if(IsolatedValidation){validationSave=JsonUtility.ToJson(data);return;}
         PlayerPrefs.SetString(SaveKey, JsonUtility.ToJson(data)); PlayerPrefs.Save();
     }
 
@@ -126,16 +124,12 @@ public static class RunProgress
         RunSaveData data = new RunSaveData
         {
             checkpointX = checkpoint.x, checkpointY = checkpoint.y, storyFlags = storyFlags,
-            experimentMode=ExperimentMode,runSeed=RunSeed,
             campaignLayout=CampaignFlow.Current!=null,
             region = region, guardianCleared = guardianCleared, elapsedSeconds = elapsedSeconds,
             dashUnlocked = player != null && player.DashUnlocked,
             scene = SceneManager.GetActiveScene().name
         };
         if (completedTriggers != null) data.completedTriggers.AddRange(completedTriggers);
-        if(CampaignFlow.Current?.ecosystem!=null)data.ecosystem=CampaignFlow.Current.ecosystem.Capture();
-        var reservoir=player!=null?player.GetComponent<PlayerReservoir>():null;
-        if(reservoir!=null){data.carriedWater=reservoir.Stored;data.carriedPollution=reservoir.Pollution;}
         GeneInventory inventory = player != null ? player.Genes : null;
         if (inventory == null) return data;
         foreach (Modifier gene in inventory.GenInventory)
@@ -221,6 +215,7 @@ public static class RunProgress
     {
         if (data == null) return;
         data.completed = true; data.ending = coexistence ? "水的归处" : "最后的回声"; Write(data);
+        if(IsolatedValidation){validationEndings|=coexistence?1:2;return;}
         PlayerPrefs.SetInt(EndingKey, DiscoveredEndings | (coexistence ? 1 : 2)); PlayerPrefs.Save();
     }
 }

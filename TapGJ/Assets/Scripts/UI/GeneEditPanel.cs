@@ -22,6 +22,7 @@ public class GeneEditPanel : BasePanel
     private GeneInventory inventory;
     private Modifier[] draft;
     private int selected, filter;
+    private int openedFrame;
     private GameplayUITheme theme;
     private readonly List<InventoryRow> rows = new List<InventoryRow>();
     private sealed class InventoryRow
@@ -59,7 +60,7 @@ public class GeneEditPanel : BasePanel
         if (owner == null || owner.MenuOpen || terminal == null || !terminal.CanUse(owner)) return;
         player = owner; station = terminal; inventory = owner.Genes;
         if (inventory == null) return;
-        draft = inventory.CopyChain(); selected = 0; filter = 0;
+        draft = inventory.CopyChain(); selected = 0; filter = 0; openedFrame=Time.frameCount;
         player.SetMenuOpen(true); UIManager.Instance.ShowPanel(gameObject);
         transform.SetAsLastSibling();
         EnsureSlotCount(draft.Length); StyleControls(); RebuildInventory(); Refresh();
@@ -261,7 +262,8 @@ public class GeneEditPanel : BasePanel
     private void StyleControls()
     {
         if (filterButtons != null) foreach (Button button in filterButtons) StyleButton(button, PlayerUIStyle.Cream);
-        StyleButton(confirmButton, PlayerUIStyle.Mint); StyleButton(cancelButton, PlayerUIStyle.Cream);
+        StyleButton(confirmButton, PlayerUIStyle.Mint);
+        if(confirmButton!=null)confirmButton.GetComponentInChildren<Text>().text="Space 确认装配"; StyleButton(cancelButton, PlayerUIStyle.Cream);
         StyleButton(removeButton, PlayerUIStyle.Cream); StyleButton(leftButton, PlayerUIStyle.Cream); StyleButton(rightButton, PlayerUIStyle.Cream);
         if (inventoryCount != null) inventoryCount.color = PlayerUIStyle.Ink;
         for (int i = 0; i < slotButtons.Length; i++)
@@ -330,7 +332,15 @@ public class GeneEditPanel : BasePanel
     protected override void Update()
     {
         base.Update();
-        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) Cancel();
+        if(draft==null||Time.frameCount<=openedFrame)return;
+        var keys=Keyboard.current;
+        if(keys!=null)
+        {
+            if(keys.escapeKey.wasPressedThisFrame){Cancel();return;}
+            if(keys.aKey.wasPressedThisFrame)SelectSlot(Mathf.Max(0,selected-1));
+            if(keys.dKey.wasPressedThisFrame)SelectSlot(Mathf.Min(draft.Length-1,selected+1));
+            if(keys.spaceKey.wasPressedThisFrame){Confirm();return;}
+        }
         if (player != null && (player.IsDead || station == null || !station.CanUse(player))) Cancel();
     }
     private void OnDisable() { draft = null; if (player != null && player.MenuOpen) player.SetMenuOpen(false); }

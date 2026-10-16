@@ -1,0 +1,30 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"success\":true,\"message\":\"Code executed successfully.\",\"data\":{\"result\":{\"saveUnchanged\":true,\"saveHash\":\"FC927226C95A72D180D97DC5C745EF4F3397CA25EAB4D5AF42BC22DB9393DA9E\",\"saveExistenceUnchanged\":true,\"endingProgressUnchanged\":true,\"isPlaying\":false,\"automaticChecksDisabled\":true,\"isolated\":false,\"scene\":\"Assets/Scene/BeginScene.unity\"},\"compiler\":\"codedom\"}}"
+      }
+    ],
+    "structuredContent": {
+      "success": true,
+      "message": "Code executed successfully.",
+      "data": {
+        "result": {
+          "saveUnchanged": true,
+          "saveHash": "FC927226C95A72D180D97DC5C745EF4F3397CA25EAB4D5AF42BC22DB9393DA9E",
+          "saveExistenceUnchanged": true,
+          "endingProgressUnchanged": true,
+          "isPlaying": false,
+          "automaticChecksDisabled": true,
+          "isolated": false,
+          "scene": "Assets/Scene/BeginScene.unity"
+        },
+        "compiler": "codedom"
+      }
+    },
+    "isError": false
+  }
+}

@@ -7,7 +7,9 @@ public sealed class WaterAudioAssetTests
     [Test]
     public void EveryNamedCueIsARealShortMonoAudioAsset()
     {
-        Assert.That(GameAudioPresentation.CueNames.Distinct().Count(),Is.EqualTo(31));
+        Assert.That(GameAudioPresentation.CueNames.Distinct().Count(),Is.EqualTo(GameAudioPresentation.CueNames.Length));
+        Assert.That(GameAudioPresentation.CueNames,Does.Not.Contain("absorb"));
+        Assert.That(GameAudioPresentation.CueNames,Does.Not.Contain("release"));
         foreach(string name in GameAudioPresentation.CueNames)
         {
             var clip=Resources.Load<AudioClip>("Audio/WaterDrain/"+name);

@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -32,8 +31,6 @@ public class PlayerController : MonoBehaviour, ICombatable
     public bool RollPressed { get; private set; }
     public bool AttackPressed { get; private set; }
     public bool JumpHeld { get; private set; }
-    public bool PulsePressed { get; private set; }
-    public bool PulsePulling { get; private set; }
     public float Hp => hp;
     public float MaxHp => maxHp;
     public bool IsDead => hp <= 0f;
@@ -48,7 +45,6 @@ public class PlayerController : MonoBehaviour, ICombatable
     public Weapon Weapon => weapon;
     public GeneInventory Genes => geneInventory;
     public PlayerPresentation Presentation { get; private set; }
-    public PlayerBackflowPulse Backflow { get; private set; }
     public float CoyoteTime => playerData != null ? playerData.coyoteTime : .22f;
     public float JumpBufferTime => playerData != null ? playerData.jumpBuffer : .22f;
     public bool IsShooting => shotVisualUntil > Time.time;
@@ -78,7 +74,7 @@ public class PlayerController : MonoBehaviour, ICombatable
     private float fallingSpeed;
     private readonly Dictionary<string, float> animationDurations = new();
     private bool initialized, wasGrounded, forcedInvulnerable, hitStopped, deathSignaled, ownsData;
-    private bool inputJump, environmentLaunch;
+    private bool inputJump;
     private void Awake()
     {
         rb = rb != null ? rb : GetComponent<Rigidbody2D>();
@@ -103,9 +99,6 @@ public class PlayerController : MonoBehaviour, ICombatable
         Presentation = GetComponent<PlayerPresentation>();
         if (Presentation == null) Presentation = gameObject.AddComponent<PlayerPresentation>();
         Presentation.Initialize(this, sr, rb, bodyCollider);
-        Backflow = GetComponent<PlayerBackflowPulse>();
-        if (Backflow == null) Backflow = gameObject.AddComponent<PlayerBackflowPulse>();
-        Backflow.Initialize(this, playerData);
         if (inputActions != null) { ownedInput = Instantiate(inputActions); actions = ownedInput.FindActionMap("Player"); }
         mainCamera = Camera.main; AimPosition = (Vector2)transform.position + Vector2.right;
         Machine = new StateMachine();
@@ -144,9 +137,8 @@ public class PlayerController : MonoBehaviour, ICombatable
             if (Machine.CurrentState == FallState) Machine.Switch(LandState);
         }
         wasGrounded = grounded;
-        if (grounded) { inputJump = false; environmentLaunch = false; }
+        if (grounded) { inputJump = false; }
         Machine.Update();
-        if (PulsePressed) Backflow.TryPulse(PulsePulling);
         bool overUi = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
         if (!overUi && AttackPressed) TryAttack();
         if (!overUi && Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
@@ -170,8 +162,6 @@ public class PlayerController : MonoBehaviour, ICombatable
         AttackPressed = (actions?.FindAction("Attack")?.IsPressed() ?? false) ||
             (Mouse.current != null && Mouse.current.leftButton.isPressed);
         JumpHeld = keys != null && (keys.spaceKey.isPressed || keys.wKey.isPressed);
-        PulsePressed = keys != null && keys.fKey.wasPressedThisFrame;
-        PulsePulling = keys != null && keys.sKey.isPressed;
         if (mainCamera == null) mainCamera = Camera.main;
         if (Mouse.current != null && mainCamera != null)
             AimPosition = mainCamera.ScreenToWorldPoint(new Vector3(Mouse.current.position.x.ReadValue(),
@@ -184,8 +174,7 @@ public class PlayerController : MonoBehaviour, ICombatable
         if (!initialized || MenuOpen) return;
         Machine.FixUpdate();
         if (IsDashing) return;
-        // Steam launch preserves its authored trajectory regardless of keyboard release.
-        float multiplier = !IsDead && !IsHurt && !environmentLaunch
+        float multiplier = !IsDead && !IsHurt
             ? YVelocity < -.1f ? playerData.fallingGravity : inputJump && JumpHeld && YVelocity > .1f ? playerData.heldJumpGravity : 1f
             : 1f;
         rb.gravityScale = originalGravity * multiplier;
@@ -222,21 +211,9 @@ public class PlayerController : MonoBehaviour, ICombatable
     public bool TryJump()
     {
         if (IsDead || MenuOpen || IsDashing || IsHurt || Time.time < ignoreGroundUntil) return false;
-        if(WaterReservoir2D.Active.Any(t=>t!=null&&t.Contains(bodyCollider.bounds.center)))
-        {
-            rb.linearVelocity=new Vector2(rb.linearVelocity.x,5f);ignoreGroundUntil=Time.time+.12f;
-            inputJump=true;environmentLaunch=false;Presentation?.Jump();return true;
-        }
-        if (!IsGrounded() && Time.time > groundedUntil)
-        {
-            PlayerSynthesis synthesis=GetComponent<PlayerSynthesis>();
-            if(synthesis==null||!synthesis.TryAirStep())return false;
-            bufferedUntil=float.NegativeInfinity;groundedUntil=float.NegativeInfinity;
-            ignoreGroundUntil=Time.time+.12f;inputJump=true;environmentLaunch=false;
-            Presentation?.Jump();return true;
-        }
+        if (!IsGrounded() && Time.time > groundedUntil) return false;
         groundedUntil = float.NegativeInfinity; ignoreGroundUntil = Time.time + 0.08f;
-        bufferedUntil = float.NegativeInfinity; inputJump = true; environmentLaunch = false;
+        bufferedUntil = float.NegativeInfinity; inputJump = true;
         rb.linearVelocity = new Vector2(rb.linearVelocityX, jumpVelocity);
         Presentation?.Jump();
         return true;
@@ -283,13 +260,7 @@ public class PlayerController : MonoBehaviour, ICombatable
     public void BeginDash()
     {
         rb.gravityScale = 0f;
-        Vector2 direction=Vector2.right*FaceDir;
-        if(GetComponent<PlayerSynthesis>()!=null)
-        {
-            Vector2 aim=AimPosition-(Vector2)bodyCollider.bounds.center;
-            if(aim.sqrMagnitude>.01f)direction=aim.normalized;
-        }
-        rb.linearVelocity = direction * (GetComponent<PlayerSynthesis>()!=null?8.5f:moveSpeed*rollSpeedMultiplier);
+        rb.linearVelocity = Vector2.right * FaceDir * (moveSpeed * rollSpeedMultiplier);
         Presentation?.Dash();
         UpdateFeedback();
     }
@@ -300,17 +271,7 @@ public class PlayerController : MonoBehaviour, ICombatable
         UpdateFeedback(false);
     }
     public void UnlockDash() => DashUnlocked = true;
-    public void LaunchFromEnvironment(float velocity)
-    {
-        if (IsDead || MenuOpen) return;
-        if (IsDashing) Machine.Switch(FallState);
-        inputJump = false; environmentLaunch = true;
-        groundedUntil = bufferedUntil = float.NegativeInfinity;
-        ignoreGroundUntil = Time.time + .12f;
-        rb.gravityScale = originalGravity;
-        Machine.Switch(JumpState);
-        rb.linearVelocity = new Vector2(rb.linearVelocity.x, Mathf.Clamp(velocity, 4f, 9f));
-    }
+
     public void SetInvincible(bool value) { forcedInvulnerable = value; UpdateFeedback(); }
     public void TakeDamage(float damage) => TakeDamageFrom(damage, (Vector2)transform.position - Vector2.right * FaceDir);
     public void TakeDamage(DamageInfo info)
@@ -367,7 +328,7 @@ public class PlayerController : MonoBehaviour, ICombatable
         GameplayUIFactory.ModalInputFrame = Time.frameCount;
         MenuOpen = value; XInput = 0f;
         if (value && rb != null) rb.linearVelocity = Vector2.zero;
-        if (value) { bufferedUntil = groundedUntil = float.NegativeInfinity; JumpHeld = PulsePressed = false; }
+        if (value) { bufferedUntil = groundedUntil = float.NegativeInfinity; JumpHeld = false; }
         Time.timeScale = value || hitStopped ? 0f : 1f;
     }
     private void UpdateFeedback(bool includeDash = true)

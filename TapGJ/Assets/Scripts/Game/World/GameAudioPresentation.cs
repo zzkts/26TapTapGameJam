@@ -18,7 +18,7 @@ public sealed class GameAudioPresentation : MonoBehaviour
     private AudioClip room;
     private PlayerController player;
     private GeneInventory inventory;
-    private int hurts,jumps,landings,airSteps,variant;
+    private int hurts,jumps,landings,variant;
     private bool wasDashing,wasModal,wasDead;
     private float nextPlayerSearch,lastClick=-1;
     private readonly Dictionary<string,AudioClip> clips=new();
@@ -32,7 +32,7 @@ public sealed class GameAudioPresentation : MonoBehaviour
     public int PlayedCount { get; private set; }
     public int LoadedClipCount=>clips.Count;
     public int CountFor(string cue)=>played.TryGetValue(cue,out int count)?count:0;
-    public static readonly string[] CueNames={"water_shot_01","water_shot_02","water_shot_03","water_impact_01","water_impact_02","water_impact_03","absorb","release","jump","air_step","land","dash","seed","recall","gene","heal","hurt","death","steam","conduction","growth","explosion","fracture","node","chapter","resonance","victory","chest","ui","fire_shot","poison_shot"};
+    public static readonly string[] CueNames={"water_shot_01","water_shot_02","water_shot_03","water_impact_01","water_impact_02","water_impact_03","jump","land","dash","gene","heal","hurt","death","steam","conduction","explosion","chapter","victory","chest","ui","fire_shot","poison_shot"};
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetSession(){current=null;}
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -80,7 +80,7 @@ public sealed class GameAudioPresentation : MonoBehaviour
         float now=Time.unscaledTime;
         if(nextCue.TryGetValue(cue,out float until)&&now<until)return true;
         voices.RemoveAll(end=>end<=now);if(voices.Count>=16)return true;
-        nextCue[cue]=now+(cue=="water_impact"?.07f:cue=="water_shot"?.075f:cue=="growth"||cue=="steam"||cue=="conduction"?.22f:.09f);
+        nextCue[cue]=now+(cue=="water_impact"?.07f:cue=="water_shot"?.075f:cue=="steam"||cue=="conduction"?.22f:.09f);
         effects.PlayOneShot(clip,Mathf.Clamp01(gain));voices.Add(now+clip.length);
         LastCue=cue;PlayedCount++;played[cue]=CountFor(cue)+1;return true;
     }
@@ -108,7 +108,6 @@ public sealed class GameAudioPresentation : MonoBehaviour
     {
         var p=player!=null?player.Presentation:null;if(p==null)return;
         hurts=p.HurtCount;jumps=p.JumpCount;landings=p.LandingCount;
-        var ability=player.GetComponent<PlayerSynthesis>();airSteps=ability!=null?ability.AirSteps:0;
     }
     private void Update()
     {
@@ -121,9 +120,7 @@ public sealed class GameAudioPresentation : MonoBehaviour
             if(!modal)
             {
                 if(p.HurtCount!=hurts)PlayCue("hurt");
-                var ability=player.GetComponent<PlayerSynthesis>();
-                bool stepped=ability!=null&&ability.AirSteps!=airSteps;
-                if(stepped)PlayCue("air_step");else if(p.JumpCount!=jumps)PlayCue("jump");
+                if(p.JumpCount!=jumps)PlayCue("jump");
                 if(p.LandingCount!=landings)PlayCue("land");
                 if(player.IsDashing&&!wasDashing)PlayCue("dash");
             }
@@ -134,8 +131,8 @@ public sealed class GameAudioPresentation : MonoBehaviour
     }
     private void OnReaction(EmergenceEvent reaction)
     {
-        string key=reaction.kind=="ecology"?"growth":reaction.kind;
-        if(key=="steam"||key=="conduction"||key=="growth"||key=="explosion"||key=="fracture")PlayWorld(key,reaction.position,.85f);
+        string key=reaction.kind;
+        if(key=="steam"||key=="conduction"||key=="explosion")PlayWorld(key,reaction.position,.85f);
     }
     private void PlayUIClick()
     {

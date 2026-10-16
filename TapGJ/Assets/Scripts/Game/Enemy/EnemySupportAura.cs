@@ -106,9 +106,6 @@ public class EnemySupportAura : MonoBehaviour
         }
 
         cooldownTimer = healCooldown;
-        foreach(EcoFungus fungus in new List<EcoFungus>(EcoFungus.Active))
-            if(fungus!=null&&Vector2.Distance(fungus.transform.position,transform.position)<=healRadius)
-            {fungus.Nourish(.10f);healedTargets++;}
         if (healedTargets > 0)
         {owner.PlaySupportAnimation();GameAudioPresentation.PlayWorld("heal",transform.position,.7f);}
     }

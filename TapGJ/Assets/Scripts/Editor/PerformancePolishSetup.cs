@@ -40,8 +40,6 @@ public static class PerformancePolishSetup
             if (canvas.renderMode != RenderMode.WorldSpace || !canvas.name.StartsWith("路标 · ")) continue;
             var text = canvas.GetComponentInChildren<Text>();
             string value = text.text.Split(new[]{" · "},StringSplitOptions.None)[0];
-            if(value=="上游清水 → 母菌生长 → 菌冠捷径")value="清水唤醒菌冠";
-            if(value=="下方净化池")value="净化池 · S+F 吸水 / F 放水";
             if(value=="雨后泵站"||value=="共生菌林"||value=="净化核心")
             {
                 float origin = value=="雨后泵站"?0:value=="共生菌林"?48:96;

@@ -9,10 +9,10 @@ public static class GeneBuildAnalysis
             if(gene==null)continue;water|=gene.Element==E_ElementType.Water;fire|=gene.Element==E_ElementType.Fire;poison|=gene.Element==E_ElementType.Poison;
             split|=gene.ModifierType==E_ModifierType.Split; bounce|=gene.ModifierType==E_ModifierType.Rebound;vortex|=gene.IsVortex;
         }
-        if(fire&&poison)return "组合观察：先留下毒雾，再用火焰触发连锁。";
-        if(fire&&water)return "组合观察：先弄湿目标，再加热；留意蒸汽推力。";
-        if(vortex)return "组合观察：旋涡能聚拢敌人，也能移动箱体。";
+        if(fire&&poison)return "组合观察：先施加毒，再用火焰触发爆破。";
+        if(fire&&water)return "组合观察：按顺序切换水与火，观察敌人的元素状态。";
+        if(vortex)return "组合观察：旋涡能聚拢敌人，提高范围攻击的命中。";
         if(split&&bounce)return "组合观察：分裂和反弹会扩大碰撞覆盖。";
-        return "组合观察：基础水弹能弄湿导体、蓄压和推动箱子。";
+        return "组合观察：改造持续生效；右键按槽位顺序启动属性。";
     }
 }

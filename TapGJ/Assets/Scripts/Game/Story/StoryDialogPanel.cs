@@ -29,7 +29,7 @@ public sealed class StoryDialogPanel : BasePanel
     {
         advanceClick.onClick.AddListener(Advance);next.onClick.AddListener(Advance);skip.onClick.AddListener(Skip);
         coexist.onClick.AddListener(()=>Choose(true));seal.onClick.AddListener(()=>Choose(false));
-        newRun.onClick.AddListener(()=>{if(RunProgress.ExperimentMode)RunProgress.BeginExperimentRun();else RunProgress.BeginNewRun();});
+        newRun.onClick.AddListener(()=>{RunProgress.BeginNewRun();});
         mainMenu.onClick.AddListener(()=>{Time.timeScale=1f;SceneManager.LoadSceneAsync("BeginScene");});
     }
 
@@ -110,13 +110,8 @@ public sealed class StoryDialogPanel : BasePanel
         endingDescription.text=coexistence?"你打开了回流阀。\n未知的生命，将与城市一同学习如何共存。":"你启动了净化装置。\n城市暂时安静，最后一滴水仍保存着地下的回声。";
         int minutes=Mathf.FloorToInt(seconds/60f),remaining=Mathf.FloorToInt(seconds%60f);
         endingStats.text="探索完成  ·  "+minutes+"分"+remaining.ToString("00")+"秒  ·  收集 "+collectedGenes+" 个基因实例";
-        if(CampaignFlow.Current!=null)
-        {
-            int restored=0;for(int district=1;district<=3;district++)if(CampaignFlow.Current.DistrictSolved(district))restored++;
-            endingStats.text+="\n地下水网 · "+restored+" / 3 区域恢复 · 观察到 "+(EmergenceProgress.Current!=null?EmergenceProgress.Current.Discoveries.Count:0)+" 种变化";
-        }
-        else if(EmergenceProgress.Current!=null)endingStats.text+="\n观察到 "+EmergenceProgress.Current.Discoveries.Count+" 种变化 · 接通 "+EmergenceProgress.Current.CompletionCount+" 条通路";
-        newRun.GetComponentInChildren<Text>().text=RunProgress.ExperimentMode?"再做一次试验":"再次探索";
+        if(CampaignFlow.Current!=null)endingStats.text+="\n三名核心守卫已击败 · 基因构筑挑战完成";
+        newRun.GetComponentInChildren<Text>().text="再次探索";
         openedFrame=Time.frameCount;UIManager.Instance.ShowPanel(gameObject);transform.SetAsLastSibling();
     }
     public void CloseForValidation()

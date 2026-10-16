@@ -128,23 +128,7 @@ public sealed class PerformancePlayModeChecks:MonoBehaviour
         Check(WaterEffectPool.CreatedCount==warmEffects,"Repeated surface impacts reuse spray particles and animated impact sheets");
         Check(WaterEffectPool.ReusedCount>0,"Transient water effects use their scene-owned pool");
         Metrics="256 stress shots; new projectiles="+(ProjectilePool.CreatedCount-startCreated)+"; reused="+(ProjectilePool.ReusedCount-startReuse)+"; impact warmup="+(warmEffects-effects)+"; steady impact allocations=0 GameObjects";
-        Stage="water trace absorption returns to pool";
         Teleport(new Vector2(17,1));yield return new WaitForSeconds(.2f);
-        var body=player.GetComponent<PlayerReservoir>();body.Restore(0,0);
-        var trace=ElementField.Create(E_ElementType.Water,new Vector2(18,.8f),new Vector2(1.8f,.5f),5,0);
-        Check(body.Absorb()&&!trace.gameObject.activeSelf&&!ElementField.Active.Contains(trace),"Absorbing a water trace immediately retires it through the field pool");
-        Stage="interaction and local sign bounds";
-        Teleport(new Vector2(137.5f,1));yield return new WaitForSeconds(.3f);Canvas.ForceUpdateCanvases();
-        var hud=Object.FindFirstObjectByType<PlayerHudPanel>();var label=hud.interactionText;
-        Check(hud.interactionCard.gameObject.activeSelf&&label.text.Contains("最终回流阀"),"The actual far-right valve displays its action prompt");
-        Check(label.verticalOverflow==VerticalWrapMode.Truncate&&label.rectTransform.rect.height+1>=label.preferredHeight,"Valve instructions fit the text rectangle without overflow");
-        var corners=new Vector3[4];label.rectTransform.GetWorldCorners(corners);var bounds=new Vector3[4];hud.interactionCard.GetWorldCorners(bounds);
-        Check(corners[0].y>=bounds[0].y&&corners[2].y<=bounds[2].y,"Prompt text remains inside the decorated card");
-        var signs=Object.FindObjectsByType<WorldSign>(FindObjectsSortMode.None);
-        Check(signs.All(s=>s.GetComponentInChildren<Text>().text.Length<=23),"World signposts use short labels instead of duplicate objective paragraphs");
-        Check(signs.Where(s=>Mathf.Abs(s.transform.position.x-player.transform.position.x)>8).All(s=>!s.GetComponent<Canvas>().enabled),"Distant sign canvases are culled");
-        Check(Object.FindObjectsByType<ProjectilePool>(FindObjectsSortMode.None).Length==1&&Object.FindObjectsByType<WaterEffectPool>(FindObjectsSortMode.None).Length==1,"One pool owner of each kind exists in the gameplay scene");
-        Stage="complete";
     }
     private void Teleport(Vector2 at)
     {player.transform.position=at;var rb=player.GetComponent<Rigidbody2D>();rb.position=at;rb.linearVelocity=Vector2.zero;Physics2D.SyncTransforms();}
