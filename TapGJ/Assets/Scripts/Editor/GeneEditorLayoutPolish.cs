@@ -13,6 +13,17 @@ public static class GeneEditorLayoutPolish
     private static readonly Color Border = new Color(.47f,.38f,.63f);
     private static readonly Color Muted = new Color(.72f,.69f,.81f);
 
+    public static void ApplyControls()
+    {
+        if(EditorApplication.isPlaying)throw new InvalidOperationException("Exit Play Mode first.");
+        var scene=UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+        if(scene.name!="GameScene")throw new InvalidOperationException("Open GameScene first.");
+        var editor=Object.FindFirstObjectByType<GeneEditPanel>(FindObjectsInactive.Include);
+        editor.ConfigureKeyboardHints();
+        editor.confirmButton.GetComponentInChildren<Text>(true).text="Space 确认装配";
+        EditorUtility.SetDirty(editor);EditorSceneManager.MarkSceneDirty(scene);EditorSceneManager.SaveScene(scene);
+    }
+
     [MenuItem("Tools/TapGJ/Polish Gene Workbench")]
     public static void Apply()
     {
@@ -111,7 +122,7 @@ public static class GeneEditorLayoutPolish
     {
         Label("Draft Title", root, .49f,.755f,.95f,.802f, 22, "装配方案", PlayerUIStyle.Cream);
         Label("Draft Rule", root, .49f,.719f,.95f,.757f, 13,
-            "属性按 01 → 06 轮换附魔；改造同时生效", Muted);
+            "A/D 左右选槽 · W/S 上下选槽 · 点击库存装入", Muted);
         editor.slotButtons = new Button[6];
         for (int i = 0; i < 6; i++)
         {
@@ -164,16 +175,17 @@ public static class GeneEditorLayoutPolish
         editor.rotation.resizeTextForBestFit = true;
         editor.rotation.resizeTextMinSize = 11; editor.rotation.resizeTextMaxSize = 17;
         editor.buildHint = Label("Reaction Preview", root, .49f,.115f,.95f,.170f, 14,
-            "组合观察：基础水弹能弄湿导体、蓄压和推动箱子。", PlayerUIStyle.Mint);
+            "改造同时生效 · 属性按槽位顺序右键触发", PlayerUIStyle.Mint);
         editor.buildHint.resizeTextForBestFit = true;
         editor.buildHint.resizeTextMinSize = 12; editor.buildHint.resizeTextMaxSize = 14;
 
-        editor.leftButton = Button("Move Left", root, .035f,.034f,.136f,.089f,"← 前移",PlayerUIStyle.Cream,15);
-        editor.rightButton = Button("Move Right", root, .148f,.034f,.249f,.089f,"后移 →",PlayerUIStyle.Cream,15);
-        editor.removeButton = Button("Remove", root, .261f,.034f,.362f,.089f,"移除此格",PlayerUIStyle.Cream,15);
-        Label("Draft Reminder",root,.378f,.034f,.65f,.089f,12,"确认后应用 · 取消保留原构筑",Muted);
-        editor.confirmButton = Button("Confirm",root,.674f,.034f,.843f,.089f,"确认装配",PlayerUIStyle.Mint,19);
-        editor.cancelButton = Button("Cancel",root,.855f,.034f,.965f,.089f,"取消 / ESC",PlayerUIStyle.Cream,16);
+        editor.leftButton = Button("Move Left", root, .035f,.022f,.136f,.077f,"← 前移",PlayerUIStyle.Cream,15);
+        editor.rightButton = Button("Move Right", root, .148f,.022f,.249f,.077f,"后移 →",PlayerUIStyle.Cream,15);
+        editor.removeButton = Button("Remove", root, .261f,.022f,.362f,.077f,"移除此格",PlayerUIStyle.Cream,15);
+        Label("Draft Reminder",root,.378f,.022f,.65f,.077f,12,"确认后应用 · 取消保留原构筑",Muted);
+        editor.confirmButton = Button("Confirm",root,.674f,.022f,.843f,.077f,"Space 确认装配",PlayerUIStyle.Mint,19);
+        Label("Confirm Shortcut",editor.confirmButton.transform,0,1.02f,1,1.48f,11,"Space确认装配",PlayerUIStyle.Mint,TextAnchor.MiddleCenter);
+        editor.cancelButton = Button("Cancel",root,.855f,.022f,.965f,.077f,"取消 / ESC",PlayerUIStyle.Cream,16);
     }
 
     private static Image Surface(string name, Transform parent, float x0,float y0,float x1,float y1,Color color,bool raycast=false)

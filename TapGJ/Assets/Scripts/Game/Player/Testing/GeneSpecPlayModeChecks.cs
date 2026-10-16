@@ -91,9 +91,16 @@ public sealed class GeneSpecPlayModeChecks:MonoBehaviour
             float end=Time.realtimeSinceStartup+25;float movedAt=Time.realtimeSinceStartup,lastX=player.transform.position.x;
             while(player.transform.position.x<range.y)
             {
+                // Keep synthetic movement held when the editor changes focus during an MCP request.
+                keys.MakeCurrent();
+                InputSystem.QueueStateEvent(keys,new KeyboardState(Key.D));
+                // Guardians create/re-enable their collision bodies when the encounter wakes.
+                // This route-only check excludes combat obstruction throughout the walk.
+                foreach(var enemy in flow.level.guardians)
+                    if(enemy!=null)foreach(var collider in enemy.GetComponentsInChildren<Collider2D>(true))collider.enabled=false;
                 if(Time.realtimeSinceStartup>end)throw new TimeoutException("Main route traversal at "+player.transform.position);
                 if(player.transform.position.x>lastX+.1f){lastX=player.transform.position.x;movedAt=Time.realtimeSinceStartup;}
-                if(Time.realtimeSinceStartup-movedAt>2)throw new InvalidOperationException("Main route blocked at "+player.transform.position);
+                if(Time.realtimeSinceStartup-movedAt>2)throw new InvalidOperationException("Main route blocked at "+player.transform.position+" input="+player.XInput+" held="+keys.dKey.isPressed+" menu="+player.MenuOpen);
                 yield return null;
             }
             InputSystem.QueueStateEvent(keys,new KeyboardState());yield return null;
@@ -120,6 +127,24 @@ public sealed class GeneSpecPlayModeChecks:MonoBehaviour
         InputSystem.QueueStateEvent(keys,new KeyboardState());yield return null;
         int ember=player.Genes.GenInventory.ToList().FindIndex(g=>g.Definition.name=="ember");panel.Equip(ember);
         Check(panel.CopyDraft()[1]!=null&&panel.CopyDraft()[1].Definition.name=="ember","D selects the next gene slot");
+        var unchanged=panel.CopyDraft();
+        InputSystem.QueueStateEvent(keys,new KeyboardState(Key.S));yield return null;
+        InputSystem.QueueStateEvent(keys,new KeyboardState());yield return null;
+        Check(panel.SelectedSlot==4&&panel.CopyDraft().SequenceEqual(unchanged),"S selects the slot directly below without moving any genes");
+        InputSystem.QueueStateEvent(keys,new KeyboardState(Key.S));yield return null;
+        InputSystem.QueueStateEvent(keys,new KeyboardState());yield return null;
+        Check(panel.SelectedSlot==4,"S at the bottom row keeps the current column and selection");
+        InputSystem.QueueStateEvent(keys,new KeyboardState(Key.W));yield return null;
+        InputSystem.QueueStateEvent(keys,new KeyboardState());yield return null;
+        Check(panel.SelectedSlot==1&&panel.CopyDraft().SequenceEqual(unchanged),"W returns to the same column in the upper row");
+        InputSystem.QueueStateEvent(keys,new KeyboardState(Key.A));yield return null;
+        InputSystem.QueueStateEvent(keys,new KeyboardState());yield return null;
+        Check(panel.SelectedSlot==0&&panel.CopyDraft().SequenceEqual(unchanged),"A selects the previous slot without swapping the draft");
+        Check(panel.confirmButton.transform.Find("Confirm Shortcut").GetComponent<UnityEngine.UI.Text>().text=="Space确认装配","The confirmation shortcut is visible above the confirm button");
+        Canvas.ForceUpdateCanvases();
+        var shortcut=panel.confirmButton.transform.Find("Confirm Shortcut").GetComponent<UnityEngine.UI.Text>();
+        Check(shortcut.rectTransform.rect.height>=shortcut.preferredHeight-.5f,"The confirmation shortcut has enough height to render its text");
+        UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(panel.cancelButton.gameObject);
         InputSystem.QueueStateEvent(keys,new KeyboardState(Key.Space));yield return null;
         InputSystem.QueueStateEvent(keys,new KeyboardState());yield return null;
         Check(!player.MenuOpen&&player.Genes.GenChain[0]?.Definition.name=="water"&&player.Genes.GenChain[1]?.Definition.name=="ember","Space confirms the draft at a terminal");

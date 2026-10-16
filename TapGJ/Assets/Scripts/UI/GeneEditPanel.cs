@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 [DefaultExecutionOrder(-350)]
@@ -17,6 +18,8 @@ public class GeneEditPanel : BasePanel
     public Image detailIcon;
     public Text detailLevel;
     public Image[] evolutionSegments;
+    [SerializeField, Min(1)] private int slotColumns = 3;
+    public int SelectedSlot => selected;
     private PlayerController player;
     private GeneEditStation station;
     private GeneInventory inventory;
@@ -75,7 +78,7 @@ public class GeneEditPanel : BasePanel
         {
             resized[i] = i < slotButtons.Length ? slotButtons[i] : Instantiate(slotButtons[0], slotButtons[0].transform.parent);
             RectTransform rect = resized[i].GetComponent<RectTransform>();
-            int columns = 3;
+            int columns = Mathf.Max(1,slotColumns);
             int rows = Mathf.CeilToInt(count / (float)columns);
             float width = .46f / columns, height = .255f / rows;
             rect.anchorMin = new Vector2(.49f + (i % columns) * width, .73f - (i / columns + 1) * height);
@@ -156,6 +159,13 @@ public class GeneEditPanel : BasePanel
         draft[selected] = gene; Refresh();
     }
     public void SelectSlot(int index) { if (draft != null && index >= 0 && index < draft.Length) { selected = index; Refresh(); } }
+    public void NavigateSlots(int horizontal,int vertical)
+    {
+        if(draft==null)return;
+        int next=selected+(vertical!=0?Math.Sign(vertical)*Mathf.Max(1,slotColumns):Math.Sign(horizontal));
+        // A missing row/column keeps the current slot instead of jumping to an unrelated cell.
+        if(next>=0&&next<draft.Length)SelectSlot(next);
+    }
     private void MoveSlot(int direction)
     {
         if (draft == null) return;
@@ -264,6 +274,7 @@ public class GeneEditPanel : BasePanel
         if (filterButtons != null) foreach (Button button in filterButtons) StyleButton(button, PlayerUIStyle.Cream);
         StyleButton(confirmButton, PlayerUIStyle.Mint);
         if(confirmButton!=null)confirmButton.GetComponentInChildren<Text>().text="Space 确认装配"; StyleButton(cancelButton, PlayerUIStyle.Cream);
+        ConfigureKeyboardHints();
         StyleButton(removeButton, PlayerUIStyle.Cream); StyleButton(leftButton, PlayerUIStyle.Cream); StyleButton(rightButton, PlayerUIStyle.Cream);
         if (inventoryCount != null) inventoryCount.color = PlayerUIStyle.Ink;
         for (int i = 0; i < slotButtons.Length; i++)
@@ -311,6 +322,39 @@ public class GeneEditPanel : BasePanel
         if (evolutionSegments != null) foreach (Image segment in evolutionSegments)
         { segment.sprite = PlayerUIStyle.Rounded; segment.type = Image.Type.Sliced; }
     }
+    public void ConfigureKeyboardHints()
+    {
+        if(confirmButton!=null)
+        {
+            RectTransform confirmRect=confirmButton.GetComponent<RectTransform>();
+            if(confirmRect.anchorMin.y>.03f&&confirmRect.anchorMax.y<.1f)
+            {
+                foreach(Button button in new[]{leftButton,rightButton,removeButton,confirmButton,cancelButton})
+                {
+                    if(button==null)continue;
+                    RectTransform rect=button.GetComponent<RectTransform>();
+                    rect.anchorMin-=new Vector2(0,.012f);
+                    rect.anchorMax-=new Vector2(0,.012f);
+                }
+                Transform reminder=confirmButton.transform.parent.Find("Draft Reminder");
+                if(reminder!=null)
+                {
+                    RectTransform rect=reminder.GetComponent<RectTransform>();
+                    rect.anchorMin-=new Vector2(0,.012f);
+                    rect.anchorMax-=new Vector2(0,.012f);
+                }
+            }
+            Transform existing=confirmButton.transform.Find("Confirm Shortcut");
+            Text hint=existing!=null?existing.GetComponent<Text>():GameplayUIFactory.Label("Confirm Shortcut",confirmButton.transform,
+                new Vector2(0,1.02f),new Vector2(1,1.48f),font,11,"Space确认装配",TextAnchor.MiddleCenter);
+            hint.rectTransform.anchorMin=new Vector2(0,1.02f);
+            hint.rectTransform.anchorMax=new Vector2(1,1.48f);
+            hint.rectTransform.offsetMin=hint.rectTransform.offsetMax=Vector2.zero;
+            hint.text="Space确认装配";hint.color=PlayerUIStyle.Mint;
+        }
+        foreach(Text text in GetComponentsInChildren<Text>(true))
+            if(text.name=="Draft Rule")text.text="A/D 左右选槽 · W/S 上下选槽 · 点击库存装入";
+    }
     private static void StyleButton(Button button, Color color)
     {
         if (button == null) return;
@@ -337,8 +381,13 @@ public class GeneEditPanel : BasePanel
         if(keys!=null)
         {
             if(keys.escapeKey.wasPressedThisFrame){Cancel();return;}
-            if(keys.aKey.wasPressedThisFrame)SelectSlot(Mathf.Max(0,selected-1));
-            if(keys.dKey.wasPressedThisFrame)SelectSlot(Mathf.Min(draft.Length-1,selected+1));
+            bool navigating=keys.aKey.wasPressedThisFrame||keys.dKey.wasPressedThisFrame||keys.wKey.wasPressedThisFrame||keys.sKey.wasPressedThisFrame;
+            if((navigating||keys.spaceKey.wasPressedThisFrame)&&EventSystem.current!=null)
+                EventSystem.current.SetSelectedGameObject(null);
+            if(keys.aKey.wasPressedThisFrame)NavigateSlots(-1,0);
+            else if(keys.dKey.wasPressedThisFrame)NavigateSlots(1,0);
+            else if(keys.wKey.wasPressedThisFrame)NavigateSlots(0,-1);
+            else if(keys.sKey.wasPressedThisFrame)NavigateSlots(0,1);
             if(keys.spaceKey.wasPressedThisFrame){Confirm();return;}
         }
         if (player != null && (player.IsDead || station == null || !station.CanUse(player))) Cancel();
