@@ -71,6 +71,7 @@ public class PlayerController : MonoBehaviour, ICombatable
     private int normalLayer, invulnerableLayer;
     private Color originalColor;
     private string locomotionAnimation = "Idle";
+    private PhysicsMaterial2D movementMaterial;
     private float fallingSpeed;
     private readonly Dictionary<string, float> animationDurations = new();
     private bool initialized, wasGrounded, forcedInvulnerable, hitStopped, deathSignaled, ownsData;
@@ -79,6 +80,13 @@ public class PlayerController : MonoBehaviour, ICombatable
     {
         rb = rb != null ? rb : GetComponent<Rigidbody2D>();
         bodyCollider = bodyCollider != null ? bodyCollider : GetComponent<BoxCollider2D>();
+        if (bodyCollider != null)
+        {
+            // Horizontal input keeps pushing into walls; friction must not cancel a jump or fall.
+            movementMaterial = new PhysicsMaterial2D("Player Movement")
+            { hideFlags = HideFlags.DontSave, friction = 0f, bounciness = 0f };
+            bodyCollider.sharedMaterial = movementMaterial;
+        }
         animator = animator != null ? animator : GetComponentInChildren<Animator>();
         sr = sr != null ? sr : GetComponentInChildren<SpriteRenderer>();
         weapon = weapon != null ? weapon : GetComponent<Weapon>();
@@ -371,5 +379,14 @@ public class PlayerController : MonoBehaviour, ICombatable
         rb.gravityScale = originalGravity; gameObject.layer = normalLayer;
         if (sr != null) sr.color = originalColor;
     }
-    private void OnDestroy() { if (ownedInput != null) Destroy(ownedInput); if (ownsData) Destroy(playerData); }
+    private void OnDestroy()
+    {
+        if (ownedInput != null) Destroy(ownedInput);
+        if (ownsData) Destroy(playerData);
+        if (movementMaterial != null)
+        {
+            if (Application.isPlaying) Destroy(movementMaterial);
+            else DestroyImmediate(movementMaterial);
+        }
+    }
 }
