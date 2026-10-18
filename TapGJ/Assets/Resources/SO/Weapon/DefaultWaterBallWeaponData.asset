@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   damage: 1
   damageMultiplier: 1
-  attackInterval: 0.2
-  projectileSpeed: 5
+  attackInterval: 0.6
+  projectileSpeed: 8
   projectileCount: 1
   projectileSizeMultiplier: 0.35
   projectileLifetime: 3

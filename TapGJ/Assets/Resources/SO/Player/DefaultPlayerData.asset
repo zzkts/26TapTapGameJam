@@ -17,17 +17,13 @@ MonoBehaviour:
   jumpVelocity: 4
   maxHp: 10
   dashUnlocked: 0
-  rollCooldown: 2
-  rollSpeedMultiplier: 1.5
+  rollCooldown: 1.5
+  rollSpeedMultiplier: 3
   rollDuration: 0.2
   coyoteTime: 0.22
   jumpBuffer: 0.22
   heldJumpGravity: 0.85
   fallingGravity: 1.2
-  pulseCooldown: 2
-  pulseRadius: 3.2
-  pulseImpulse: 2.8
-  pulseFieldShift: 0.75
   invulnerabilityTime: 0.8
   hurtTime: 0.22
   hitStopTime: 0.1
