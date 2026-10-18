@@ -188,7 +188,7 @@ public static class RunProgress
             if (instance != null)
             {
                 instance.Level = Mathf.Clamp(saved.level, 1, 2);
-                instance.Copies = Mathf.Clamp(saved.copies, 1, inventory.EvolutionCopies);
+                instance.Copies = Mathf.Clamp(saved.copies, 1, inventory.GetEvolutionCopies(instance));
                 if (!string.IsNullOrEmpty(saved.instanceId)) instance.InstanceId = saved.instanceId;
                 claimed.Add(instance);
             }

@@ -39,7 +39,7 @@ public class PlayerHudPanel : BasePanel
     {
         if (toastText == null) return;
         toastText.text = gene.Level > 1 ? gene.Name + " · 进化完成！" :
-            "获得 " + gene.Name + "   " + gene.Copies + " / " + inventory.EvolutionCopies;
+            "获得 " + gene.Name + "   " + gene.Copies + " / " + inventory.GetEvolutionCopies(gene);
         if (toastIcon != null) { toastIcon.sprite = PlayerUIStyle.GeneIcon(gene); toastIcon.color = PlayerUIStyle.GeneColor(gene); }
         toastUntil = Time.unscaledTime + 3.2f; RefreshSlots();
     }

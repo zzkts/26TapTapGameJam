@@ -126,7 +126,7 @@ public class GeneEditPanel : BasePanel
                 TextAnchor.MiddleRight);
             Text progress = GameplayUIFactory.Label("Evolution", row.transform,
                 new Vector2(0.56f,0.12f), new Vector2(0.965f,0.44f), font, 15,
-                gene.Level > 1 ? "高级 · 已进化" : "进化  " + gene.Copies + " / " + inventory.EvolutionCopies,
+                gene.Level > 1 ? "高级 · 已进化" : "进化  " + gene.Copies + " / " + inventory.GetEvolutionCopies(gene),
                 TextAnchor.MiddleRight);
             progress.color = gene.Level > 1 ? PlayerUIStyle.Gold : new Color(0.73f,0.72f,0.82f);
             if (gene.Level > 1)
@@ -242,13 +242,14 @@ public class GeneEditPanel : BasePanel
         }
         if (detailLevel != null)
         {
-            detailLevel.text = selectedGene == null ? "选择与装配仍是预览；确认后才应用" : selectedGene.Level > 1 ? "高级基因 · 完成进化" : "进化进度  " + selectedGene.Copies + " / " + inventory.EvolutionCopies + "  ·  收集同名基因可进化";
+            detailLevel.text = selectedGene == null ? "选择与装配仍是预览；确认后才应用" : selectedGene.Level > 1 ? "高级基因 · 完成进化" : "进化进度  " + selectedGene.Copies + " / " + inventory.GetEvolutionCopies(selectedGene) + "  ·  收集同名基因可进化";
             detailLevel.color = selectedGene != null && selectedGene.Level > 1 ? PlayerUIStyle.Gold : new Color(.70f,.68f,.79f);
         }
         if (evolutionSegments != null) for (int i = 0; i < evolutionSegments.Length; i++)
         {
             evolutionSegments[i].enabled = selectedGene != null;
-            evolutionSegments[i].color = selectedGene != null && (selectedGene.Level > 1 || selectedGene.Copies > i + 1) ?
+            evolutionSegments[i].color = selectedGene != null && (selectedGene.Level > 1 ||
+                selectedGene.Copies - 1 >= Mathf.CeilToInt((i + 1) * (inventory.GetEvolutionCopies(selectedGene) - 1) / (float)evolutionSegments.Length)) ?
                 selectedGene.Level > 1 ? PlayerUIStyle.Gold : PlayerUIStyle.Mint : new Color(.39f,.34f,.52f);
         }
         rotation.fontSize = 17; rotation.color = PlayerUIStyle.Cream;

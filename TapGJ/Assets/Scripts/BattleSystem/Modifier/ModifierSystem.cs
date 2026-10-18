@@ -28,6 +28,7 @@ public class ModifierSystem
     public BulletSnapshot Apply(WeaponData src, IReadOnlyList<Modifier> modifiers, Modifier activeAttribute = null)
     {
         BulletSnapshot result = new(src);
+        float splitDamageMultiplier = 1f;
 
         // Attribute genes and empty slots do not contribute to the split gene's build scaling.
         // Split is itself a modification gene and participates in this count.
@@ -80,6 +81,7 @@ public class ModifierSystem
                     // One extra launch bullet makes a base shot two; each equipped modification
                     // then contributes +1 (normal) or +2 (evolved). Never enable impact splitting.
                     result.projectileCount += 1 + modificationCount * Mathf.RoundToInt(modifier.ModifierValue);
+                    splitDamageMultiplier *= modifier.SplitDamageMultiplier;
                     break;
                 case E_ModifierType.ProjectileMove:
                     ApplyMove(result, modifier.ModifierValue);
@@ -87,6 +89,8 @@ public class ModifierSystem
             }
         }
 
+        // Apply per-bullet split penalties after all additive modifiers, independent of slot order.
+        result.damageMultiplier *= splitDamageMultiplier;
         if (activeAttribute != null)
         {
             ApplyElement(result, (float)activeAttribute.Element);

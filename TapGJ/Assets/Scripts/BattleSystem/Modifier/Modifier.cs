@@ -15,6 +15,9 @@ public class Modifier : ScriptableObject
     [SerializeField, Min(0f)] private float effectRadius = 3f;
     [SerializeField, Min(0f)] private float evolvedRadius = 5f;
     [SerializeField] private bool vortex;
+    [SerializeField, Min(0)] private int evolutionRequiredCopies;
+    [SerializeField, Range(0f, 1f)] private float splitDamageMultiplier = 1f;
+    [SerializeField, Range(0f, 1f)] private float evolvedSplitDamageMultiplier = 1f;
     [System.NonSerialized] public string InstanceId;
     [System.NonSerialized] public int Copies = 1;
     [System.NonSerialized] public int Level = 1;
@@ -30,6 +33,8 @@ public class Modifier : ScriptableObject
     public float EnchantDuration => enchantDuration;
     public float Radius => Level > 1 ? evolvedRadius : effectRadius;
     public bool IsVortex => vortex;
+    public int EvolutionRequiredCopies => evolutionRequiredCopies;
+    public float SplitDamageMultiplier => Level > 1 && hasEvolution ? evolvedSplitDamageMultiplier : splitDamageMultiplier;
     public E_ElementType Element => IsAttribute ? (E_ElementType)Mathf.RoundToInt(modifierValue) : E_ElementType.None;
     public Color Color => !IsAttribute ? new Color(0.8f, 0.84f, 0.88f) :
         Element == E_ElementType.Fire ? new Color(1f, 0.38f, 0.18f) :

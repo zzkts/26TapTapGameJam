@@ -15,6 +15,8 @@ public class GeneInventory : MonoBehaviour
     public IReadOnlyList<Modifier> GenChain => genChain;
     public int SlotCount => slotCount;
     public int EvolutionCopies => evolutionCopies;
+    public int GetEvolutionCopies(Modifier gene) => gene != null && gene.EvolutionRequiredCopies > 0 ?
+        Mathf.Max(2, gene.EvolutionRequiredCopies) : evolutionCopies;
     public event Action Changed;
     public event Action<Modifier> Acquired;
     private void Awake()
@@ -49,7 +51,7 @@ public class GeneInventory : MonoBehaviour
         Modifier instance = genInventory.Find(x => x != null && x.Level == 1 &&
             (gene.GeneId != 0 ? x.GeneId == gene.GeneId : x.Definition == gene.Definition));
         if (instance == null) { instance = Clone(gene); genInventory.Add(instance); }
-        else { instance.Copies++; if (instance.Copies >= evolutionCopies) instance.Level = 2; }
+        else { instance.Copies++; if (instance.Copies >= GetEvolutionCopies(instance)) instance.Level = 2; }
         Apply(); Acquired?.Invoke(instance); Changed?.Invoke();
     }
     public Modifier[] CopyChain() { ResizeChain(); return genChain.ToArray(); }

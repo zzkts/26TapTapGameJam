@@ -14,13 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Modifier
   geneId: 4
   geneName: "\u5206\u88C2"
-  desc: "\u53d1\u5c04\u65f6\u540c\u65f6\u5c04\u51fa\u57fa\u7840 2 \u53d1\uff1b\u6bcf\u88c5\u914d\u4e00\u4e2a\u6539\u9020\u57fa\u56e0\uff08\u542b\u81ea\u8eab\uff09\u989d\u5916 +1 \u53d1\u3002\u547d\u4e2d\u6216\u6d88\u5931\u65f6\u4e0d\u518d\u5206\u88c2\u3002"
+  desc: "发射时同时射出基础 2 发；每装配一个改造基因（含自身）额外 +1 发。每装配一个普通分裂，每颗子弹伤害乘 50%；多个分裂逐个乘算。命中或消失时不再分裂。收集 4 份进化。"
   modifierType: 14
   modifierValue: 1
   enchantDuration: 4
   hasEvolution: 1
   evolvedValue: 2
-  evolvedDescription: "\u53d1\u5c04\u65f6\u540c\u65f6\u5c04\u51fa\u57fa\u7840 2 \u53d1\uff1b\u6bcf\u88c5\u914d\u4e00\u4e2a\u6539\u9020\u57fa\u56e0\uff08\u542b\u81ea\u8eab\uff09\u989d\u5916 +2 \u53d1\u3002\u547d\u4e2d\u6216\u6d88\u5931\u65f6\u4e0d\u518d\u5206\u88c2\u3002"
+  evolvedDescription: "发射时同时射出基础 2 发；每装配一个改造基因（含自身）额外 +2 发。每装配一个高级分裂，每颗子弹伤害乘 75%；多个分裂逐个乘算。命中或消失时不再分裂。"
   effectRadius: 3
   evolvedRadius: 5
   vortex: 0
+  evolutionRequiredCopies: 4
+  splitDamageMultiplier: 0.5
+  evolvedSplitDamageMultiplier: 0.75

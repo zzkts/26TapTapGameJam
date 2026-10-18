@@ -169,7 +169,13 @@ public static class GameplayPolishSetup
             if (gene.name == "water") { Set(gene,"geneName","扩散"); Set(gene,"desc","命中时使半径 3 米内的敌人湿润。"); Set(gene,"evolvedDescription","命中时使半径 5 米内的敌人湿润。"); }
             if (gene.name == "ember") { Set(gene,"geneName","火种"); Set(gene,"desc","命中时引燃半径 3 米内的敌人。"); Set(gene,"evolvedDescription","命中时引燃半径 5 米内的敌人。"); }
             if (gene.name == "sewage") { Set(gene,"geneName","污水"); Set(gene,"desc","毒弹消失后生成毒雾，遇火爆炸。"); }
-            if (gene.name == "split") { Set(gene,"modifierType",(int)E_ModifierType.Split); Set(gene,"modifierValue",1f); Set(gene,"evolvedValue",2f); Set(gene,"desc","发射时同时射出基础 2 发；每装配一个改造基因（含自身）额外 +1 发。命中或消失时不再分裂。"); Set(gene,"evolvedDescription","发射时同时射出基础 2 发；每装配一个改造基因（含自身）额外 +2 发。命中或消失时不再分裂。"); }
+            if (gene.name == "split")
+            {
+                Set(gene,"modifierType",(int)E_ModifierType.Split); Set(gene,"modifierValue",1f); Set(gene,"evolvedValue",2f);
+                Set(gene,"evolutionRequiredCopies",4); Set(gene,"splitDamageMultiplier",.5f); Set(gene,"evolvedSplitDamageMultiplier",.75f);
+                Set(gene,"desc","发射时同时射出基础 2 发；每装配一个改造基因（含自身）额外 +1 发。每装配一个普通分裂，每颗子弹伤害乘 50%；多个分裂逐个乘算。命中或消失时不再分裂。收集 4 份进化。");
+                Set(gene,"evolvedDescription","发射时同时射出基础 2 发；每装配一个改造基因（含自身）额外 +2 发。每装配一个高级分裂，每颗子弹伤害乘 75%；多个分裂逐个乘算。命中或消失时不再分裂。");
+            }
         }
         const string vortexPath = "Assets/Resources/SO/Genes/vortex.asset";
         Modifier vortex = AssetDatabase.LoadAssetAtPath<Modifier>(vortexPath);
