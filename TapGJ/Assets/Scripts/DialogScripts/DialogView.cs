@@ -1,12 +1,9 @@
-﻿using System;
+using System;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Cysharp.Threading.Tasks;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace DialogScripts
 {
@@ -28,8 +25,8 @@ namespace DialogScripts
             StopAutoPlay();
             StopRollText();
         }
-        
-        private static async UniTaskVoid RollText(string text, CancellationToken cancellationToken)
+
+        private static async Task RollText(string text, CancellationToken cancellationToken)
         {
             isRunning = true;
             _builder.Clear();
@@ -60,11 +57,12 @@ namespace DialogScripts
         /// <param name="text"></param>
         public static void StartRollText(string text)
         {
-            var task = RollText(text, _rollTextSource.Token);
+            StopRollText();
+            Observe(RollText(text, _rollTextSource.Token));
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public static void RunDialogLine()
         {
@@ -76,7 +74,7 @@ namespace DialogScripts
             }
         }
 
-        private static async UniTaskVoid AutoRollText(CancellationToken cancellationToken)
+        private static async Task AutoRollText(CancellationToken cancellationToken)
         {
             isAutoPlay = true;
             if (DataManager.CurrentIndex is -1)
@@ -96,15 +94,23 @@ namespace DialogScripts
             isAutoPlay = false;
         }
 
-        private static async UniTask DelayCurrentLine(CancellationToken cancellationToken, int update = 1)
+        private static async Task DelayCurrentLine(CancellationToken cancellationToken, int update = 1)
         {
             int need_time = DataManager.CurrentDialog.Length * DialogSetting.PerCharDelay * 8 / update;
             await Task.Delay(need_time, cancellationToken);
-        } 
+        }
 
         public static void StartAutoPlay()
         {
-            AutoRollText(_autoRollSource.Token).Forget();
+            StopAutoPlay();
+            Observe(AutoRollText(_autoRollSource.Token));
+        }
+
+        private static async void Observe(Task task)
+        {
+            try { await task; }
+            catch (OperationCanceledException) { }
+            catch (Exception exception) { Debug.LogException(exception); }
         }
 
         public static void StopAutoPlay()

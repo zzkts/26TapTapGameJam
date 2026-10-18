@@ -1,12 +1,5 @@
 {
   "dependencies": {
-    "com.code-philosophy.luban": {
-      "version": "https://github.com/focus-creative-games/luban_unity.git",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "061314200e2f03307c4d90b448e1de7b85431905"
-    },
     "com.coplaydev.unity-mcp": {
       "version": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main",
       "depth": 0,
@@ -23,13 +16,6 @@
         "com.unity.test-framework": "1.1.31"
       },
       "hash": "aa5fc638d623f56178d50329d9ad8c541a57fe66"
-    },
-    "com.cysharp.unitask": {
-      "version": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "f74aace058f4ee7d3aa5bcc89cc98dbfb2a02892"
     },
     "com.unity.2d.animation": {
       "version": "13.0.6",
