@@ -56,8 +56,9 @@ public sealed class GameAudioPresentation : MonoBehaviour
             var clip=Resources.Load<AudioClip>("Audio/WaterDrain/"+name);
             if(clip!=null)clips[name]=clip;
         }
-        // Preserve the quiet existing ambience. Only short effects are replaced by the new bank.
+        // Keep the quiet cavern bed underneath the separate, scene-specific music sources.
         room=CreateRoom();owned.Add(room);ambience.clip=room;ambience.loop=true;ambience.Play();
+        if(GetComponent<SceneMusicPlayer>()==null)gameObject.AddComponent<SceneMusicPlayer>();
         SceneManager.sceneLoaded+=OnSceneLoaded;EmergenceReactions.Happened+=OnReaction;
         EnsureListener();BindPlayer();
     }

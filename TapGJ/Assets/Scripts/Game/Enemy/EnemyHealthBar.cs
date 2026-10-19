@@ -14,6 +14,7 @@ public class EnemyHealthBar : MonoBehaviour
     private SpriteRenderer visual;
     private RectTransform bar;
     private RectTransform fill;
+    private Image healthImage;
     public float DisplayedRatio { get; private set; }
 
     private void Awake()
@@ -29,8 +30,12 @@ public class EnemyHealthBar : MonoBehaviour
         canvas.sortingOrder = 100;
         bar = root.GetComponent<RectTransform>();
         bar.sizeDelta = new Vector2(width * 100f, height * 100f);
+        backgroundColor=WaterDrainUI.Surface;
+        foregroundColor=enemy!=null&&enemy.IsSupport?PlayerUIStyle.Mint:new Color(1f,.66f,.60f);
         MakeImage("Background", bar, backgroundColor);
         fill = MakeImage("Health", bar, foregroundColor);
+        fill.offsetMin=new Vector2(1.5f,1.5f);fill.offsetMax=new Vector2(-1.5f,-1.5f);
+        healthImage=fill.GetComponent<Image>();healthImage.type=Image.Type.Filled;healthImage.fillMethod=Image.FillMethod.Horizontal;
         LateUpdate();
     }
 
@@ -42,8 +47,7 @@ public class EnemyHealthBar : MonoBehaviour
         rect.anchorMin = Vector2.zero;
         rect.anchorMax = Vector2.one;
         rect.offsetMin = rect.offsetMax = Vector2.zero;
-        obj.GetComponent<Image>().color = color;
-        obj.GetComponent<Image>().raycastTarget = false;
+        Image image=obj.GetComponent<Image>();image.color=color;image.sprite=PlayerUIStyle.Rounded;image.type=Image.Type.Sliced;image.raycastTarget=false;
         return rect;
     }
 
@@ -60,7 +64,8 @@ public class EnemyHealthBar : MonoBehaviour
         bar.localScale = new Vector3(0.01f / Mathf.Max(0.001f, Mathf.Abs(scale.x)),
             0.01f / Mathf.Max(0.001f, Mathf.Abs(scale.y)), 1f);
         DisplayedRatio = Mathf.Clamp01(enemy.HealthNormalized);
-        fill.anchorMax = new Vector2(DisplayedRatio, 1f);
+        healthImage.fillAmount=DisplayedRatio;
+        healthImage.color=DisplayedRatio<=.25f?new Color(1,.39f,.49f):foregroundColor;
     }
 
     private void OnDisable() { if (bar != null) bar.gameObject.SetActive(false); }

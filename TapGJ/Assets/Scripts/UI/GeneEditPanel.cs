@@ -274,7 +274,7 @@ public class GeneEditPanel : BasePanel
     {
         if (filterButtons != null) foreach (Button button in filterButtons) StyleButton(button, PlayerUIStyle.Cream);
         StyleButton(confirmButton, PlayerUIStyle.Mint);
-        if(confirmButton!=null)confirmButton.GetComponentInChildren<Text>().text="Space 确认装配"; StyleButton(cancelButton, PlayerUIStyle.Cream);
+        if(confirmButton!=null)confirmButton.GetComponentInChildren<Text>().text="确认装配"; StyleButton(cancelButton, PlayerUIStyle.Cream);
         ConfigureKeyboardHints();
         StyleButton(removeButton, PlayerUIStyle.Cream); StyleButton(leftButton, PlayerUIStyle.Cream); StyleButton(rightButton, PlayerUIStyle.Cream);
         if (inventoryCount != null) inventoryCount.color = PlayerUIStyle.Ink;
@@ -347,11 +347,12 @@ public class GeneEditPanel : BasePanel
             }
             Transform existing=confirmButton.transform.Find("Confirm Shortcut");
             Text hint=existing!=null?existing.GetComponent<Text>():GameplayUIFactory.Label("Confirm Shortcut",confirmButton.transform,
-                new Vector2(0,1.02f),new Vector2(1,1.48f),font,11,"Space确认装配",TextAnchor.MiddleCenter);
+                new Vector2(0,1.02f),new Vector2(1,1.48f),font,13,"Space确认装配",TextAnchor.MiddleCenter);
             hint.rectTransform.anchorMin=new Vector2(0,1.02f);
             hint.rectTransform.anchorMax=new Vector2(1,1.48f);
             hint.rectTransform.offsetMin=hint.rectTransform.offsetMax=Vector2.zero;
             hint.text="Space确认装配";hint.color=PlayerUIStyle.Mint;
+            hint.fontSize=13;WaterDrainUI.Readable(hint,12);
         }
         foreach(Text text in GetComponentsInChildren<Text>(true))
             if(text.name=="Draft Rule")text.text="A/D 左右选槽 · W/S 上下选槽 · 点击库存装入";

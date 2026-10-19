@@ -5,6 +5,7 @@ using UnityEngine.UI;
 public class RunMenuPanel : BasePanel
 {
     public Text title;
+    public Text hint;
     public Button resumeButton, retryButton;
     public Button settingsButton, menuButton;
     public Image portrait;
@@ -29,12 +30,14 @@ public class RunMenuPanel : BasePanel
     {
         player = owner;
         title.text = dead ? "本次探索结束" : "已暂停";
+        if(hint!=null)hint.text=dead?"从最近的检查点继续，重新组合基因再出发":"Esc 继续  ·  已记录的检查点会保留";
         if (portrait != null) portrait.sprite = dead ? deadPortrait : alivePortrait;
         resumeButton.gameObject.SetActive(!dead);
         Place(retryButton, dead ? .52f : .41f);
         Place(settingsButton, dead ? .39f : .30f);
         Place(menuButton, dead ? .26f : .19f);
         player.SetMenuOpen(true);
+        transform.SetAsLastSibling();
         UIManager.Instance.ShowPanel(gameObject);
     }
     private static void Place(Button button, float bottom)

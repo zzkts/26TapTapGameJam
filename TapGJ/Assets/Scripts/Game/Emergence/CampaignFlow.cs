@@ -15,7 +15,7 @@ public sealed class CampaignFlow : MonoBehaviour
     public string ChapterName=>Name(chapter);
     public static string Name(int n)=>n==1?"第一章 · 雨后泵站":n==2?"第二章 · 共生菌林":"第三章 · 净化核心";
     public bool NavigatingGuardians=>chapter==3&&level.BattleStarted&&!level.CoreDefeated;
-    public string Goal=>chapter<3?"打怪 / 开冷库获取基因 → 终端装配 → 向右探索":
+    public string Goal=>chapter<3?"收集基因 → 在终端装配 → 向右探索":
         level.CoreDefeated?"核心守卫已击败 · 到最右端回流阀按 E 选择结局":
         level.BattleStarted?"击败核心守卫 · 剩余 "+level.guardians.Count(g=>g!=null&&!g.IsDead)+" / 3":
         "在基因终端准备构筑 · 向右挑战三名核心守卫";

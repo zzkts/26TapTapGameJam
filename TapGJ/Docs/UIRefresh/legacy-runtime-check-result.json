@@ -1,0 +1,16 @@
+{
+    "success": false,
+    "checks": [
+        "PASS: Save access is isolated before StorySession starts",
+        "PASS: Split variant 0 creates 3 bullets immediately on firing",
+        "PASS: Launch bullets inherit the active element and never arm impact splitting",
+        "PASS: Launch bullets are independent projectile instances",
+        "PASS: Every initial split bullet can hit the target once",
+        "PASS: Hitting an enemy creates no secondary split bullets",
+        "FAIL: The next shot again splits at launch"
+    ],
+    "errors": [
+        "System.InvalidOperationException: The next shot again splits at launch\r\n  at GeneSpecPlayModeChecks.Check (System.Boolean valid, System.String text) [0x00045] in D:\\My\\TapTap\\26TapTapGameJam\\TapGJ\\Assets\\Scripts\\Game\\Player\\Testing\\GeneSpecPlayModeChecks.cs:59 \r\n  at GeneSpecPlayModeChecks+<SplitGeneLaunchCases>d__16.MoveNext () [0x004f0] in D:\\My\\TapTap\\26TapTapGameJam\\TapGJ\\Assets\\Scripts\\Game\\Player\\Testing\\GeneSpecPlayModeChecks.cs:222 \r\n  at GeneSpecPlayModeChecks+<Start>d__12.MoveNext () [0x0005d] in D:\\My\\TapTap\\26TapTapGameJam\\TapGJ\\Assets\\Scripts\\Game\\Player\\Testing\\GeneSpecPlayModeChecks.cs:44 "
+    ],
+    "editorWarnings": []
+}

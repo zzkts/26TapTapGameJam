@@ -66,7 +66,7 @@ public class PlayerHudPanel : BasePanel
             }
             if (slotFrames != null && i < slotFrames.Length)
             {
-                slotFrames[i].color = Color.white;
+                slotFrames[i].color = gene==null?WaterDrainUI.Border:PlayerUIStyle.Violet;
                 Outline rarity = slotFrames[i].GetComponent<Outline>();
                 if (rarity != null) rarity.enabled = gene != null && gene.Level > 1;
             }
@@ -180,7 +180,7 @@ public class PlayerHudPanel : BasePanel
         float halfWidth = canvasRect.rect.width * .5f, halfHeight = canvasRect.rect.height * .5f;
         float padding = interactionCard.rect.width * .5f + 20;
         interactionCard.anchoredPosition = new Vector2(Mathf.Clamp(local.x, -halfWidth + padding, halfWidth - padding),
-            Mathf.Clamp(local.y + 28, -halfHeight + 170f, halfHeight - interactionCard.rect.height - 24));
+            Mathf.Clamp(local.y + 28, -halfHeight + 222f, halfHeight - interactionCard.rect.height - 24));
     }
     private void OnDestroy() { if (inventory != null) inventory.Acquired -= OnAcquired; }
 }
