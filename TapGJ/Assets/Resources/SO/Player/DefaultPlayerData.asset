@@ -15,7 +15,7 @@ MonoBehaviour:
   moveSpeed: 3
   direction: 1
   jumpVelocity: 4
-  maxHp: 10
+  maxHp: 20
   dashUnlocked: 0
   rollCooldown: 1.5
   rollSpeedMultiplier: 3
