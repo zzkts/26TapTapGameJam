@@ -19,7 +19,7 @@ public class ElementField : MonoBehaviour
     private static readonly HashSet<Rigidbody2D> pullBodies = new();
     private bool pooled;
     public static ElementField Create(E_ElementType element, Vector2 position, Vector2 size,
-        float lifetime, LayerMask targets, bool pull = false)
+        float lifetime, LayerMask targets, bool pull = false, Vector2? surfacePoint = null, Vector2? surfaceNormal = null)
     {
         bool fresh = true;
         GameObject obj = Application.isPlaying ? TapGJ.WaterProjectiles.WaterEffectPool.Rent("Element field", out fresh) : new GameObject("Element field");
@@ -30,15 +30,50 @@ public class ElementField : MonoBehaviour
         field.element = element; field.size = size; field.duration = lifetime;
         field.created = Time.time; field.expires = Time.time + lifetime;
         field.targetMask = element == E_ElementType.Water ? targets | LayerMask.GetMask("Player","PlayerInvulnerable") : targets; field.vortex = pull;
-        if (fresh) field.visual = obj.AddComponent<SpriteRenderer>(); field.visual.sprite = PrototypeVisual.WhiteSprite;
+        if (fresh)
+        {
+            var child = new GameObject("Field visual");
+            child.transform.SetParent(obj.transform, false);
+            field.visual = child.AddComponent<SpriteRenderer>();
+        }
+        // Keep the effect's gameplay volume separate from its surface presentation.
+        obj.transform.localScale = Vector3.one;
+        field.visual.transform.localPosition = Vector3.zero;
+        field.visual.transform.localRotation = Quaternion.identity;
+        field.visual.transform.localScale = new Vector3(size.x, size.y, 1f);
+        field.visual.enabled = true;
+        field.visual.sprite = TapGJ.WaterProjectiles.WaterVfx.GetLiquidQuad();
         field.visual.sortingOrder = 3;
         field.visual.color = element == E_ElementType.None ? new Color(1f, 1f, 1f, 0.3f) :
             element == E_ElementType.Poison ? new Color(0.4f, 0.9f, 0.25f, 0.4f) : new Color(0.2f, 0.8f, 1f, 0.4f);
         Material material = Resources.Load<Material>("Material/Combat/ElementSprite");
+        if (element == E_ElementType.Water && !pull)
+        {
+            Vector2 normal = surfaceNormal.HasValue ? surfaceNormal.Value.normalized : Vector2.up;
+            // Hits on actors, walls and mid-air expiry must not leave floating horizontal bars.
+            field.visual.enabled = surfacePoint.HasValue && normal.y > .45f;
+            if (field.visual.enabled)
+            {
+                field.visual.transform.position = surfacePoint.Value + normal * .025f;
+                field.visual.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(normal.y, normal.x) * Mathf.Rad2Deg - 90f);
+                field.visual.transform.localScale = new Vector3(size.x, Mathf.Clamp(size.y * .65f, .10f, .18f), 1f);
+                foreach (var previous in Active)
+                {
+                    if (previous == field || previous == null || previous.element != E_ElementType.Water ||
+                        previous.vortex || previous.visual == null || !previous.visual.enabled) continue;
+                    Vector2 separation = previous.visual.transform.position - field.visual.transform.position;
+                    if (Vector2.Dot(previous.visual.transform.up, normal) > .98f &&
+                        Mathf.Abs(Vector2.Dot(separation, normal)) < .04f &&
+                        separation.magnitude < size.x * .35f)
+                        previous.visual.enabled = false;
+                }
+            }
+            material = TapGJ.WaterProjectiles.WaterVfx.GetLiquidMaterial(4);
+            field.visual.color = Color.white;
+        }
         if (material != null) field.visual.sharedMaterial = material;
         if (field.properties == null) field.properties = new MaterialPropertyBlock();
         field.properties.Clear(); field.visual.SetPropertyBlock(null);
-        obj.transform.localScale = new Vector3(size.x, size.y, 1f);
         return field;
     }
     private void OnEnable() => Active.Add(this);

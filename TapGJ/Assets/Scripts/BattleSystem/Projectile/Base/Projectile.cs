@@ -40,6 +40,7 @@ public class Projectile : MonoBehaviour
     private SpriteRenderer visual;
     private Vector2 impactNormal;
     private Vector2? contactPoint;
+    private bool surfaceContact;
     internal ProjectilePool Pool;
     internal int PoolKey;
     private SpriteRenderer originalVisual;
@@ -106,7 +107,7 @@ public class Projectile : MonoBehaviour
     {
         CacheVisual();
         snapshot = null; spawnBudget = null; generation = 0; owner = null;
-        hasSplit = false; isExpired = false; contactPoint = null;
+        hasSplit = false; isExpired = false; contactPoint = null; surfaceContact = false;
         damagedTargets.Clear(); projectileMove = null;
         if (rb == null) rb = GetComponent<Rigidbody2D>();
         rb.linearVelocity = Vector2.zero; rb.angularVelocity = 0;
@@ -167,6 +168,7 @@ public class Projectile : MonoBehaviour
         direction = dir.normalized;
         impactNormal = -direction;
         contactPoint = null;
+        surfaceContact = false;
         this.speed = speed;
         this.damage = damage;
         this.damageMultiplier = damageMultiplier;
@@ -273,6 +275,7 @@ public class Projectile : MonoBehaviour
     protected void MoveWithPhysics(Vector2 movement)
     {
         contactPoint = null;
+        surfaceContact = false;
         float moveDistance = movement.magnitude;
         if (moveDistance <= 0f)
             return;
@@ -296,6 +299,7 @@ public class Projectile : MonoBehaviour
                 rb.position = start + moveDirection * hit.distance;
                 impactNormal = hit.normal;
                 contactPoint = hit.point;
+                surfaceContact = true;
 
                 if (reboundCount > 0)
                 {
@@ -306,6 +310,7 @@ public class Projectile : MonoBehaviour
                     reboundCount--;
                     impactNormal = -direction;
                     contactPoint = null;
+                    surfaceContact = false;
                     return;
                 }
 
@@ -391,7 +396,7 @@ public class Projectile : MonoBehaviour
         if (Application.isPlaying && elementType == E_ElementType.Water)
             TapGJ.WaterProjectiles.WaterVfx.SpawnLiquidImpact(contactPoint ?? rb.position,
                 contactPoint.HasValue ? impactNormal : -direction,
-                projectileSizeMultiplier, speed, onSurface: contactPoint.HasValue);
+                projectileSizeMultiplier, speed, onSurface: surfaceContact);
         else if (Application.isPlaying)
             TapGJ.WaterProjectiles.WaterVfx.SpawnSplash(rb.position,
                 elementType == E_ElementType.Fire ? new Color(1f, 0.45f, 0.1f) :
@@ -401,7 +406,8 @@ public class Projectile : MonoBehaviour
             if (elementType == E_ElementType.Poison)
                 ElementField.Create(E_ElementType.Poison, rb.position, Vector2.one * 5f, 3f, targetLM);
             else if (elementType == E_ElementType.Water)
-                ElementField.Create(E_ElementType.Water, rb.position, new Vector2(1.5f, 0.2f), 4f, targetLM);
+                ElementField.Create(E_ElementType.Water, rb.position, new Vector2(1.5f, 0.2f), 4f, targetLM,
+                    surfacePoint: surfaceContact ? contactPoint : null, surfaceNormal: impactNormal);
             Split(rb.position);
         }
         isExpired = true;

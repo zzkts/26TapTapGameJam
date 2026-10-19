@@ -7,6 +7,7 @@ Shader "TapGJ/Liquid Drop 2D"
         _Kind ("Drop / Ribbon / Spray / Impact", Float) = 0
         _Phase ("Motion Phase", Float) = 0
         _Progress ("Impact Age", Range(0,1)) = 0
+        _Electric ("Electricity", Range(0,1)) = 0
     }
     SubShader
     {
@@ -18,7 +19,7 @@ Shader "TapGJ/Liquid Drop 2D"
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         CBUFFER_START(UnityPerMaterial)
             half4 _Color;
-            float _Kind, _Phase, _Progress;
+            float _Kind, _Phase, _Progress, _Electric;
         CBUFFER_END
         struct Attributes { float3 positionOS:POSITION; float2 uv:TEXCOORD0; half4 color:COLOR; };
         struct Varyings { float4 positionCS:SV_POSITION; float2 uv:TEXCOORD0; half4 color:COLOR; };
@@ -47,6 +48,23 @@ Shader "TapGJ/Liquid Drop 2D"
                 float a=(1-smoothstep(.19,.49,edge))*(.46+.12*sin(i.uv.x*31-t));
                 float glint=exp(-pow((p.y+wobble-.17)*24,2))*.42;
                 return half4(lerp(float3(.13,.65,.86),float3(.86,1,1),glint)*i.color.rgb,a*i.color.a);
+            }
+            if (_Kind>3.5)
+            {
+                // Thin, rounded wet footprint with broken glints, soft edges and a dry-out fade.
+                float edgeNoise=sin(p.x*28+sin(p.x*13)*2)*.025;
+                float r=length(float2(p.x*2.14,p.y*2.7+edgeNoise));
+                float mask=1-smoothstep(.72,1,r);
+                float spread=lerp(.72,1,saturate(_Progress*12));
+                mask*=1-smoothstep(.75*spread,1.02*spread,abs(p.x)*2);
+                float glint=exp(-pow((p.y-.08-sin(p.x*16)*.035)*23,2));
+                glint*=smoothstep(-.40,-.24,p.x)*(1-smoothstep(.17,.36,p.x));
+                glint*=.4+.6*smoothstep(-.4,.5,sin(p.x*38));
+                float dry=1-smoothstep(.35,1,_Progress);
+                float3 water=lerp(float3(.10,.48,.62),float3(.65,.94,.98),glint*.6);
+                float spark=pow(saturate(sin(p.x*55+_Time.y*18)),12)*_Electric;
+                water=lerp(water,float3(.80,.92,1),spark);
+                return half4(water*i.color.rgb,mask*(.23+glint*.26+spark*.25)*dry*i.color.a);
             }
             if (_Kind>2.5)
             {

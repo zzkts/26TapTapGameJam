@@ -9,7 +9,7 @@ namespace TapGJ.WaterProjectiles
         private static Material particleMaterial;
         private static Material spriteMaterial;
         private static Sprite liquidQuad;
-        private static readonly Material[] liquidMaterials=new Material[4];
+        private static readonly Material[] liquidMaterials=new Material[5];
 
         public static Sprite GetLiquidQuad()
         {
@@ -26,7 +26,7 @@ namespace TapGJ.WaterProjectiles
         public static Material GetLiquidMaterial(int kind)
         {
             if(liquidMaterials[kind]==null)
-                liquidMaterials[kind]=Resources.Load<Material>("WaterProjectiles/"+new[]{"LiquidDrop","LiquidRibbon","LiquidSpray","LiquidImpact"}[kind]);
+                liquidMaterials[kind]=Resources.Load<Material>("WaterProjectiles/"+new[]{"LiquidDrop","LiquidRibbon","LiquidSpray","LiquidImpact","LiquidPuddle"}[kind]);
             return liquidMaterials[kind];
         }
 
@@ -55,6 +55,7 @@ namespace TapGJ.WaterProjectiles
             main.startLifetime=new ParticleSystem.MinMaxCurve(.14f,.3f);
             main.startSize=new ParticleSystem.MinMaxCurve(radius*.22f,radius*.48f);
             main.gravityModifier=.28f; main.maxParticles=32;
+            StopDropsAtGround(particles);
             var emission=particles.emission; emission.rateOverTime=0; emission.rateOverDistance=12;
             particles.Play();
         }
@@ -71,6 +72,7 @@ namespace TapGJ.WaterProjectiles
             main.startLifetime=new ParticleSystem.MinMaxCurve(.22f,.55f);
             main.startSize=new ParticleSystem.MinMaxCurve(size*.10f,size*.28f);
             main.gravityModifier=.75f; main.maxParticles=24; main.stopAction=ParticleSystemStopAction.None;
+            StopDropsAtGround(particles);
             var emission=particles.emission; emission.enabled=false;
             particles.Play();
             float force=Mathf.Clamp(speed*.16f,1.0f,3.0f);
@@ -79,13 +81,14 @@ namespace TapGJ.WaterProjectiles
             {
                 float fan=Mathf.Lerp(-1.25f,1.25f,i/(float)(count-1));
                 Vector2 velocity=(normal*Mathf.Cos(fan)+tangent*Mathf.Sin(fan))*Random.Range(.6f,1.6f)*force;
-                particles.Emit(new ParticleSystem.EmitParams{position=position+normal*.025f,velocity=velocity},1);
+                particles.Emit(new ParticleSystem.EmitParams{position=position+normal*(size*.10f+.025f),velocity=velocity},1);
             }
             WaterEffectPool.ReturnAfter(particles.gameObject,.8f);
             if(!onSurface) return particles;
             bool created;
             var sheet=WaterEffectPool.Rent("LiquidImpactSheet",out created);
-            sheet.transform.position=position+normal*(size*.55f+.015f);
+            // The shader's baseline is UV y=.15; align that baseline with the collision surface.
+            sheet.transform.position=position+normal*(size*1.6f*.35f+.008f);
             sheet.transform.rotation=Quaternion.Euler(0,0,Mathf.Atan2(normal.y,normal.x)*Mathf.Rad2Deg-90);
             sheet.transform.localScale=new Vector3(size*2.6f,size*1.6f,1);
             var sprite=created?sheet.AddComponent<SpriteRenderer>():sheet.GetComponent<SpriteRenderer>(); sprite.sprite=GetLiquidQuad();
@@ -99,6 +102,21 @@ namespace TapGJ.WaterProjectiles
         {
             if (dropletSprite == null) dropletSprite = Resources.Load<Sprite>("WaterProjectiles/WaterDrop");
             return dropletSprite;
+        }
+
+        private static void StopDropsAtGround(ParticleSystem particles)
+        {
+            var collision = particles.collision;
+            collision.enabled = true;
+            collision.type = ParticleSystemCollisionType.World;
+            collision.mode = ParticleSystemCollisionMode.Collision2D;
+            collision.collidesWith = LayerMask.GetMask("Ground", "Wall", "OneWayPlatform");
+            collision.enableDynamicColliders = false;
+            // Approximate collision quality can leak droplets through a 2D floor.
+            // These short bursts contain at most 24 particles and only query terrain layers.
+            collision.quality = ParticleSystemCollisionQuality.High;
+            collision.radiusScale = .55f;
+            collision.lifetimeLoss = 1f;
         }
 
         public static Material GetParticleMaterial()
