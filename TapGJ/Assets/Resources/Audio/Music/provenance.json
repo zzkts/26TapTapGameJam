@@ -1,0 +1,19 @@
+{
+  "downloaded": "2026-10-19",
+  "tracks": [
+    {
+      "file": "baby_black_magi_loop.ogg",
+      "url": "https://opengameart.org/sites/default/files/baby_blk_magi_2026_-_loop.ogg",
+      "bytes": 2224916,
+      "sha256": "4efd2ff557e469a1214f245c6aba4144b9f7eb3f7b40037e40fecaa139f8490c",
+      "contentType": "audio/ogg"
+    },
+    {
+      "file": "chee_zee_lab.mp3",
+      "url": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Chee%20Zee%20Lab.mp3",
+      "bytes": 10244208,
+      "sha256": "61705eff756de576818f2ce644f5ee878c6716136c53c5c8472a9dd7f27298fc",
+      "contentType": "application/octet-stream"
+    }
+  ]
+}

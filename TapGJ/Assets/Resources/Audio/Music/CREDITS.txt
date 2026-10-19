@@ -1,0 +1,19 @@
+Water Drain / 地底物语 — Music credits
+
+BeginScene
+Baby Black Magi (2026 loop) — Bobjt
+Source: https://opengameart.org/content/quirky-mageville
+License: CC0 1.0 Universal
+https://creativecommons.org/publicdomain/zero/1.0/
+Original loop OGG, downloaded 2026-10-19.
+
+GameScene
+"Chee Zee Lab" Kevin MacLeod (incompetech.com)
+Licensed under Creative Commons: By Attribution 4.0 License
+https://creativecommons.org/licenses/by/4.0/
+Source: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100683&Search=Search
+Original MP3, downloaded 2026-10-19. ISRC: USUAN1100683.
+
+Usage: Original audio files retained. Unity imports compressed streaming audio.
+In-game playback applies looping, volume adjustment and crossfades.
+The in-game credits are accessible from Settings > 音乐署名 in both scenes.

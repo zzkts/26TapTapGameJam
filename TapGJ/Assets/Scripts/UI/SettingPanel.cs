@@ -8,6 +8,7 @@ public class SettingPanel : BasePanel
     public Toggle togFull;
     public Button btnClose;
     public Text effectsValue, musicValue;
+    private MusicCreditsPanel musicCredits;
 
     public override void Init()
     {
@@ -19,6 +20,9 @@ public class SettingPanel : BasePanel
         sliderBk.onValueChanged.AddListener(_ => RefreshValues());
         togFull.onValueChanged.AddListener(SetFullScreen);
         btnClose.onClick.AddListener(CloseSettings);
+        musicCredits = gameObject.GetComponent<MusicCreditsPanel>();
+        if (musicCredits == null) musicCredits = gameObject.AddComponent<MusicCreditsPanel>();
+        musicCredits.Initialize(btnClose.GetComponentInChildren<Text>().font);
         RefreshSettings();
     }
 
@@ -72,7 +76,10 @@ public class SettingPanel : BasePanel
         if (UnityEngine.InputSystem.Keyboard.current != null &&
             Time.frameCount > GameplayUIFactory.ModalInputFrame &&
             UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame)
-            CloseSettings();
+        {
+            if (musicCredits != null && musicCredits.IsOpen) musicCredits.Close();
+            else CloseSettings();
+        }
     }
 
 }
