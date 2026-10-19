@@ -20,7 +20,7 @@ public static class GeneEditorLayoutPolish
         if(scene.name!="GameScene")throw new InvalidOperationException("Open GameScene first.");
         var editor=Object.FindFirstObjectByType<GeneEditPanel>(FindObjectsInactive.Include);
         editor.ConfigureKeyboardHints();
-        editor.confirmButton.GetComponentInChildren<Text>(true).text="Space 确认装配";
+        editor.confirmButton.GetComponentInChildren<Text>(true).text="确认装配";
         EditorUtility.SetDirty(editor);EditorSceneManager.MarkSceneDirty(scene);EditorSceneManager.SaveScene(scene);
     }
 
@@ -58,11 +58,11 @@ public static class GeneEditorLayoutPolish
         workbench.rectTransform.offsetMax = -Vector2.one * 4f;
         Transform root = workbench.transform;
 
-        Text title = Label("Workbench Title", root, .035f,.892f,.45f,.954f, 30, "基因实验台", PlayerUIStyle.Cream);
+        Text title = Label("Workbench Title", root, .035f,.892f,.45f,.954f, 32, "基因实验台", PlayerUIStyle.Cream);
         Label("Workbench Subtitle", root, .035f,.839f,.69f,.889f, 15,
             "选择槽位  →  装入基因  →  观察组合  →  确认应用", Muted);
         Surface("Theme Pill", root, .74f,.904f,.962f,.953f, PlayerUIStyle.Mint);
-        Label("Theme", root, .747f,.905f,.956f,.952f, 16, "涌现 · 让规则相遇", PlayerUIStyle.Ink, TextAnchor.MiddleCenter);
+        Label("Theme", root, .747f,.905f,.956f,.952f, 15, WaterDrainUI.Signature, PlayerUIStyle.Ink, TextAnchor.MiddleCenter);
         Surface("Header Line", root, .035f,.823f,.965f,.826f, Border);
 
         BuildInventory(editor, root);
@@ -183,8 +183,8 @@ public static class GeneEditorLayoutPolish
         editor.rightButton = Button("Move Right", root, .148f,.022f,.249f,.077f,"后移 →",PlayerUIStyle.Cream,15);
         editor.removeButton = Button("Remove", root, .261f,.022f,.362f,.077f,"移除此格",PlayerUIStyle.Cream,15);
         Label("Draft Reminder",root,.378f,.022f,.65f,.077f,12,"确认后应用 · 取消保留原构筑",Muted);
-        editor.confirmButton = Button("Confirm",root,.674f,.022f,.843f,.077f,"Space 确认装配",PlayerUIStyle.Mint,19);
-        Label("Confirm Shortcut",editor.confirmButton.transform,0,1.02f,1,1.48f,11,"Space确认装配",PlayerUIStyle.Mint,TextAnchor.MiddleCenter);
+        editor.confirmButton = Button("Confirm",root,.674f,.022f,.843f,.077f,"确认装配",PlayerUIStyle.Mint,19);
+        Label("Confirm Shortcut",editor.confirmButton.transform,0,1.02f,1,1.48f,13,"Space确认装配",PlayerUIStyle.Mint,TextAnchor.MiddleCenter);
         editor.cancelButton = Button("Cancel",root,.855f,.022f,.965f,.077f,"取消 / ESC",PlayerUIStyle.Cream,16);
     }
 

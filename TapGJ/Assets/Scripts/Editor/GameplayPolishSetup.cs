@@ -60,9 +60,9 @@ public static class GameplayPolishSetup
         menu.btnContinue.interactable = false;
         if (menu.transform.Find("Game Title") == null)
         {
-            Text title = Text("Game Title", menu.transform, .08f, .62f, .52f, .79f, 72, "地漏");
+            Text title = Text("Game Title", menu.transform, .08f, .62f, .52f, .79f, 72, WaterDrainUI.ChineseTitle);
             title.gameObject.AddComponent<Shadow>().effectDistance = new Vector2(2f,-3f);
-            Text("Game Subtitle", menu.transform, .085f, .57f, .5f, .64f, 25, "Waterdrain");
+            Text("Game Subtitle", menu.transform, .085f, .57f, .5f, .64f, 25, WaterDrainUI.EnglishTitle);
         }
         foreach (SettingPanel settings in Object.FindObjectsByType<SettingPanel>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             Object.DestroyImmediate(settings.gameObject);

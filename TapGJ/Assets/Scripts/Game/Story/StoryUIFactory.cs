@@ -60,20 +60,20 @@ public static class StoryUIFactory
             PlayerHudPanel hud = Object.FindFirstObjectByType<PlayerHudPanel>(FindObjectsInactive.Include);
             if (hud != null && hud.portrait != null) portrait = hud.portrait.sprite;
         }
-        RectTransform objective = GameplayUIFactory.Rect("Story Objective", canvas.transform, new Vector2(.73f,.83f), new Vector2(.985f,.975f));
+        RectTransform objective = WaterDrainUI.Dock("Story Objective",canvas.transform,new Vector2(1,1),new Vector2(-24,-24),new Vector2(402,146));
         Image objectiveBack = objective.gameObject.AddComponent<Image>(); objectiveBack.sprite = rounded;
         objectiveBack.type = Image.Type.Sliced; objectiveBack.color = new Color(.16f,.13f,.27f,.94f); objectiveBack.raycastTarget = false;
         StoryObjectivePanel objectivePanel = objective.gameObject.AddComponent<StoryObjectivePanel>();
-        objectivePanel.chapter = Label("Chapter", objective, .07f,.71f,.94f,.94f,font,18,"第一章 · 异常回流",PlayerUIStyle.Mint);
-        objectivePanel.target = Label("Objective", objective, .07f,.19f,.94f,.72f,font,20,"寻找维修日志",PlayerUIStyle.Cream);
-        objectivePanel.progress = Label("Progress", objective, .07f,.035f,.94f,.25f,font,13,"自动记录安全区检查点",new Color(.72f,.68f,.81f));
+        objectivePanel.chapter = Label("Chapter", objective, .055f,.69f,.945f,.93f,font,18,"第一章 · 异常回流",PlayerUIStyle.Mint);
+        objectivePanel.target = Label("Objective", objective, .055f,.28f,.945f,.69f,font,21,"寻找维修日志",PlayerUIStyle.Cream);
+        objectivePanel.progress = Label("Progress", objective, .055f,.055f,.945f,.26f,font,13,"安全区会自动记录检查点",WaterDrainUI.Muted);
 
         GameObject root = GameplayUIFactory.Rect("Story Dialogue", canvas.transform, Vector2.zero, Vector2.one).gameObject;
         StoryDialogPanel panel = root.AddComponent<StoryDialogPanel>();
         Image shade = GameplayUIFactory.Image("Story Shade", root.transform, Vector2.zero, Vector2.one, new Color(.055f,.035f,.095f,.66f), true);
         Button advanceClick = shade.gameObject.AddComponent<Button>(); advanceClick.transition = Selectable.Transition.None;
         panel.advanceClick = advanceClick;
-        GameObject body = GameplayUIFactory.Rect("Dialogue Body", root.transform, new Vector2(.055f,.075f), new Vector2(.945f,.39f)).gameObject;
+        GameObject body = GameplayUIFactory.Rect("Dialogue Body", root.transform, new Vector2(.055f,.075f), new Vector2(.945f,.43f)).gameObject;
         Back("Dialogue Frame", body.transform, 0,0,1,1,rounded,PlayerUIStyle.Violet);
         Back("Dialogue Paper", body.transform, .005f,.014f,.995f,.986f,rounded,PlayerUIStyle.Ink);
         Back("Speaker Tab", body.transform, .215f,.76f,.74f,.96f,rounded,new Color(.23f,.18f,.35f));
@@ -85,7 +85,8 @@ public static class StoryUIFactory
         // disappear when this authored UI is saved to GameScene or included in a build.
         record.sprite=rounded;record.type=Image.Type.Sliced;panel.recordEmblem=record;
         Label("Record Mark",record.transform,.06f,.06f,.94f,.94f,font,18,"档案\nNODE-03",PlayerUIStyle.Ink,TextAnchor.MiddleCenter);
-        panel.body=Label("Dialogue Text",body.transform,.235f,.27f,.955f,.73f,font,27,"",PlayerUIStyle.Cream);
+        panel.body=Label("Dialogue Text",body.transform,.225f,.27f,.955f,.72f,font,26,"",PlayerUIStyle.Cream);
+        panel.body.lineSpacing=1.15f;
         panel.body.alignment=TextAnchor.UpperLeft;
         panel.hint=Label("Advance Hint",body.transform,.235f,.055f,.69f,.20f,font,16,"空格 / 点击继续",new Color(.69f,.65f,.78f));
         panel.next=Button("Continue",body.transform,.79f,.055f,.965f,.225f,font,"继续  ›",rounded,PlayerUIStyle.Mint);
@@ -105,7 +106,8 @@ public static class StoryUIFactory
         GameObject result=GameplayUIFactory.Rect("Ending Result",root.transform,new Vector2(.20f,.23f),new Vector2(.80f,.79f)).gameObject;
         Back("Result Frame",result.transform,0,0,1,1,rounded,PlayerUIStyle.Violet);
         Back("Result Surface",result.transform,.006f,.014f,.994f,.986f,rounded,PlayerUIStyle.Ink);
-        panel.endingTitle=Label("Ending Title",result.transform,.07f,.70f,.93f,.91f,font,38,"",PlayerUIStyle.Mint,TextAnchor.MiddleCenter);
+        Label("Result Brand",result.transform,.08f,.88f,.92f,.96f,font,15,WaterDrainUI.Signature,WaterDrainUI.Muted,TextAnchor.MiddleCenter);
+        panel.endingTitle=Label("Ending Title",result.transform,.07f,.70f,.93f,.87f,font,38,"",PlayerUIStyle.Mint,TextAnchor.MiddleCenter);
         panel.endingDescription=Label("Ending Description",result.transform,.09f,.39f,.91f,.71f,font,23,"",PlayerUIStyle.Cream,TextAnchor.MiddleCenter);
         panel.endingStats=Label("Ending Statistics",result.transform,.09f,.26f,.91f,.40f,font,18,"",new Color(.77f,.73f,.85f),TextAnchor.MiddleCenter);
         panel.newRun=Button("New Exploration",result.transform,.09f,.08f,.48f,.24f,font,"再次探索",rounded,PlayerUIStyle.Mint);
@@ -122,7 +124,7 @@ public static class StoryUIFactory
     private static Text Label(string name,Transform parent,float x0,float y0,float x1,float y1,Font font,int size,string value,Color color,TextAnchor alignment=TextAnchor.MiddleLeft)
     {
         Text label=GameplayUIFactory.Label(name,parent,new Vector2(x0,y0),new Vector2(x1,y1),font,size,value,alignment);
-        label.color=color;return label;
+        label.color=color;WaterDrainUI.Readable(label,Mathf.Max(12,size-3));return label;
     }
     private static Button Button(string name,Transform parent,float x0,float y0,float x1,float y1,Font font,string text,Sprite sprite,Color color)
     {
