@@ -9,11 +9,17 @@ public class ActorElementEffects : MonoBehaviour
     private SpriteRenderer visual;
     private MaterialPropertyBlock properties;
     private float nextTick, flashUntil;
+    private int shownElement=-1,shownElectric=-1;
+    private float shownFlash=-1f;
+    private static readonly int ElementId=Shader.PropertyToID("_Element"),ElectricId=Shader.PropertyToID("_Electric"),
+        FlashId=Shader.PropertyToID("_Flash"),ModeId=Shader.PropertyToID("_Mode");
     private static bool conducting;
     public bool Has(E_ElementType element)
     {
         if (actor == null) return false;
-        foreach (BuffInstance buff in actor.BuffList) if (buff.ElementType == element) return true;
+        // BuffList is an IReadOnlyList: foreach boxes its List enumerator on every query.
+        var buffs=actor.BuffList;
+        for(int i=0;i<buffs.Count;i++)if(buffs[i].ElementType==element)return true;
         return false;
     }
     private void Awake()
@@ -24,7 +30,7 @@ public class ActorElementEffects : MonoBehaviour
         properties = new MaterialPropertyBlock();
         if (visual != null && material != null) visual.sharedMaterial = material;
     }
-    private void OnEnable() => Active.Add(this);
+    private void OnEnable(){Active.Add(this);shownElement=shownElectric=-1;shownFlash=-1f;}
     private void OnDisable() => Active.Remove(this);
     public void Flash() => flashUntil = Time.time + 0.12f;
     private void Update()
@@ -43,12 +49,15 @@ public class ActorElementEffects : MonoBehaviour
     private void LateUpdate()
     {
         if (visual == null || properties == null) return;
+        int element=Has(E_ElementType.Fire)?2:Has(E_ElementType.Poison)?4:Has(E_ElementType.Water)?1:0;
+        int electric=Has(E_ElementType.Electric)?1:0;
+        float flash=Mathf.Clamp01((flashUntil-Time.time)/.12f);
+        if(element==shownElement&&electric==shownElectric&&flash==shownFlash)return;
         visual.GetPropertyBlock(properties);
-        properties.SetFloat("_Element", Has(E_ElementType.Fire) ? 2f : Has(E_ElementType.Poison) ? 4f : Has(E_ElementType.Water) ? 1f : 0f);
-        properties.SetFloat("_Electric", Has(E_ElementType.Electric) ? 1f : 0f);
-        properties.SetFloat("_Flash", Mathf.Clamp01((flashUntil - Time.time) / 0.12f));
-        properties.SetFloat("_Mode", 0f);
+        properties.SetFloat(ElementId,element);properties.SetFloat(ElectricId,electric);
+        properties.SetFloat(FlashId,flash);properties.SetFloat(ModeId,0f);
         visual.SetPropertyBlock(properties);
+        shownElement=element;shownElectric=electric;shownFlash=flash;
     }
     public static void Conduct(Vector2 origin, float initialRadius = 1f)
     {

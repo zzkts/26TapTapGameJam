@@ -20,6 +20,10 @@ public class EnemySupportAura : MonoBehaviour
     private readonly Dictionary<EnemyAIController, long> enteredOrder = new Dictionary<EnemyAIController, long>();
     private readonly Dictionary<EnemyAIController, LineRenderer> beams = new Dictionary<EnemyAIController, LineRenderer>();
     private readonly List<EnemyAIController> priorityTargets = new List<EnemyAIController>();
+    private readonly HashSet<EnemyAIController> inRange = new();
+    private readonly List<EnemyAIController> stale = new();
+    private readonly List<EnemyAIController> staleBeams = new();
+    private System.Comparison<EnemyAIController> compareEntryOrder;
     private Material beamMaterial;
     private float cooldownTimer;
     private long sequence;
@@ -33,6 +37,7 @@ public class EnemySupportAura : MonoBehaviour
     {
         owner = GetComponent<EnemyAIController>();
         cooldownTimer = healCooldown;
+        compareEntryOrder = CompareEntryOrder;
     }
 
     private void Update()
@@ -54,7 +59,7 @@ public class EnemySupportAura : MonoBehaviour
         ContactFilter2D filter = new ContactFilter2D();
         filter.SetLayerMask(targetMask);
         int count = Physics2D.OverlapCircle(transform.position, healRadius, filter, overlapResults);
-        var inRange = new HashSet<EnemyAIController>();
+        inRange.Clear();
         for (int i = 0; i < count; i++)
         {
             EnemyAIController candidate = overlapResults[i] != null
@@ -68,7 +73,7 @@ public class EnemySupportAura : MonoBehaviour
                 enteredOrder.Add(candidate, sequence++);
         }
 
-        var stale = new List<EnemyAIController>();
+        stale.Clear();
         foreach (EnemyAIController candidate in enteredOrder.Keys)
             if (!inRange.Contains(candidate) || candidate == null || candidate.IsDead)
                 stale.Add(candidate);
@@ -80,16 +85,20 @@ public class EnemySupportAura : MonoBehaviour
 
         priorityTargets.Clear();
         priorityTargets.AddRange(enteredOrder.Keys);
-        priorityTargets.Sort((left, right) => enteredOrder[left].CompareTo(enteredOrder[right]));
+        priorityTargets.Sort(compareEntryOrder ??= CompareEntryOrder);
         if (priorityTargets.Count > maxTargets)
             priorityTargets.RemoveRange(maxTargets, priorityTargets.Count - maxTargets);
 
         foreach (EnemyAIController candidate in priorityTargets)
             ShowBeam(candidate);
-        foreach (EnemyAIController candidate in new List<EnemyAIController>(beams.Keys))
+        staleBeams.Clear();
+        foreach (EnemyAIController candidate in beams.Keys)
             if (!priorityTargets.Contains(candidate))
-                RemoveBeam(candidate);
+                staleBeams.Add(candidate);
+        foreach (EnemyAIController candidate in staleBeams) RemoveBeam(candidate);
     }
+
+    private int CompareEntryOrder(EnemyAIController left, EnemyAIController right) => enteredOrder[left].CompareTo(enteredOrder[right]);
 
     private void HealOldestTargets()
     {
@@ -156,6 +165,7 @@ public class EnemySupportAura : MonoBehaviour
         beams.Clear();
         priorityTargets.Clear();
         enteredOrder.Clear();
+        inRange.Clear(); stale.Clear(); staleBeams.Clear();
         if (beamMaterial != null)
             Destroy(beamMaterial);
         beamMaterial = null;

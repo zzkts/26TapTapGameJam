@@ -54,8 +54,10 @@ public class EnemyHealthBar : MonoBehaviour
     private void LateUpdate()
     {
         if (bar == null || enemy == null) return;
-        bar.gameObject.SetActive(!enemy.IsDead);
-        if (enemy.IsDead) return;
+        DisplayedRatio = Mathf.Clamp01(enemy.HealthNormalized);
+        bool visible=!enemy.IsDead&&(visual==null||visual.isVisible);
+        if(bar.gameObject.activeSelf!=visible)bar.gameObject.SetActive(visible);
+        if(!visible)return;
         float top = body != null ? body.bounds.max.y : transform.position.y;
         if (visual != null) top = Mathf.Max(top, visual.bounds.max.y);
         bar.position = new Vector3(transform.position.x, top + verticalOffset, transform.position.z);
@@ -63,7 +65,6 @@ public class EnemyHealthBar : MonoBehaviour
         Vector3 scale = transform.lossyScale;
         bar.localScale = new Vector3(0.01f / Mathf.Max(0.001f, Mathf.Abs(scale.x)),
             0.01f / Mathf.Max(0.001f, Mathf.Abs(scale.y)), 1f);
-        DisplayedRatio = Mathf.Clamp01(enemy.HealthNormalized);
         healthImage.fillAmount=DisplayedRatio;
         healthImage.color=DisplayedRatio<=.25f?new Color(1,.39f,.49f):foregroundColor;
     }

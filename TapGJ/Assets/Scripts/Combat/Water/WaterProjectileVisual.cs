@@ -69,7 +69,7 @@ namespace TapGJ.WaterProjectiles
 
         private void LateUpdate()
         {
-            if(!configured||Time.deltaTime<=0) return;
+            if(!configured||Surface==null||!Surface.enabled||Time.deltaTime<=0) return;
             Vector2 position=transform.position;
             Vector2 displacement=position-lastPosition;
             if(displacement.sqrMagnitude>.000001f)

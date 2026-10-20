@@ -13,7 +13,7 @@ public sealed class InterfaceVisualChecks : MonoBehaviour
 {
     [Serializable] private sealed class Report {public bool success;public string[] checks;}
     private readonly List<string> checks=new();
-    private const string Folder="Docs/UIAlignment/2026-10-20/";
+    private const string Folder="Temp/UIAlign/";
     private bool previousBackground;
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Bootstrap()
