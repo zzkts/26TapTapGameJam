@@ -10,7 +10,9 @@ public sealed class MusicCreditsPanel : MonoBehaviour
     public void Initialize(Font font)
     {
         if (overlay != null) return;
-        var entry = MakeButton("Music Credits", transform, .43f, .268f, .57f, .305f, font, "音乐署名");
+        var settings = GetComponent<SettingPanel>();
+        var entry = settings != null && settings.btnCredits != null ? settings.btnCredits :
+            MakeButton("Music Credits", transform, .43f, .268f, .57f, .305f, font, "音乐署名");
         entry.onClick.AddListener(Open);
         var shade = GameplayUIFactory.Image("Music Credits Overlay", transform, Vector2.zero, Vector2.one,
             new Color(.035f, .025f, .07f, .94f), true);
@@ -61,6 +63,9 @@ public sealed class MusicCreditsPanel : MonoBehaviour
         image.sprite = PlayerUIStyle.Rounded; image.type = Image.Type.Sliced; image.color = PlayerUIStyle.Violet;
         var text = button.GetComponentInChildren<Text>(); text.color = PlayerUIStyle.Cream;
         text.fontSize = 18; WaterDrainUI.Readable(text);
+        text.alignByGeometry = true;
+        var colors=button.colors;colors.normalColor=colors.selectedColor=Color.white;
+        colors.highlightedColor=new Color(.90f,1,.96f);colors.pressedColor=new Color(.68f,.86f,.78f);button.colors=colors;
         return button;
     }
 }

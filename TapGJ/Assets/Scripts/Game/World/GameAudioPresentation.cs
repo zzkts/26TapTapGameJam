@@ -38,6 +38,10 @@ public sealed class GameAudioPresentation : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Bootstrap()
     {
+#if !UNITY_EDITOR
+        // Avoid saturating the GPU with uncapped frames in the desktop release.
+        if(QualitySettings.vSyncCount==0&&Application.targetFrameRate<=0)Application.targetFrameRate=60;
+#endif
         if(current!=null)return;
         var existing=FindAnyObjectByType<GameAudioPresentation>();
         if(existing!=null){current=existing;return;}
@@ -57,7 +61,9 @@ public sealed class GameAudioPresentation : MonoBehaviour
             if(clip!=null)clips[name]=clip;
         }
         // Keep the quiet cavern bed underneath the separate, scene-specific music sources.
-        room=CreateRoom();owned.Add(room);ambience.clip=room;ambience.loop=true;ambience.Play();
+        room=Resources.Load<AudioClip>("Audio/WaterDrain/cavern_ambience");
+        if(room==null){room=CreateRoom();owned.Add(room);}
+        ambience.clip=room;ambience.loop=true;ambience.Play();
         if(GetComponent<SceneMusicPlayer>()==null)gameObject.AddComponent<SceneMusicPlayer>();
         SceneManager.sceneLoaded+=OnSceneLoaded;EmergenceReactions.Happened+=OnReaction;
         EnsureListener();BindPlayer();

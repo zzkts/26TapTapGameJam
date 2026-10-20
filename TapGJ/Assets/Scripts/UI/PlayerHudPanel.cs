@@ -21,6 +21,11 @@ public class PlayerHudPanel : BasePanel
     private int shownSlotCount = -1;
     private string promptTitle, promptDetail;
     private float promptWidth;
+    private float shownHp=float.NaN,shownMaxHp=float.NaN;
+    private int shownDashState=-1,shownDashTenths=-1,shownPhase=-1,shownPhaseTenths=-1,shownNextIndex=-1;
+    private Modifier shownAttribute,shownNextAttribute;
+    private RectTransform canvasRect;
+    private Camera gameplayCamera;
     public override void Init()
     {
         if (inventory != null) inventory.Acquired -= OnAcquired;
@@ -30,6 +35,9 @@ public class PlayerHudPanel : BasePanel
         interaction = player.GetComponent<PlayerInteraction>();
         if (inventory != null) inventory.Acquired += OnAcquired;
         lastHp = player.hp;
+        shownHp=shownMaxHp=float.NaN;shownDashState=shownPhase=shownNextIndex=-1;
+        var canvas=GetComponentInParent<Canvas>();canvasRect=canvas!=null?canvas.transform as RectTransform:null;
+        gameplayCamera=Camera.main;
         if (healthFill != null) healthFill.fillAmount = HealthRatio;
         if (healthTrail != null) healthTrail.fillAmount = HealthRatio;
         RefreshSlots();
@@ -94,7 +102,11 @@ public class PlayerHudPanel : BasePanel
         }
         if (healthTrail != null && Time.unscaledTime >= trailDelay)
             healthTrail.fillAmount = Mathf.MoveTowards(healthTrail.fillAmount, ratio, dt * .65f);
-        if (healthText != null) healthText.text = player.hp.ToString("0.#") + " / " + player.maxHp.ToString("0.#");
+        if (healthText != null && (shownHp!=player.hp||shownMaxHp!=player.maxHp))
+        {
+            shownHp=player.hp;shownMaxHp=player.maxHp;
+            healthText.text=shownHp.ToString("0.#")+" / "+shownMaxHp.ToString("0.#");
+        }
         hitPulse = Mathf.MoveTowards(hitPulse, 0f, dt * 4f);
         if (vitality != null) vitality.localScale = Vector3.one * (1f + hitPulse * .035f);
         if (portrait != null) portrait.color = Color.Lerp(Color.white, new Color(1f, .4f, .5f), hitPulse);
@@ -109,8 +121,13 @@ public class PlayerHudPanel : BasePanel
         }
         if (dashText != null)
         {
-            dashText.text = !player.DashUnlocked ? "冲刺 · 寻找模块" : player.IsDashing ? "冲刺中" :
-                ready ? "冲刺就绪" : "冷却 " + player.DashCooldownRemaining.ToString("0.0") + "s";
+            int state=!player.DashUnlocked?0:player.IsDashing?1:ready?2:3;
+            int tenths=state==3?Mathf.RoundToInt(player.DashCooldownRemaining*10):-1;
+            if(state!=shownDashState||tenths!=shownDashTenths)
+            {
+                shownDashState=state;shownDashTenths=tenths;
+                dashText.text=state==0?"冲刺 · 寻找模块":state==1?"冲刺中":state==2?"冲刺就绪":"冷却 "+(tenths*.1f).ToString("0.0")+"s";
+            }
             dashText.color = ready ? PlayerUIStyle.Mint : new Color(.75f, .73f, .86f);
         }
         UpdateChain(); UpdateInteraction();
@@ -142,8 +159,10 @@ public class PlayerHudPanel : BasePanel
         Modifier current = chain.CurrentAttribute;
         bool reload = chain.State == GeneChainController.Phase.Reloading, active = chain.State == GeneChainController.Phase.Active;
         if (attributeText != null) attributeText.text = reload ? "整链重载" : current != null ? current.Name : "基础水弹";
-        if (phaseText != null) phaseText.text = reload ? chain.Remaining.ToString("0.0") + "s" :
-            active ? "附魔 " + chain.Remaining.ToString("0.0") + "s" : current != null ? "右键激活" : "左键射击";
+        int phase=reload?0:active?1:current!=null?2:3;
+        int phaseTenths=reload||active?Mathf.RoundToInt(chain.Remaining*10):-1;
+        if(phaseText!=null&&(phase!=shownPhase||phaseTenths!=shownPhaseTenths||current!=shownAttribute))
+            phaseText.text=reload?(phaseTenths*.1f).ToString("0.0")+"s":active?"附魔 "+(phaseTenths*.1f).ToString("0.0")+"s":current!=null?"右键激活":"左键射击";
         if (stageFill != null)
         {
             stageFill.fillAmount = current == null && !reload ? 0f : chain.Progress;
@@ -152,9 +171,12 @@ public class PlayerHudPanel : BasePanel
         if (nextText != null)
         {
             int next = chain.AttributeIndex + 1;
-            nextText.text = active ? next < chain.Attributes.Count ? "下一阶段 " + chain.Attributes[next].Name : "结束后重载" :
-                reload ? "普通射击仍可使用" : current != null ? "属性依次激活" : "在终端装配基因";
+            Modifier nextAttribute=next<chain.Attributes.Count?chain.Attributes[next]:null;
+            if(phase!=shownPhase||current!=shownAttribute||next!=shownNextIndex||nextAttribute!=shownNextAttribute)
+                nextText.text=active?nextAttribute!=null?"下一阶段 "+nextAttribute.Name:"结束后重载":reload?"普通射击仍可使用":current!=null?"属性依次激活":"在终端装配基因";
+            shownNextIndex=next;shownNextAttribute=nextAttribute;
         }
+        shownPhase=phase;shownPhaseTenths=phaseTenths;shownAttribute=current;
         if (slotHighlights != null) for (int i = 0; i < slotHighlights.Length; i++)
         {
             bool selected = !reload && current != null && inventory != null && i < inventory.GenChain.Count && inventory.GenChain[i] == current;
@@ -167,15 +189,16 @@ public class PlayerHudPanel : BasePanel
         WorldInteractable near = interaction != null ? interaction.Nearby : null;
         bool show = near != null && !player.MenuOpen && !player.IsDead;
         if (interactionCard != null) interactionCard.gameObject.SetActive(show);
-        if (!show || interactionCard == null || Camera.main == null) return;
-        var canvasRect = GetComponentInParent<Canvas>().transform as RectTransform;
+        if(!show||interactionCard==null||canvasRect==null)return;
+        if(gameplayCamera==null)gameplayCamera=Camera.main;
+        if(gameplayCamera==null)return;
         float width = Mathf.Min(448, canvasRect.rect.width - 40);
         if (interactionText != null && (promptTitle != near.Title || promptDetail != near.Detail || !Mathf.Approximately(promptWidth, width)))
         {
             promptTitle = near.Title; promptDetail = near.Detail; promptWidth = width;
             InteractionPromptLayout.Apply(interactionCard, interactionText, promptTitle, promptDetail, width);
         }
-        Vector2 screen = Camera.main.WorldToScreenPoint(player.transform.position + Vector3.up * 1.05f);
+        Vector2 screen = gameplayCamera.WorldToScreenPoint(player.transform.position + Vector3.up * 1.05f);
         RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screen, null, out Vector2 local);
         float halfWidth = canvasRect.rect.width * .5f, halfHeight = canvasRect.rect.height * .5f;
         float padding = interactionCard.rect.width * .5f + 20;

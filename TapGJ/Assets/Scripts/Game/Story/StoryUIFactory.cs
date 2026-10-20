@@ -90,8 +90,9 @@ public static class StoryUIFactory
         panel.body.alignment=TextAnchor.UpperLeft;
         panel.hint=Label("Advance Hint",body.transform,.235f,.055f,.69f,.20f,font,16,"空格 / 点击继续",new Color(.69f,.65f,.78f));
         panel.next=Button("Continue",body.transform,.79f,.055f,.965f,.225f,font,"继续  ›",rounded,PlayerUIStyle.Mint);
-        panel.skip=Button("Skip",root.transform,.845f,.90f,.945f,.953f,font,"跳过本段",rounded,new Color(.40f,.33f,.52f));
+        panel.skip=Button("Skip",body.transform,.79f,.78f,.965f,.94f,font,"跳过本段",rounded,new Color(.40f,.33f,.52f));
         panel.skip.GetComponentInChildren<Text>().color=PlayerUIStyle.Cream;
+        panel.skip.GetComponentInChildren<Text>().fontSize=17;
         panel.dialogueBody=body;
 
         GameObject choices=GameplayUIFactory.Rect("Ending Choice",root.transform,new Vector2(.19f,.28f),new Vector2(.81f,.76f)).gameObject;
