@@ -144,7 +144,8 @@ public class PlayerHudPanel : BasePanel
             if (deathElapsed > .7f && runMenu != null && !runMenu.gameObject.activeSelf) runMenu.Open(player, true);
         }
         else if (!player.MenuOpen && Time.frameCount > GameplayUIFactory.ModalInputFrame &&
-            Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) runMenu?.Open(player, false);
+            (MobileGameInput.Enabled ? MobileGameInput.Consume(MobileGameInput.Command.Pause) :
+            Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)) runMenu?.Open(player, false);
     }
     private void UpdateChain()
     {

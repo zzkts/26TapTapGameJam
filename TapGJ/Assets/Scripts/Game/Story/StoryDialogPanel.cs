@@ -45,11 +45,11 @@ public sealed class StoryDialogPanel : BasePanel
 
     private void PresentLine()
     {
-        StoryLine line=lines[lineIndex];speaker.text=line.speaker;fullText=line.text;typing=0f;revealed=0;body.text="";
+        StoryLine line=lines[lineIndex];speaker.text=line.speaker;fullText=MobileGameInput.AdaptHint(line.text);typing=0f;revealed=0;body.text="";
         portrait.gameObject.SetActive(line.playerPortrait&&portrait.sprite!=null);
         recordEmblem.gameObject.SetActive(!line.playerPortrait||portrait.sprite==null);
         speaker.color=line.playerPortrait?PlayerUIStyle.Mint:PlayerUIStyle.Gold;
-        hint.text="空格 / 点击补全文字   ·   "+(lineIndex+1)+" / "+lines.Length;
+        hint.text=(MobileGameInput.Enabled?"点击补全文字":"空格 / 点击补全文字")+"   ·   "+(lineIndex+1)+" / "+lines.Length;
         next.GetComponentInChildren<Text>().text="继续  ›";
     }
 
@@ -61,7 +61,7 @@ public sealed class StoryDialogPanel : BasePanel
             typing+=Time.unscaledDeltaTime*charactersPerSecond;
             int count=Mathf.Min(fullText.Length,Mathf.FloorToInt(typing));
             if(count!=revealed){revealed=count;body.text=fullText.Substring(0,revealed);}
-            if(!IsTyping)hint.text="空格 / 点击继续   ·   "+(lineIndex+1)+" / "+lines.Length;
+            if(!IsTyping)hint.text=AdvanceHint;
         }
         if(Time.frameCount<=openedFrame)return;
         Keyboard keyboard=Keyboard.current;
@@ -79,11 +79,12 @@ public sealed class StoryDialogPanel : BasePanel
         // Space can reach both this handler and the selected UGUI button in one frame.
         // One press must never reveal a line and immediately discard it.
         lastAdvanceFrame=Time.frameCount;
-        if(IsTyping){revealed=fullText.Length;typing=revealed;body.text=fullText;hint.text="空格 / 点击继续   ·   "+(lineIndex+1)+" / "+lines.Length;return;}
+        if(IsTyping){revealed=fullText.Length;typing=revealed;body.text=fullText;hint.text=AdvanceHint;return;}
         lineIndex++;
         if(lineIndex>=lines.Length)FinishDialogue();else PresentLine();
     }
     public void Skip(){if(IsDialogue)FinishDialogue();}
+    private string AdvanceHint=>(MobileGameInput.Enabled?"点击继续":"空格 / 点击继续")+"   ·   "+(lineIndex+1)+" / "+lines.Length;
     private void FinishDialogue()
     {
         Action callback=finished;finished=null;lines=null;

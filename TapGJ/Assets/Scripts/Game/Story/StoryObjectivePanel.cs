@@ -18,8 +18,22 @@ public sealed class StoryObjectivePanel : MonoBehaviour
     }
     public void Set(string chapterText,string targetText,string progressText)
     {
+        targetText=MobileGameInput.AdaptHint(targetText);progressText=MobileGameInput.AdaptHint(progressText);
         if(chapter!=null&&chapter.text!=chapterText)chapter.text=chapterText;
         if(target!=null&&target.text!=targetText)target.text=targetText;
         if(progress!=null&&progress.text!=progressText)progress.text=progressText;
+    }
+    private void Start()
+    {
+        if(!MobileGameInput.Enabled)return;
+        var rect=(RectTransform)transform;rect.anchoredPosition=new Vector2(-96,-16);rect.sizeDelta=new Vector2(300,112);
+        if(chapter!=null)chapter.fontSize=18;
+        if(target!=null)
+        {
+            target.rectTransform.anchorMin=new Vector2(.055f,.08f);target.rectTransform.anchorMax=new Vector2(.945f,.70f);
+            target.rectTransform.offsetMin=target.rectTransform.offsetMax=Vector2.zero;
+            target.fontSize=20;WaterDrainUI.Readable(target,18);
+        }
+        if(progress!=null)progress.gameObject.SetActive(false);
     }
 }

@@ -147,9 +147,11 @@ public class PlayerController : MonoBehaviour, ICombatable
         wasGrounded = grounded;
         if (grounded) { inputJump = false; }
         Machine.Update();
-        bool overUi = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+        // The touch world surface excludes UI buttons and owns its own pointer.
+        bool overUi = !MobileGameInput.Enabled && EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
         if (!overUi && AttackPressed) TryAttack();
-        if (!overUi && Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
+        if (MobileGameInput.Enabled ? MobileGameInput.Consume(MobileGameInput.Command.Enchant) :
+            !overUi && Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
             GetComponent<GeneChainController>()?.TryActivate();
         if (shotVisualUntil > 0f && Time.time >= shotVisualUntil)
         {
@@ -159,6 +161,32 @@ public class PlayerController : MonoBehaviour, ICombatable
     }
     private void ReadInput()
     {
+        if (MobileGameInput.Enabled)
+        {
+            XInput = MobileGameInput.Move.x;
+            JumpPressed = MobileGameInput.Consume(MobileGameInput.Command.Jump);
+            DownPlatformPressed = MobileGameInput.Consume(MobileGameInput.Command.Drop) || JumpPressed && MobileGameInput.Move.y < -.65f;
+            RollPressed = MobileGameInput.Consume(MobileGameInput.Command.Dash);
+            AttackPressed = MobileGameInput.ConsumeFireRequest() || MobileGameInput.Firing;
+            JumpHeld = MobileGameInput.JumpHeld;
+            Vector2 center = bodyCollider != null ? bodyCollider.bounds.center : transform.position;
+            Vector2 direction = Vector2.right * (Mathf.Abs(XInput) > .12f ? Mathf.Sign(XInput) : FaceDir);
+            AimPosition = center + direction * 8f;
+            if (AttackPressed)
+            {
+                if (mainCamera == null) mainCamera = Camera.main;
+                if (mainCamera != null)
+                {
+                    var point = MobileGameInput.AimScreenPosition;
+                    AimPosition = mainCamera.ScreenToWorldPoint(new Vector3(point.x, point.y,
+                        transform.position.z - mainCamera.transform.position.z));
+                    direction = AimPosition - center;
+                    MobileGameInput.SetAimDirection(direction);
+                }
+            }
+            if (Mathf.Abs(direction.x) > .05f) Flip(direction.x > 0);
+            return;
+        }
         Keyboard keys = Keyboard.current;
         XInput = actions?.FindAction("Move")?.ReadValue<float>() ??
             ((keys != null && keys.dKey.isPressed ? 1f : 0f) - (keys != null && keys.aKey.isPressed ? 1f : 0f));
@@ -333,6 +361,7 @@ public class PlayerController : MonoBehaviour, ICombatable
     }
     public void SetMenuOpen(bool value)
     {
+        if (MobileGameInput.Enabled) { MobileGameInput.Reset(); MobileControlsUI.Current?.SetSuspended(value); }
         GameplayUIFactory.ModalInputFrame = Time.frameCount;
         MenuOpen = value; XInput = 0f;
         if (value && rb != null) rb.linearVelocity = Vector2.zero;
@@ -371,6 +400,7 @@ public class PlayerController : MonoBehaviour, ICombatable
     }
     private void OnDisable()
     {
+        if (MobileGameInput.Enabled) MobileGameInput.Reset();
         if (!initialized) return;
         actions?.Disable(); StopAllCoroutines();
         if (MenuOpen || hitStopped) Time.timeScale = 1f;

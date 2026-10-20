@@ -67,6 +67,7 @@ public static class CompleteGameMenuBuilder
         if(events==null)new GameObject("EventSystem",typeof(EventSystem),typeof(InputSystemUIInputModule));
         Camera camera = Object.FindFirstObjectByType<Camera>(); if(camera!=null) {camera.backgroundColor=new Color(.15f,.1f,.26f);camera.clearFlags=CameraClearFlags.SolidColor;}
         // Keep the main menu scene independent from the deprecated additive dialogue UI.
+        DesktopMainMenuPolish.ApplyLayout(menu);
         EditorUtility.SetDirty(menu); EditorUtility.SetDirty(presentation);
         EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene); AssetDatabase.SaveAssets();
     }

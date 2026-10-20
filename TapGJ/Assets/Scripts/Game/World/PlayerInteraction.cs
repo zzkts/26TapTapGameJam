@@ -18,6 +18,8 @@ public class PlayerInteraction : MonoBehaviour
             float candidate = ((Vector2)item.transform.position - (Vector2)transform.position).sqrMagnitude;
             if (candidate < distance) { distance = candidate; Nearby = item; }
         }
-        if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame && Nearby != null) Nearby.Interact(player);
+        bool requested = MobileGameInput.Enabled ? MobileGameInput.Consume(MobileGameInput.Command.Interact) :
+            Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame;
+        if (requested && Nearby != null) Nearby.Interact(player);
     }
 }

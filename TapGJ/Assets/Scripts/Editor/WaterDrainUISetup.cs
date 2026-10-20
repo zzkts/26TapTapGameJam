@@ -42,6 +42,9 @@ public static class WaterDrainUISetup
                 }
             }
         }
+        if(scene.name=="BeginScene")
+            foreach(var menu in scene.GetRootGameObjects().SelectMany(root=>root.GetComponentsInChildren<BeginPanel>(true)))
+                DesktopMainMenuPolish.ApplyLayout(menu);
         EditorSceneManager.MarkSceneDirty(scene);EditorSceneManager.SaveScene(scene);AssetDatabase.SaveAssets();
     }
     [MenuItem("Tools/TapGJ/UI/Refresh Current Scene")]

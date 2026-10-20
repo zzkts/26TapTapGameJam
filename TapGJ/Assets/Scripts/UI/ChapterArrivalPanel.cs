@@ -11,14 +11,14 @@ public sealed class ChapterArrivalPanel:MonoBehaviour
         if(Current!=null)Destroy(Current.gameObject);
         GameAudioPresentation.PlayCue("chapter",.75f);
         var canvas=StoryUIFactory.FindGameplayCanvas();
-        var rect=WaterDrainUI.Dock("Chapter Arrival",canvas.transform,new Vector2(.5f,1),new Vector2(0,-184),new Vector2(700,118));
+        var rect=WaterDrainUI.Dock("Chapter Arrival",canvas.transform,new Vector2(.5f,1),new Vector2(0,MobileGameInput.Enabled?-274:-184),new Vector2(MobileGameInput.Enabled?570:700,118));
         var panel=rect.gameObject.AddComponent<ChapterArrivalPanel>();Current=panel;
         var group=rect.gameObject.AddComponent<CanvasGroup>();group.blocksRaycasts=false;group.interactable=false;
         var bg=GameplayUIFactory.Image("Background",rect,Vector2.zero,Vector2.one,new Color(.12f,.09f,.23f,.94f));
         bg.sprite=PlayerUIStyle.Rounded;bg.type=Image.Type.Sliced;bg.raycastTarget=false;
         var font=Object.FindFirstObjectByType<PlayerHudPanel>().healthText.font;
         var heading=GameplayUIFactory.Label("Title",rect,new Vector2(.04f,.52f),new Vector2(.96f,.94f),font,27,title,TextAnchor.MiddleCenter);heading.color=PlayerUIStyle.Mint;heading.raycastTarget=false;
-        var text=GameplayUIFactory.Label("Detail",rect,new Vector2(.05f,.07f),new Vector2(.95f,.50f),font,17,detail,TextAnchor.MiddleCenter);text.color=PlayerUIStyle.Cream;text.raycastTarget=false;
+        var text=GameplayUIFactory.Label("Detail",rect,new Vector2(.05f,.07f),new Vector2(.95f,.50f),font,17,MobileGameInput.AdaptHint(detail),TextAnchor.MiddleCenter);text.color=PlayerUIStyle.Cream;text.raycastTarget=false;
         WaterDrainUI.Readable(heading,24);WaterDrainUI.Readable(text,15);
         panel.StartCoroutine(panel.Fade(group));
     }

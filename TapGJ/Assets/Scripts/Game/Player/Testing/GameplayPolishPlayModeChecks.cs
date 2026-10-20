@@ -86,7 +86,8 @@ public class GameplayPolishPlayModeChecks : MonoBehaviour
         Check(!player.DashUnlocked && !player.TryRoll(), "Dash is locked before collecting the module");
         float start = player.transform.position.x;
         Aim(player.transform.position + Vector3.right * 5f); Keys(Key.D); MouseButtons(true);
-        yield return new WaitForSeconds(.65f);
+        // Keep this keyboard/mouse regression valid when designers tune the fire rate.
+        yield return new WaitForSeconds(player.Weapon.BaseData.attackInterval * 2f + .15f);
         Check(player.transform.position.x > start + 1.5f, "Holding fire does not lock horizontal movement");
         Check(player.Presentation.ShotCount >= 3, "Every held-fire shot produces character recoil");
         Check(rig.GetComponentsInChildren<Projectile>().Length == 0 &&

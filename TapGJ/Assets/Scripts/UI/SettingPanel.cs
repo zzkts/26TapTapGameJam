@@ -62,6 +62,7 @@ public class SettingPanel : BasePanel
 
     private void SetFullScreen(bool isFullScreen)
     {
+        if (MobileGameInput.Enabled) return;
         Screen.fullScreenMode = isFullScreen
             ? FullScreenMode.FullScreenWindow
             : FullScreenMode.Windowed;
@@ -71,7 +72,7 @@ public class SettingPanel : BasePanel
     private void RefreshFullscreen()
     {
         bool on = togFull.isOn;
-        if(fullscreenValue!=null)fullscreenValue.text=on?"开启":"关闭";
+        if(fullscreenValue!=null)fullscreenValue.text=MobileGameInput.Enabled?"自动":on?"开启":"关闭";
         if(fullscreenTrack!=null)fullscreenTrack.color=on?PlayerUIStyle.Mint:WaterDrainUI.Border;
         if(fullscreenThumb!=null)
         {

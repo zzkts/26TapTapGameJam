@@ -8,6 +8,12 @@ public sealed class WorldSign : MonoBehaviour
     private Transform player;
     private float nextCheck;
     private void Awake() { canvas = GetComponent<Canvas>(); }
+    private void Start()
+    {
+        if(!MobileGameInput.Enabled)return;
+        foreach(var label in GetComponentsInChildren<UnityEngine.UI.Text>(true))
+            label.text=MobileGameInput.AdaptHint(label.text).Replace("LeftShift","冲刺键").Replace("SHIFT","冲刺键").Replace("Space","跳跃键");
+    }
     private void Update()
     {
         if (Time.unscaledTime < nextCheck) return;

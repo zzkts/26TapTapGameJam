@@ -29,6 +29,11 @@ public sealed class CampaignUI : MonoBehaviour
         ui.toastText=GameplayUIFactory.Label("Gene Route Toast",toast,new Vector2(.03f,.04f),new Vector2(.97f,.96f),font,18,"",TextAnchor.MiddleCenter);
         ui.toastText.color=PlayerUIStyle.Gold;
         WaterDrainUI.Readable(ui.navigation,15);WaterDrainUI.Readable(ui.toastText,16);
+        if(MobileGameInput.Enabled)
+        {
+            route.anchoredPosition=new Vector2(-96,-136);route.sizeDelta=new Vector2(300,38);
+            toast.anchoredPosition=new Vector2(0,-204);toast.sizeDelta=new Vector2(430,58);
+        }
     }
     private void Update()
     {
@@ -41,6 +46,6 @@ public sealed class CampaignUI : MonoBehaviour
         navigation.text=(flow.chapter<3?"下一区域":flow.NavigatingGuardians?"核心守卫":"终点回流阀")+" · "+direction+" "+delta.magnitude.ToString("0")+" m";
         if(Time.unscaledTime>=toastUntil)toastText.text="";
     }
-    public void Toast(string text){toastText.text=text;toastUntil=Time.unscaledTime+4;}
+    public void Toast(string text){toastText.text=MobileGameInput.AdaptHint(text);toastUntil=Time.unscaledTime+4;}
     private void OnDestroy(){if(Current==this)Current=null;}
 }

@@ -109,7 +109,7 @@ public class GeneEditPanel : BasePanel
             Text label = row.transform.Find("Label").GetComponent<Text>();
             label.alignment = TextAnchor.MiddleLeft; label.color = PlayerUIStyle.Cream;
             label.rectTransform.anchorMin = new Vector2(0.20f, 0.42f);
-            label.rectTransform.anchorMax = new Vector2(0.76f, 0.90f); label.fontSize = 21;
+            label.rectTransform.anchorMax = new Vector2(0.76f, 0.90f); label.fontSize = MobileGameInput.Enabled ? 24 : 21;
             label.transform.SetAsLastSibling();
             Image iconBack = GameplayUIFactory.Image("Icon Disc", row.transform,
                 new Vector2(0.022f,0.12f), new Vector2(0.18f,0.88f), PlayerUIStyle.Violet);
@@ -119,7 +119,7 @@ public class GeneEditPanel : BasePanel
             icon.sprite = PlayerUIStyle.GeneIcon(gene); icon.preserveAspect = true;
             Text type = GameplayUIFactory.Label("Category", row.transform,
                 new Vector2(0.20f,0.12f), new Vector2(0.55f,0.44f), font, 15,
-                gene.IsAttribute ? "属性 · 右键附魔" : "改造 · 常驻生效");
+                gene.IsAttribute ? MobileGameInput.Enabled ? "属性 · 点击附魔" : "属性 · 右键附魔" : "改造 · 常驻生效");
             type.color = PlayerUIStyle.GeneColor(gene);
             Text state = GameplayUIFactory.Label("Instance State", row.transform,
                 new Vector2(0.76f,0.45f), new Vector2(0.965f,0.94f), font, 13, "",
@@ -182,7 +182,8 @@ public class GeneEditPanel : BasePanel
             Text label = slotButtons[i].transform.Find("Label").GetComponent<Text>();
             label.text = gene == null ? "空槽" : gene.Name;
             label.color = gene == null ? new Color(.72f,.70f,.80f) : PlayerUIStyle.Cream;
-            label.fontSize = gene != null && gene.Name.Length > 5 ? 16 : 18;
+            label.fontSize = MobileGameInput.Enabled ? gene != null && gene.Name.Length > 5 ? 20 : 22 : gene != null && gene.Name.Length > 5 ? 16 : 18;
+            if(MobileGameInput.Enabled)WaterDrainUI.Readable(label,label.fontSize-2);
             label.alignment = TextAnchor.MiddleLeft;
             label.rectTransform.anchorMin = new Vector2(.34f,.34f);
             label.rectTransform.anchorMax = new Vector2(.95f,.76f);
@@ -254,8 +255,8 @@ public class GeneEditPanel : BasePanel
         }
         rotation.fontSize = 17; rotation.color = PlayerUIStyle.Cream;
         rotation.text = "附魔顺序  " + (sequence.Count == 0 ? "基础水弹 · 未装配属性" : string.Join("  →  ", sequence)) +
-            (sequence.Count == 0 ? "" : "\n右键逐次开启 · 整链重载 " + player.GetComponent<GeneChainController>().reloadDuration + " 秒");
-        if (buildHint != null) buildHint.text = GeneBuildAnalysis.Describe(draft);
+            (sequence.Count == 0 ? "" : "\n" + MobileGameInput.EnchantHint + "逐次开启 · 整链重载 " + player.GetComponent<GeneChainController>().reloadDuration + " 秒");
+        if (buildHint != null) buildHint.text = MobileGameInput.AdaptHint(GeneBuildAnalysis.Describe(draft));
         else rotation.text += "\n" + GeneBuildAnalysis.Describe(draft);
         if (inventoryHint != null)
         {
@@ -275,6 +276,7 @@ public class GeneEditPanel : BasePanel
         if (filterButtons != null) foreach (Button button in filterButtons) StyleButton(button, PlayerUIStyle.Cream);
         StyleButton(confirmButton, PlayerUIStyle.Mint);
         if(confirmButton!=null)confirmButton.GetComponentInChildren<Text>().text="确认装配"; StyleButton(cancelButton, PlayerUIStyle.Cream);
+        if(MobileGameInput.Enabled&&cancelButton!=null)cancelButton.GetComponentInChildren<Text>().text="取消";
         ConfigureKeyboardHints();
         StyleButton(removeButton, PlayerUIStyle.Cream); StyleButton(leftButton, PlayerUIStyle.Cream); StyleButton(rightButton, PlayerUIStyle.Cream);
         if (inventoryCount != null) inventoryCount.color = PlayerUIStyle.Ink;
@@ -333,13 +335,13 @@ public class GeneEditPanel : BasePanel
             var hint=reminder!=null?reminder.GetComponent<Text>():null;
             if(hint!=null)
             {
-                hint.text="Space 确认 · Esc 取消\n确认后应用 · 取消保留原构筑";
+                hint.text=MobileGameInput.Enabled?"点击确认装配后应用\n取消保留原构筑":"Space 确认 · Esc 取消\n确认后应用 · 取消保留原构筑";
                 hint.alignment=TextAnchor.MiddleCenter;hint.lineSpacing=1.15f;
                 WaterDrainUI.Readable(hint,12);
             }
         }
         foreach(Text text in GetComponentsInChildren<Text>(true))
-            if(text.name=="Draft Rule")text.text="A/D 左右选槽 · W/S 上下选槽 · 点击库存装入";
+            if(text.name=="Draft Rule")text.text=MobileGameInput.Enabled?"点击槽位选择 · 点击库存装入 · 拖动库存上下浏览":"A/D 左右选槽 · W/S 上下选槽 · 点击库存装入";
     }
     private static void StyleButton(Button button, Color color)
     {
@@ -363,7 +365,7 @@ public class GeneEditPanel : BasePanel
     {
         base.Update();
         if(draft==null||Time.frameCount<=openedFrame)return;
-        var keys=Keyboard.current;
+        var keys=MobileGameInput.Enabled?null:Keyboard.current;
         if(keys!=null)
         {
             if(keys.escapeKey.wasPressedThisFrame){Cancel();return;}

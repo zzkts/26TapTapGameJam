@@ -151,6 +151,15 @@ public sealed class GameAudioPresentation : MonoBehaviour
             var button=uiHits.Count>0?uiHits[0].gameObject.GetComponentInParent<UnityEngine.UI.Button>():null;
             clicked=button!=null&&button.IsActive()&&button.IsInteractable();
         }
+        var touch=Touchscreen.current;
+        if(!clicked&&touch!=null)
+            foreach(var finger in touch.touches)
+            {
+                if(!finger.press.wasPressedThisFrame)continue;
+                uiHits.Clear();events.RaycastAll(new PointerEventData(events){position=finger.position.ReadValue()},uiHits);
+                var button=uiHits.Count>0?uiHits[0].gameObject.GetComponentInParent<UnityEngine.UI.Button>():null;
+                if(button!=null&&button.IsActive()&&button.IsInteractable()){clicked=true;break;}
+            }
         var keys=Keyboard.current;var selected=events.currentSelectedGameObject;
         var selectedButton=selected!=null?selected.GetComponent<UnityEngine.UI.Button>():null;
         bool submitted=keys!=null&&selectedButton!=null&&selectedButton.IsInteractable()&&(keys.enterKey.wasPressedThisFrame||keys.spaceKey.wasPressedThisFrame);
