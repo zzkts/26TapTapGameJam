@@ -1,0 +1,10 @@
+{
+    "success": true,
+    "checkedScenes": [
+        "Assets/Scene/BeginScene.unity",
+        "Assets/Scene/GameScene.unity"
+    ],
+    "errors": [],
+    "prefabs": 19,
+    "renderers": 366
+}

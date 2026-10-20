@@ -11,6 +11,39 @@ public static class WaterDrainUISetup
 {
     private static Font font;
     private static Sprite rounded,circle,portrait;
+    [MenuItem("Tools/TapGJ/UI/Align And Polish Current Interface")]
+    public static void ApplyInterfacePass()
+    {
+        if(EditorApplication.isPlaying)throw new InvalidOperationException("Exit Play Mode first.");
+        var scene=UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+        if(scene.name!="BeginScene"&&scene.name!="GameScene")throw new InvalidOperationException("Open a game scene.");
+        font=AssetDatabase.LoadAssetAtPath<Font>("Assets/ArtRes/Fonts/PlayerUI/NotoSansCJKsc-Medium.otf");
+        rounded=AssetDatabase.LoadAssetAtPath<Sprite>("Assets/ArtRes/UI/Player/Rounded.png");
+        circle=AssetDatabase.LoadAssetAtPath<Sprite>("Assets/ArtRes/UI/Player/Circle.png");
+        portrait=AssetDatabase.LoadAssetAtPath<Sprite>("Assets/ArtRes/UI/Player/Portrait.png");
+        foreach(var root in scene.GetRootGameObjects())
+        foreach(var canvas in root.GetComponentsInChildren<Canvas>(true).Where(c=>c.isRootCanvas&&c.renderMode!=RenderMode.WorldSpace))
+        {
+            foreach(var settings in canvas.GetComponentsInChildren<SettingPanel>(true))BuildSettings(settings);
+            foreach(var menu in canvas.GetComponentsInChildren<RunMenuPanel>(true))BuildRunMenu(menu);
+            foreach(var hud in canvas.GetComponentsInChildren<PlayerHudPanel>(true))BuildHud(hud);
+            foreach(var gene in canvas.GetComponentsInChildren<GeneEditPanel>(true))
+            {GeneEditorLayoutPolish.Rebuild(gene);EditorUtility.SetDirty(gene);}
+            foreach(var story in canvas.GetComponentsInChildren<StoryDialogPanel>(true))PolishStory(story);
+            foreach(var objective in canvas.GetComponentsInChildren<StoryObjectivePanel>(true))PolishObjective(objective);
+            foreach(var label in canvas.GetComponentsInChildren<Text>(true))
+            {
+                label.font=font;label.alignByGeometry=label.alignment==TextAnchor.MiddleCenter&& !label.text.Contains("\n");
+                WaterDrainUI.Readable(label,Mathf.Max(12,label.fontSize-2));
+                if(scene.name=="BeginScene"&&new[]{"Game Title","Game Subtitle","Menu Eyebrow","Chapter","Control Hint","Jam Credit"}.Contains(label.name))
+                {
+                    var r=label.rectTransform;r.anchorMin=new Vector2(.13f,r.anchorMin.y);r.offsetMin=r.offsetMax=Vector2.zero;
+                    if(label.name=="Game Title"){label.fontSize=64;WaterDrainUI.Readable(label,54);}
+                }
+            }
+        }
+        EditorSceneManager.MarkSceneDirty(scene);EditorSceneManager.SaveScene(scene);AssetDatabase.SaveAssets();
+    }
     [MenuItem("Tools/TapGJ/UI/Refresh Current Scene")]
     public static void Apply()
     {
@@ -77,44 +110,70 @@ public static class WaterDrainUISetup
         Label(root,"Brand",.32f,.837f,.68f,.88f,16,WaterDrainUI.Signature,WaterDrainUI.Muted,TextAnchor.MiddleCenter);
         Box(root,"Accent",.47f,.82f,.53f,.824f,PlayerUIStyle.Mint);
     }
+    private static RectTransform FixedModal(Transform root,string name)
+    {
+        Box(root,"Shade",0,0,1,1,new Color(.035f,.025f,.075f,.87f),true).sprite=null;
+        var frame=Card(root,name,new Vector2(.5f,.5f),Vector2.zero,new Vector2(620,680));
+        TextAt(frame,"Brand",54,628,512,24,15,WaterDrainUI.Signature,WaterDrainUI.Muted,TextAnchor.MiddleCenter);
+        ImageAt(frame,"Accent",278,610,64,3,PlayerUIStyle.Mint,rounded);
+        return frame;
+    }
+    private static Button ButtonAt(Transform root,string name,float y,string value,Color color,int size=21)
+    {
+        var button=Button(root,name,0,0,0,0,value,color,size);var rect=button.GetComponent<RectTransform>();
+        rect.pivot=Vector2.zero;rect.anchoredPosition=new Vector2(54,y);rect.sizeDelta=new Vector2(512,52);return button;
+    }
     private static void BuildSettings(SettingPanel panel)
     {
-        Clear(panel.transform);var root=panel.transform;Modal(root,"Settings Frame");
-        Label(root,"Title",.33f,.73f,.67f,.80f,34,"设置",PlayerUIStyle.Cream,TextAnchor.MiddleCenter);
-        Label(root,"Effects",.33f,.63f,.5f,.68f,21,"音效音量",PlayerUIStyle.Cream);
-        panel.effectsValue=Label(root,"Effects Value",.58f,.63f,.67f,.68f,18,"100%",PlayerUIStyle.Mint,TextAnchor.MiddleRight);
-        panel.sliderGame=VolumeSlider(root,"Effects Volume",.33f,.572f,.67f,.627f);
-        Label(root,"Music",.33f,.48f,.5f,.53f,21,"音乐音量",PlayerUIStyle.Cream);
-        panel.musicValue=Label(root,"Music Value",.58f,.48f,.67f,.53f,18,"100%",PlayerUIStyle.Mint,TextAnchor.MiddleRight);
-        panel.sliderBk=VolumeSlider(root,"Music Volume",.33f,.422f,.67f,.477f);
-        Label(root,"Fullscreen",.33f,.31f,.57f,.37f,21,"全屏显示",PlayerUIStyle.Cream);
-        var toggle=Box(root,"Fullscreen Toggle",.63f,.315f,.67f,.371f,WaterDrainUI.Border,true);
-        panel.togFull=toggle.gameObject.AddComponent<Toggle>();panel.togFull.targetGraphic=toggle;
-        panel.togFull.graphic=Box(toggle.transform,"Check",.2f,.2f,.8f,.8f,PlayerUIStyle.Mint);
-        panel.btnClose=Button(root,"Close Settings",.33f,.19f,.67f,.257f,"保存并返回",PlayerUIStyle.Mint);
-        Label(root,"Settings Hint",.33f,.123f,.67f,.173f,15,"Esc 返回  ·  音量设置会自动保存",WaterDrainUI.Muted,TextAnchor.MiddleCenter);
+        Clear(panel.transform);var root=FixedModal(panel.transform,"Settings Frame");
+        TextAt(root,"Title",54,550,512,48,34,"设置",PlayerUIStyle.Cream,TextAnchor.MiddleCenter);
+        TextAt(root,"Subtitle",54,520,512,24,15,"声音与显示",WaterDrainUI.Muted,TextAnchor.MiddleCenter);
+        TextAt(root,"Effects",54,448,360,30,21,"音效音量",PlayerUIStyle.Cream);
+        panel.effectsValue=TextAt(root,"Effects Value",446,448,120,30,19,"100%",PlayerUIStyle.Mint,TextAnchor.MiddleRight);
+        panel.sliderGame=VolumeSlider(root,"Effects Volume",403);
+        TextAt(root,"Music",54,344,360,30,21,"音乐音量",PlayerUIStyle.Cream);
+        panel.musicValue=TextAt(root,"Music Value",446,344,120,30,19,"100%",PlayerUIStyle.Mint,TextAnchor.MiddleRight);
+        panel.sliderBk=VolumeSlider(root,"Music Volume",299);
+        ImageAt(root,"Display Divider",54,276,512,1,WaterDrainUI.Border);
+        TextAt(root,"Fullscreen",54,220,300,30,21,"全屏显示",PlayerUIStyle.Cream);
+        TextAt(root,"Display Hint",54,197,360,23,13,"切换全屏或窗口显示",WaterDrainUI.Muted);
+        panel.fullscreenValue=TextAt(root,"Fullscreen Value",434,220,54,30,15,"关闭",WaterDrainUI.Muted,TextAnchor.MiddleRight);
+        var toggle=ImageAt(root,"Fullscreen Toggle",504,220,62,32,WaterDrainUI.Border,rounded);toggle.raycastTarget=true;
+        panel.togFull=toggle.gameObject.AddComponent<Toggle>();panel.togFull.targetGraphic=toggle;panel.fullscreenTrack=toggle;
+        var thumb=ImageAt(toggle.transform,"Thumb",0,0,24,24,PlayerUIStyle.Cream,circle);
+        thumb.rectTransform.pivot=new Vector2(.5f,.5f);thumb.rectTransform.anchoredPosition=new Vector2(16,16);panel.fullscreenThumb=thumb;
+        panel.togFull.transition=Selectable.Transition.None;
+        panel.btnCredits=ButtonAt(root,"Music Credits",146,"音乐署名",PlayerUIStyle.Violet,16);
+        panel.btnCredits.GetComponent<RectTransform>().sizeDelta=new Vector2(512,38);
+        panel.btnClose=ButtonAt(root,"Close Settings",78,"保存并返回",PlayerUIStyle.Mint);
+        TextAt(root,"Settings Hint",54,28,512,27,13,"Esc 返回 · 设置在返回时保存",WaterDrainUI.Muted,TextAnchor.MiddleCenter);
         panel.gameObject.SetActive(false);EditorUtility.SetDirty(panel);
     }
-    private static Slider VolumeSlider(Transform root,string name,float x0,float y0,float x1,float y1)
+    private static Slider VolumeSlider(Transform root,string name,float y)
     {
-        var holder=R(root,name,x0,y0,x1,y1);var hit=holder.gameObject.AddComponent<Image>();hit.color=Color.clear;
-        var slider=holder.gameObject.AddComponent<Slider>();Box(holder,"Track",0,.36f,1,.64f,WaterDrainUI.Border);
-        var fillArea=R(holder,"Fill Area",.025f,.36f,.975f,.64f);
+        var holder=R(root,name,0,0,0,0);holder.pivot=Vector2.zero;holder.anchoredPosition=new Vector2(54,y);holder.sizeDelta=new Vector2(512,44);
+        var hit=holder.gameObject.AddComponent<Image>();hit.color=Color.clear;
+        var slider=holder.gameObject.AddComponent<Slider>();Box(holder,"Track",0,.363636f,1,.636364f,WaterDrainUI.Border);
+        // Track and fill share the exact same rectangle; no normalized side inset.
+        var fillArea=R(holder,"Fill Area",0,.363636f,1,.636364f);
         var fill=Box(fillArea,"Fill",0,0,1,1,PlayerUIStyle.Mint);slider.fillRect=fill.rectTransform;
-        var handleArea=R(holder,"Handle Area",.025f,0,.975f,1);
-        var handle=Box(handleArea,"Handle",0,.16f,0,.84f,PlayerUIStyle.Cream,true);handle.rectTransform.sizeDelta=new Vector2(26,0);
-        slider.handleRect=handle.rectTransform;slider.targetGraphic=handle;slider.minValue=0;slider.maxValue=1;return slider;
+        var handleArea=R(holder,"Handle Area",0,.5f,1,.5f);handleArea.offsetMin=new Vector2(12,0);handleArea.offsetMax=new Vector2(-12,0);
+        var handle=ImageAt(handleArea,"Handle",0,0,24,24,PlayerUIStyle.Cream,circle);handle.raycastTarget=true;
+        handle.rectTransform.anchorMin=handle.rectTransform.anchorMax=new Vector2(0,.5f);handle.rectTransform.pivot=new Vector2(.5f,.5f);handle.rectTransform.anchoredPosition=Vector2.zero;
+        slider.handleRect=handle.rectTransform;slider.targetGraphic=handle;slider.minValue=0;slider.maxValue=1;
+        var colors=slider.colors;colors.normalColor=colors.selectedColor=Color.white;colors.highlightedColor=new Color(.8f,1,.94f);colors.pressedColor=PlayerUIStyle.Mint;slider.colors=colors;return slider;
     }
     private static void BuildRunMenu(RunMenuPanel menu)
     {
-        var alive=menu.alivePortrait;var dead=menu.deadPortrait;Clear(menu.transform);var root=menu.transform;Modal(root,"Pause Frame");
-        menu.portrait=Box(root,"Menu Portrait",.455f,.70f,.545f,.81f,Color.white);menu.portrait.sprite=alive!=null?alive:portrait;menu.portrait.type=Image.Type.Simple;menu.portrait.preserveAspect=true;
-        menu.title=Label(root,"Title",.32f,.615f,.68f,.69f,34,"已暂停",PlayerUIStyle.Cream,TextAnchor.MiddleCenter);
-        menu.resumeButton=Button(root,"Resume",.33f,.52f,.67f,.60f,"继续探索",PlayerUIStyle.Mint);
-        menu.retryButton=Button(root,"Restart",.33f,.41f,.67f,.49f,"从检查点重试",PlayerUIStyle.Cream);
-        menu.settingsButton=Button(root,"Settings",.33f,.30f,.67f,.38f,"设置",PlayerUIStyle.Violet);
-        menu.menuButton=Button(root,"Main Menu",.33f,.19f,.67f,.27f,"返回主菜单",PlayerUIStyle.Violet);
-        menu.hint=Label(root,"Pause Hint",.33f,.12f,.67f,.168f,14,"Esc 继续  ·  已记录的检查点会保留",WaterDrainUI.Muted,TextAnchor.MiddleCenter);
+        var alive=menu.alivePortrait;var dead=menu.deadPortrait;Clear(menu.transform);var root=FixedModal(menu.transform,"Pause Frame");menu.cardLayout=true;
+        menu.portrait=ImageAt(root,"Menu Portrait",254,498,112,108,Color.white,alive!=null?alive:portrait);menu.portrait.preserveAspect=true;
+        menu.title=TextAt(root,"Title",54,444,512,48,34,"已暂停",PlayerUIStyle.Cream,TextAnchor.MiddleCenter);
+        menu.hint=TextAt(root,"Pause Hint",54,392,512,42,14,"Esc 继续 · 已记录的检查点会保留",WaterDrainUI.Muted,TextAnchor.MiddleCenter);
+        menu.resumeButton=ButtonAt(root,"Resume",324,"继续探索",PlayerUIStyle.Mint);
+        menu.retryButton=ButtonAt(root,"Restart",256,"从检查点重试",PlayerUIStyle.Cream);
+        menu.settingsButton=ButtonAt(root,"Settings",188,"设置",PlayerUIStyle.Violet);
+        menu.menuButton=ButtonAt(root,"Main Menu",120,"返回主菜单",PlayerUIStyle.Violet);
+        TextAt(root,"Footer",54,48,512,28,13,"随时暂停，重新组合你的下一次尝试。",WaterDrainUI.Muted,TextAnchor.MiddleCenter);
         menu.alivePortrait=alive;menu.deadPortrait=dead;menu.gameObject.SetActive(false);EditorUtility.SetDirty(menu);
     }
     private static void BuildHud(PlayerHudPanel hud)
@@ -177,6 +236,11 @@ public static class WaterDrainUISetup
     private static void PolishStory(StoryDialogPanel panel)
     {
         Place((RectTransform)panel.dialogueBody.transform,.055f,.075f,.945f,.43f);
+        panel.skip.transform.SetParent(panel.dialogueBody.transform,false);
+        Place(panel.skip.GetComponent<RectTransform>(),.79f,.78f,.965f,.94f);
+        panel.skip.GetComponentInChildren<Text>().fontSize=17;
+        Place(panel.speaker.rectTransform,.225f,.77f,.74f,.94f);
+        Place(panel.hint.rectTransform,.225f,.055f,.69f,.20f);
         Place(panel.body.rectTransform,.225f,.27f,.955f,.72f);panel.body.fontSize=26;panel.body.lineSpacing=1.15f;
         WaterDrainUI.Readable(panel.body,22);
         foreach(var text in panel.GetComponentsInChildren<Text>(true))WaterDrainUI.Readable(text,Mathf.Max(14,text.fontSize-3));

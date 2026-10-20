@@ -1,0 +1,21 @@
+{
+    "success": true,
+    "checks": [
+        "PASS: In-memory save isolation active",
+        "PASS: BeginScene menu controls load",
+        "PASS: All gameplay sound cues load",
+        "PASS: Menu music loads",
+        "PASS: Main menu enters ready GameScene",
+        "PASS: Player, gene inventory and weapon load",
+        "PASS: Gameplay HUD and gene editor load",
+        "PASS: Monster4 healing support prefab retained",
+        "PASS: Gene definitions remain available",
+        "PASS: Ground water footprint material loads",
+        "PASS: GameScene music loads",
+        "PASS: Pause, settings and music credits load",
+        "PASS: Return to main menu works",
+        "PASS: Scene transition retains exactly one audio presenter",
+        "PASS: Real save unchanged",
+        "PASS: Ending history unchanged"
+    ]
+}

@@ -10,6 +10,7 @@ public class RunMenuPanel : BasePanel
     public Button settingsButton, menuButton;
     public Image portrait;
     public Sprite alivePortrait, deadPortrait;
+    [HideInInspector] public bool cardLayout;
     private PlayerController player;
     public override void Init()
     {
@@ -33,9 +34,18 @@ public class RunMenuPanel : BasePanel
         if(hint!=null)hint.text=dead?"从最近的检查点继续，重新组合基因再出发":"Esc 继续  ·  已记录的检查点会保留";
         if (portrait != null) portrait.sprite = dead ? deadPortrait : alivePortrait;
         resumeButton.gameObject.SetActive(!dead);
-        Place(retryButton, dead ? .52f : .41f);
-        Place(settingsButton, dead ? .39f : .30f);
-        Place(menuButton, dead ? .26f : .19f);
+        if(cardLayout)
+        {
+            PlaceCard(retryButton,dead?324:256);
+            PlaceCard(settingsButton,dead?256:188);
+            PlaceCard(menuButton,dead?188:120);
+        }
+        else
+        {
+            Place(retryButton, dead ? .52f : .41f);
+            Place(settingsButton, dead ? .39f : .30f);
+            Place(menuButton, dead ? .26f : .19f);
+        }
         player.SetMenuOpen(true);
         transform.SetAsLastSibling();
         UIManager.Instance.ShowPanel(gameObject);
@@ -47,6 +57,12 @@ public class RunMenuPanel : BasePanel
         rect.anchorMin = new Vector2(rect.anchorMin.x, bottom);
         rect.anchorMax = new Vector2(rect.anchorMax.x, bottom + .08f);
         rect.offsetMin = rect.offsetMax = Vector2.zero;
+    }
+    private static void PlaceCard(Button button,float bottom)
+    {
+        if(button==null)return;
+        var rect=button.GetComponent<RectTransform>();rect.anchorMin=rect.anchorMax=rect.pivot=Vector2.zero;
+        rect.anchoredPosition=new Vector2(54,bottom);rect.sizeDelta=new Vector2(512,52);
     }
     private void Resume()
     {

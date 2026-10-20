@@ -7,7 +7,10 @@ public class SettingPanel : BasePanel
     public Slider sliderBk;
     public Toggle togFull;
     public Button btnClose;
+    public Button btnCredits;
     public Text effectsValue, musicValue;
+    public Text fullscreenValue;
+    public Image fullscreenTrack, fullscreenThumb;
     private MusicCreditsPanel musicCredits;
 
     public override void Init()
@@ -40,6 +43,7 @@ public class SettingPanel : BasePanel
         sliderGame.SetValueWithoutNotify(GlobalManager.Instance.GameVolume);
         sliderBk.SetValueWithoutNotify(GlobalManager.Instance.BackgroundVolume);
         togFull.SetIsOnWithoutNotify(Screen.fullScreen);
+        RefreshFullscreen();
         RefreshValues();
     }
 
@@ -61,6 +65,19 @@ public class SettingPanel : BasePanel
         Screen.fullScreenMode = isFullScreen
             ? FullScreenMode.FullScreenWindow
             : FullScreenMode.Windowed;
+        RefreshFullscreen();
+    }
+
+    private void RefreshFullscreen()
+    {
+        bool on = togFull.isOn;
+        if(fullscreenValue!=null)fullscreenValue.text=on?"开启":"关闭";
+        if(fullscreenTrack!=null)fullscreenTrack.color=on?PlayerUIStyle.Mint:WaterDrainUI.Border;
+        if(fullscreenThumb!=null)
+        {
+            fullscreenThumb.color=on?PlayerUIStyle.Ink:PlayerUIStyle.Cream;
+            fullscreenThumb.rectTransform.anchoredPosition=new Vector2(on?46:16,16);
+        }
     }
 
     private void CloseSettings()

@@ -327,32 +327,16 @@ public class GeneEditPanel : BasePanel
     {
         if(confirmButton!=null)
         {
-            RectTransform confirmRect=confirmButton.GetComponent<RectTransform>();
-            if(confirmRect.anchorMin.y>.03f&&confirmRect.anchorMax.y<.1f)
+            var existing=confirmButton.transform.Find("Confirm Shortcut");
+            if(existing!=null)existing.gameObject.SetActive(false);
+            var reminder=confirmButton.transform.parent.Find("Draft Reminder");
+            var hint=reminder!=null?reminder.GetComponent<Text>():null;
+            if(hint!=null)
             {
-                foreach(Button button in new[]{leftButton,rightButton,removeButton,confirmButton,cancelButton})
-                {
-                    if(button==null)continue;
-                    RectTransform rect=button.GetComponent<RectTransform>();
-                    rect.anchorMin-=new Vector2(0,.012f);
-                    rect.anchorMax-=new Vector2(0,.012f);
-                }
-                Transform reminder=confirmButton.transform.parent.Find("Draft Reminder");
-                if(reminder!=null)
-                {
-                    RectTransform rect=reminder.GetComponent<RectTransform>();
-                    rect.anchorMin-=new Vector2(0,.012f);
-                    rect.anchorMax-=new Vector2(0,.012f);
-                }
+                hint.text="Space 确认 · Esc 取消\n确认后应用 · 取消保留原构筑";
+                hint.alignment=TextAnchor.MiddleCenter;hint.lineSpacing=1.15f;
+                WaterDrainUI.Readable(hint,12);
             }
-            Transform existing=confirmButton.transform.Find("Confirm Shortcut");
-            Text hint=existing!=null?existing.GetComponent<Text>():GameplayUIFactory.Label("Confirm Shortcut",confirmButton.transform,
-                new Vector2(0,1.02f),new Vector2(1,1.48f),font,13,"Space确认装配",TextAnchor.MiddleCenter);
-            hint.rectTransform.anchorMin=new Vector2(0,1.02f);
-            hint.rectTransform.anchorMax=new Vector2(1,1.48f);
-            hint.rectTransform.offsetMin=hint.rectTransform.offsetMax=Vector2.zero;
-            hint.text="Space确认装配";hint.color=PlayerUIStyle.Mint;
-            hint.fontSize=13;WaterDrainUI.Readable(hint,12);
         }
         foreach(Text text in GetComponentsInChildren<Text>(true))
             if(text.name=="Draft Rule")text.text="A/D 左右选槽 · W/S 上下选槽 · 点击库存装入";

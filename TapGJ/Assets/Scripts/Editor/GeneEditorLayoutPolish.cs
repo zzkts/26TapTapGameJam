@@ -182,9 +182,8 @@ public static class GeneEditorLayoutPolish
         editor.leftButton = Button("Move Left", root, .035f,.022f,.136f,.077f,"← 前移",PlayerUIStyle.Cream,15);
         editor.rightButton = Button("Move Right", root, .148f,.022f,.249f,.077f,"后移 →",PlayerUIStyle.Cream,15);
         editor.removeButton = Button("Remove", root, .261f,.022f,.362f,.077f,"移除此格",PlayerUIStyle.Cream,15);
-        Label("Draft Reminder",root,.378f,.022f,.65f,.077f,12,"确认后应用 · 取消保留原构筑",Muted);
+        Label("Draft Reminder",root,.378f,.022f,.65f,.077f,12,"Space 确认 · Esc 取消\n确认后应用 · 取消保留原构筑",Muted,TextAnchor.MiddleCenter);
         editor.confirmButton = Button("Confirm",root,.674f,.022f,.843f,.077f,"确认装配",PlayerUIStyle.Mint,19);
-        Label("Confirm Shortcut",editor.confirmButton.transform,0,1.02f,1,1.48f,13,"Space确认装配",PlayerUIStyle.Mint,TextAnchor.MiddleCenter);
         editor.cancelButton = Button("Cancel",root,.855f,.022f,.965f,.077f,"取消 / ESC",PlayerUIStyle.Cream,16);
     }
 
