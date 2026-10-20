@@ -20857,6 +20857,7 @@ Transform:
   - {fileID: 132078670}
   - {fileID: 642018617}
   - {fileID: 592197944}
+  - {fileID: 1347129169}
   m_Father: {fileID: 1815340744}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &794379166
@@ -21988,6 +21989,67 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 841339617}
   m_CullTransparentMesh: 1
+--- !u!1001 &845151423
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 790779891}
+    m_Modifications:
+    - target: {fileID: 2620302776625512850, guid: ab67afa2517202c4bac3e89d51e934cc, type: 3}
+      propertyPath: m_Name
+      value: "\u57FA\u56E0\u51B7\u5E93 (1)"
+      objectReference: {fileID: 0}
+    - target: {fileID: 3594755410268396557, guid: ab67afa2517202c4bac3e89d51e934cc, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 8.86
+      objectReference: {fileID: 0}
+    - target: {fileID: 3594755410268396557, guid: ab67afa2517202c4bac3e89d51e934cc, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 3594755410268396557, guid: ab67afa2517202c4bac3e89d51e934cc, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3594755410268396557, guid: ab67afa2517202c4bac3e89d51e934cc, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3594755410268396557, guid: ab67afa2517202c4bac3e89d51e934cc, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3594755410268396557, guid: ab67afa2517202c4bac3e89d51e934cc, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3594755410268396557, guid: ab67afa2517202c4bac3e89d51e934cc, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3594755410268396557, guid: ab67afa2517202c4bac3e89d51e934cc, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3594755410268396557, guid: ab67afa2517202c4bac3e89d51e934cc, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3594755410268396557, guid: ab67afa2517202c4bac3e89d51e934cc, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4946123817537880965, guid: ab67afa2517202c4bac3e89d51e934cc, type: 3}
+      propertyPath: rewardId
+      value: campaign-chest-1-4
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: ab67afa2517202c4bac3e89d51e934cc, type: 3}
 --- !u!1 &845838064
 GameObject:
   m_ObjectHideFlags: 0
@@ -23465,6 +23527,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RunMenuPanel
   isShow: 0
   title: {fileID: 29389240}
+  hint: {fileID: 0}
   resumeButton: {fileID: 1735568581}
   retryButton: {fileID: 1227973096}
   settingsButton: {fileID: 1647735204}
@@ -33033,6 +33096,8 @@ MonoBehaviour:
   sliderBk: {fileID: 1779264365}
   togFull: {fileID: 1000789929}
   btnClose: {fileID: 622955715}
+  effectsValue: {fileID: 0}
+  musicValue: {fileID: 0}
 --- !u!1 &1240948626
 GameObject:
   m_ObjectHideFlags: 0
@@ -35362,6 +35427,11 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1345396636}
   m_CullTransparentMesh: 1
+--- !u!4 &1347129169 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3594755410268396557, guid: ab67afa2517202c4bac3e89d51e934cc, type: 3}
+  m_PrefabInstance: {fileID: 845151423}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1348058520
 GameObject:
   m_ObjectHideFlags: 0
@@ -44428,11 +44498,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3465948070168617605, guid: 25d3644995c7a17499698e3a4a7cf9bb, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 42.1
+      value: 42.39
       objectReference: {fileID: 0}
     - target: {fileID: 3465948070168617605, guid: 25d3644995c7a17499698e3a4a7cf9bb, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 6.95
+      value: 3.74
       objectReference: {fileID: 0}
     - target: {fileID: 3465948070168617605, guid: 25d3644995c7a17499698e3a4a7cf9bb, type: 3}
       propertyPath: m_LocalPosition.z
