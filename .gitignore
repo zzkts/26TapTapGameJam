@@ -104,3 +104,17 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# TapGJ local IDE settings and generated verification output
+/TapGJ/.vscode/
+/TapGJ/.vsconfig
+/TapGJ/GeneSpecResults/
+/TapGJ/Docs/**/*.png
+/TapGJ/Docs/**/*.wav
+/TapGJ/Docs/**/*.json
+/TapGJ/Docs/**/*.xml
+/TapGJ/Docs/**/*.log
+/TapGJ/Docs/**/*.txt
+# Art prompts are editable source documents, not test output.
+!/TapGJ/Docs/CompleteGameArtPrompts.json
+!/TapGJ/Docs/PlayerArtPrompts.json
